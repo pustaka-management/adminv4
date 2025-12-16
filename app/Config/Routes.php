@@ -263,10 +263,13 @@ $routes->group('sales', function($routes) {
 //Sales dashboard
 $routes->group('dashboard', function($routes) {
     $routes->get('amazonpaperback', 'Sales::amazonpaperback');
+    $routes->get('amazonpaperbackrevenue', 'Sales::amazonpaperbackrevenue');
     $routes->get('salesreports', 'Sales::salesReports');
     $routes->get('ebooksales', 'Sales::ebookSales');
     $routes->get('audiobooksales', 'Sales::audiobookSales');
     $routes->get('paperbacksales', 'Sales::paperbackSales');
+    $routes->get('amazonpbkbookdetails/(:num)', 'Sales::amazonpbkbookdetails/$1');
+    
 });
 
 

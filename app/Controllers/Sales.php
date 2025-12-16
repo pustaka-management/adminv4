@@ -71,6 +71,23 @@ class Sales extends BaseController
         $data['title'] = '';
         $data['subTitle'] = '';
 
-        return view('sales/amazonpaperbackdetails',$data);
+        return view('sales/amazon/amazonPaperbackDetails',$data);
+    }
+    public function amazonpaperbackrevenue()
+    {
+        $data['paperback_revenue'] = $this->salesmodel->amazonPaperbackRevenueDetails();
+        $data['title'] = '';
+        $data['subTitle'] = '';
+
+        return view('sales/amazon/amazonPaperbackRevenueDetails',$data);
+    
+    }
+    public function amazonpbkbookdetails($book_id)
+    {
+        $data['paperback_bookdetails'] = $this->salesmodel->getAmazonPaperbackBookDetails($book_id);
+        $data['title'] = '';
+        $data['subTitle'] = '';
+
+        return view('sales/amazon/amazonBookwiseDetails',$data);
     }
 }

@@ -1177,5 +1177,48 @@ class SalesModel extends Model
 
 		return $data;
 	}
-    
+    public function amazonPaperbackRevenueDetails()
+    {
+        $sql ="SELECT * FROM amazon_paperback_books";
+        $query = $this->db->query($sql);
+        return $query->getResultArray();  
+    }
+    public function getAmazonPaperbackBookDetails($sku)
+    {
+        $sql = "SELECT 
+                    SUM(total_earnings) AS total_earnings,
+                    (SUM(total_earnings) * 100.0 / (SELECT SUM(total_earnings) FROM amazon_paperback_transactions)) AS percentage_contribution
+                FROM 
+                    amazon_paperback_transactions
+                WHERE 
+                type like 'Order%' and sku = ?";
+        $query = $this->db->query($sql, [$sku]);
+        $data['tot_count'] = $query->getRowArray();
+
+        $sql_tot = "SELECT type, COUNT(*) as total_cnt, sum(product_sales) as total_sales, sum(shipping_credits) 
+                        as total_credits, sum(total_earnings) as total_earnings, sum(tds) as total_tds,
+                        sum(selling_fees) as total_selling_fees, sum(other_transaction_fees) as total_trans_fees, 
+                        sum(shipping_fees) as total_shipping_fees, sum(final_royalty_value) as total_royalty_value 
+                  FROM amazon_paperback_transactions 
+                  WHERE type like 'Order%' AND sku = ?
+                  GROUP BY type";
+        $query = $this->db->query($sql_tot, [$sku]);
+        $data['total_earnings'] = $query->getResultArray()[0];
+
+        $sql_mon ="SELECT 
+                        COUNT(order_id) as total_orders,
+                        SUM(quantity) as total_quantity,
+                        DATE_FORMAT(`date`, '%Y-%m-01') AS month,
+                        SUM(total_earnings) AS monthly_total_earnings
+                    FROM amazon_paperback_transactions
+                    WHERE sku = ? AND type LIKE 'Order%'
+                    GROUP BY DATE_FORMAT(`date`, '%Y-%m')
+                    ORDER BY month DESC";
+        $query = $this->db->query($sql_mon, [$sku]);
+        $data['monthly_earnings'] = $query->getResultArray();
+        
+        return $data;
+    }
+
 }
+
