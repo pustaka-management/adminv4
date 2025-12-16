@@ -80,6 +80,8 @@ $routes->group('stock', function($routes) {
     $routes->get('bookfairdashboard', 'Stock::bookfairDashboard');
     $routes->get('exportExcel', 'Stock::exportExcel');
     $routes->get('bookfairview/(:num)', 'Stock::BookfairView/$1');
+    $routes->get('allocatedbooks', 'Stock::allocatedBooks');
+    $routes->post('saveallocation', 'Stock::saveAllocation');
 
     
     //stock Derails for paperbackledgerbooks

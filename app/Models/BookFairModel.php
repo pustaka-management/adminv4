@@ -23,6 +23,25 @@ class BookFairModel extends Model
             ->get()
             ->getResultArray();
     }
+//     public function getBaseBooks()
+// {
+//     return $this->db->table('book_fair_authors_list bf')
+//         ->select('
+//             a.author_name,
+//             a.author_id,
+//             b.book_id,
+//             b.book_title,
+//             bf.priority_code
+//         ')
+//         ->join('author_tbl a', 'a.author_id = bf.author_id')
+//         ->join('book_tbl b', 'b.author_name = a.author_id')
+//         ->whereNotIn('a.author_id', [711, 174, 265, 511, 447, 147, 535])   // excluded authors
+//         ->orderBy('bf.priority_code', 'ASC')
+//         ->orderBy('a.author_name', 'ASC')
+//         ->get()
+//         ->getResultArray();
+// }
+
 
     // 2. Allocated books
     public function getAllocatedBooks()
@@ -200,7 +219,10 @@ class BookFairModel extends Model
         ->get()
         ->getResultArray();
 }
-
+    public function saveAllocation($data)
+    {
+        return $this->db->table('bookfair_allocated_books')->insertBatch($data);
+    }
 
     }
 

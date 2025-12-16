@@ -793,7 +793,7 @@ class Stock extends BaseController
             'all'         => $model->getPriorityBooks('all'),
         ];
 
-        return view('bookfair/bookfairdashboard', $data);
+        return view('BookFair/bookfairDashboard', $data);
     }
     public function exportExcel()
 {
@@ -854,5 +854,80 @@ public function BookfairView($book_id)
 
         return view('BookFair/BookfairView', $data);
     }
+    public function allocatedBooks()
+{
+    $model = new BookFairModel();
+
+    $base = $model->getBaseBooks();
+    $allocated = $model->getAllocatedBooks();
+    $stock = $model->getStockQty();
+
+    $final = [];
+
+    foreach ($base as $b) {
+        $book_id = $b['book_id'];
+
+        // Stock
+        $b['stock_in_hand'] = 0;
+        foreach ($stock as $s) {
+            if ($s['book_id'] == $book_id) {
+                $b['stock_in_hand'] = $s['stock_in_hand'];
+                break;
+            }
+        }
+
+        // Allocation
+        $b['allocated_qty'] = 0;
+        $b['no_of_bookfairs'] = 0;
+        foreach ($allocated as $a) {
+            if ($a['book_id'] == $book_id) {
+                $b['allocated_qty'] = $a['allocated_qty'];
+                $b['no_of_bookfairs'] = $a['no_of_bookfairs'];
+                break;
+            }
+        }
+
+        $final[] = $b;
+    }
+
+    return view('BookFair/allocateBooks', [
+        'title' => '',
+        'books' => $final
+    ]);
+}
+
+
+
+//  SAVE
+public function saveAllocation()
+{
+    $json = $this->request->getJSON(true);
+
+    if (!isset($json['books'])) {
+        return $this->response->setJSON([
+            'status' => 'error',
+            'message' => 'Invalid Payload'
+        ]);
+    }
+
+    $model = new BookFairModel();
+    $insert = [];
+
+    foreach ($json['books'] as $row) {
+        $insert[] = [
+            'book_id'        => $row['book_id'],
+            'author_id'      => $row['author_id'],
+            'quantity'       => $row['qty'],
+            'bookfair_id'    => null,
+            'bookfair_name'  => $row['bookfair_name'],
+            'created_date'   => date('Y-m-d H:i:s')
+        ];
+    }
+
+    $model->saveAllocation($insert);
+
+    return $this->response->setJSON(['status' => 'success']);
+}
+
     
 }
