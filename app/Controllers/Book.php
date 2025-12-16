@@ -1215,10 +1215,19 @@ public function checkBookUrl()
                 $builder->insert([
                     'book_id'       => $book_id,
                     'author_id'     => $author_id,
-                    'created_date'  => date('Y-m-d H:i:s'),
-                    'rework_flag'   => 1,
-                    'completed_flag'=> 1,
-                    'completed_date'=> date('Y-m-d H:i:s'),
+                    'created_date' => date('Y-m-d H:i:s'),
+                    'start_flag'=>1,
+                    'level3_flag'=>1,
+                    'indesign_flag'=>1,
+                    'indesign_qc_flag'=>1,
+                    're_qc_flag'=>1,
+                    'indesign_cover_flag'=>1,
+                    'isbn_ready_flag'=>1,
+                    'final_qc_flag'=>1,
+                    'file_upload_flag'=>1,
+                    'completed_flag'=>1,
+                    'completed_date' => date('Y-m-d H:i:s'),
+                    'rework_flag' => 1,
                 ]);
             } else {
                 $builder->where('book_id', $book_id)->update([

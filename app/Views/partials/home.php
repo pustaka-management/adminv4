@@ -645,7 +645,7 @@
             <!-- POD Paperback Orders Summary Section -->
             <div class="row mt-5">
                 <div class="widget-heading text-center">
-                    <h6>POD & Author  Orders</h6>
+                    <h6>POD & Author  Orders</h6><br>
                 </div>
 
                 <!-- POD Today -->
@@ -841,7 +841,7 @@
     <div class="mt-4">
     <h6 class="text-center fw-semibold mb-4">
         Prospect Plans Summary
-    </h6>
+    </h6><br>
 
     <div class="row justify-content-center g-3">
         <?php foreach ($plan_summary as $p): ?>

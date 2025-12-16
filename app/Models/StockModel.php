@@ -840,82 +840,56 @@ class StockModel extends Model
 
         return $data;
     }
-    public function getFreeBooksStatus()
+    public function otherdistributionbooksstatus()
     {
         $db = \Config\Database::connect();
         $data = [];
 
         // Not Started
-        $sql = "SELECT free_books_paperback.*,book_tbl.book_title,author_tbl.author_name
-                FROM free_books_paperback,book_tbl,author_tbl
+        $sql = "SELECT paperback_other_distribution.*,book_tbl.book_title,author_tbl.author_name
+                FROM paperback_other_distribution,book_tbl,author_tbl
                 WHERE author_tbl.author_id = book_tbl.author_name
-                AND free_books_paperback.book_id = book_tbl.book_id
-                AND free_books_paperback.start_flag = 0
-                ORDER BY free_books_paperback.order_date ASC";
+                AND paperback_other_distribution.book_id = book_tbl.book_id
+                AND paperback_other_distribution.status = 0
+                ORDER BY paperback_other_distribution.order_date ASC";
         $query = $db->query($sql);
         $data['book_not_start'] = $query->getResultArray();
 
-        // In Progress
-        $sql = "SELECT 
-                    free_books_paperback.*, 
-                    free_books_paperback.book_id AS book_ID,
-                    book_tbl.book_title, 
-                    book_tbl.url_name, 
-                    author_tbl.author_name,
-                    indesign_processing.re_completed_flag,
-                    indesign_processing.rework_flag
-                FROM 
-                    free_books_paperback
-                JOIN 
-                    book_tbl ON free_books_paperback.book_id = book_tbl.book_id
-                JOIN 
-                    author_tbl ON author_tbl.author_id = book_tbl.author_name
-                LEFT JOIN 
-                    indesign_processing ON free_books_paperback.book_id = indesign_processing.book_id
-                WHERE 
-                    free_books_paperback.start_flag = 1 
-                    AND free_books_paperback.completed_flag = 0
-                ORDER BY 
-                    free_books_paperback.order_date ASC";
-        $query = $db->query($sql);
-        $data['in_progress'] = $query->getResultArray();
 
         // Completed (Last 30 days)
         $sql = "SELECT
-                    free_books_paperback.*,
+                    paperback_other_distribution.*,
                     book_tbl.book_title,
                     author_tbl.author_name
                 FROM
-                    free_books_paperback,
+                    paperback_other_distribution,
                     book_tbl,
                     author_tbl
                 WHERE
                     author_tbl.author_id = book_tbl.author_name
-                    AND free_books_paperback.book_id = book_tbl.book_id
-                    AND free_books_paperback.start_flag = 1
-                    AND free_books_paperback.completed_flag = 1
-                    AND free_books_paperback.completed_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                    AND paperback_other_distribution.book_id = book_tbl.book_id
+                    AND paperback_other_distribution.status = 1
+                    AND paperback_other_distribution.ship_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                 ORDER BY
-                    free_books_paperback.completed_date DESC";
+                    paperback_other_distribution.ship_date DESC";
         $query = $db->query($sql);
         $data['completed'] = $query->getResultArray();
 
         // Completed All
         $sql = "SELECT
-                    free_books_paperback.*,
+                    paperback_other_distribution.*,
                     book_tbl.book_title,
                     author_tbl.author_name
                 FROM
-                    free_books_paperback,
+                    paperback_other_distribution,
                     book_tbl,
                     author_tbl
                 WHERE
                     author_tbl.author_id = book_tbl.author_name
-                    AND free_books_paperback.book_id = book_tbl.book_id
-                    AND free_books_paperback.start_flag = 1
-                    AND free_books_paperback.completed_flag = 1
+                    AND paperback_other_distribution.book_id = book_tbl.book_id
+                    AND paperback_other_distribution.status = 1
                 ORDER BY
-                    free_books_paperback.completed_date DESC";
+                    paperback_other_distribution.ship_date DESC";
         $query = $db->query($sql);
         $data['completed_all'] = $query->getResultArray();
 
@@ -930,7 +904,7 @@ class StockModel extends Model
             $this->db->query("UPDATE pustaka_paperback_books SET start_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
             $update_data = ["start_flag" => 1];
-            $this->db->query("UPDATE free_books_paperback SET start_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET start_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -942,7 +916,7 @@ class StockModel extends Model
         if ($type == 'Initiate_print') {
             $this->db->query("UPDATE pustaka_paperback_books SET cover_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
-            $this->db->query("UPDATE free_books_paperback SET cover_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET cover_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -954,7 +928,7 @@ class StockModel extends Model
         if ($type == 'Initiate_print') {
             $this->db->query("UPDATE pustaka_paperback_books SET content_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
-            $this->db->query("UPDATE free_books_paperback SET content_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET content_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -965,7 +939,7 @@ class StockModel extends Model
         if ($type == 'Initiate_print') {
             $this->db->query("UPDATE pustaka_paperback_books SET lamination_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
-            $this->db->query("UPDATE free_books_paperback SET lamination_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET lamination_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -976,7 +950,7 @@ class StockModel extends Model
         if ($type == 'Initiate_print') {
             $this->db->query("UPDATE pustaka_paperback_books SET binding_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
-            $this->db->query("UPDATE free_books_paperback SET binding_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET binding_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -988,7 +962,7 @@ class StockModel extends Model
         if ($type == 'Initiate_print') {
             $this->db->query("UPDATE pustaka_paperback_books SET finalcut_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
-            $this->db->query("UPDATE free_books_paperback SET finalcut_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET finalcut_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -1000,7 +974,7 @@ class StockModel extends Model
         if ($type == 'Initiate_print') {
             $this->db->query("UPDATE pustaka_paperback_books SET qc_flag = 1 WHERE id = ?", [$id]);
         } elseif ($type == 'Free_books') {
-            $this->db->query("UPDATE free_books_paperback SET qc_flag = 1 WHERE id = ?", [$id]);
+            $this->db->query("UPDATE paperback_other_distribution SET qc_flag = 1 WHERE id = ?", [$id]);
         }
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
@@ -1046,16 +1020,10 @@ class StockModel extends Model
         $completed_date = date('Y-m-d H:i:s');
 
         $this->db->query("
-            UPDATE free_books_paperback 
+            UPDATE paperback_other_distribution 
             SET 
-                cover_flag = 1,
-                content_flag = 1,
-                lamination_flag = 1,
-                binding_flag = 1,
-                finalcut_flag = 1,
-                qc_flag = 1,
-                completed_flag = 1,
-                completed_date = ?
+                status = 1,
+                ship_date = ?
             WHERE id = ?
         ", [$completed_date, $id]);
 

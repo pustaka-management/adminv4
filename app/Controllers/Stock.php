@@ -2,9 +2,11 @@
 
 namespace App\Controllers;
 use App\Models\StockModel; 
+use App\Models\BookFairModel;
 use App\Controllers\BaseController;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;  
 
 
@@ -267,6 +269,8 @@ class Stock extends BaseController
 
         return view('stock/otherDistribution', $data);
     }
+
+
     public function saveotherdistribution()
     {
         $orderData = [
@@ -483,15 +487,15 @@ class Stock extends BaseController
         $writer->save('php://output');
         exit;
     }
-    public function freebooksstatus()
+    public function otherdistributionbooksstatus()
     {
         $data = [
             'title' => '',
             'subTitle' => '',
-            'print'=>$this->StockModel->getFreeBooksStatus(),    
+            'print'=>$this->StockModel->otherdistributionbooksstatus(),    
         ];
 
-        return view('stock/freeBooksStatusView', $data);
+        return view('stock/otherdistributionbooksstatus', $data);
     }
      //free book Initiate Print
     public function markstart()
@@ -499,62 +503,6 @@ class Stock extends BaseController
         $id = $this->request->getPost('id');
         $type = $this->request->getPost('type');
         $result = $this->StockModel->markStart($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function markcovercomplete()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markCoverComplete($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function markcontentcomplete()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markContentComplete($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function marklaminationcomplete()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markLaminationComplete($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function markbindingcomplete()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markBindingComplete($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function markfinalcutcomplete()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markFinalCutComplete($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function markqccomplete()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markQCComplete($id, $type);
-        return $this->response->setJSON(['status' => $result]);
-    }
-
-    public function markcompleted()
-    {
-        $id = $this->request->getPost('id');
-        $type = $this->request->getPost('type');
-        $result = $this->StockModel->markCompleted($id, $type);
         return $this->response->setJSON(['status' => $result]);
     }
     public function freemarkcompleted()
@@ -581,7 +529,7 @@ class Stock extends BaseController
         $data = [
             'title' => '',
             'subTitle' => '',
-            'print' => $this->StockModel->getFreeBooksStatus(),
+            'print' => $this->StockModel->otherdistributionbooksstatus(),
         ];
         return view('stock/totalCompletedBooks', $data);
 	}
@@ -834,4 +782,77 @@ class Stock extends BaseController
         // Redirect back to upload form
         return redirect()->to(base_url('stock/bulkupload'));
     }
+     public function bookfairDashboard()
+    {
+        $model = new BookFairModel();
+
+        $data = [
+            'title'       => '',
+            'high'        => $model->getPriorityBooks('high'),
+            'highmedium'  => $model->getPriorityBooks('highmedium'),
+            'all'         => $model->getPriorityBooks('all'),
+        ];
+
+        return view('bookfair/bookfairdashboard', $data);
+    }
+    public function exportExcel()
+{
+    $priority = $this->request->getGet('priority') ?? 'all';
+
+    $model = new \App\Models\BookFairModel();
+    $records = $model->getBooksWithStats($priority);
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    // Header
+    $sheet->setCellValue('A1', 'Author');
+    $sheet->setCellValue('B1', 'Book');
+    $sheet->setCellValue('C1', 'No. of Bookfairs');
+    $sheet->setCellValue('D1', 'Allocated Qty');
+    $sheet->setCellValue('E1', 'Sales Qty');
+    $sheet->setCellValue('F1', 'Recommended Qty');
+    $sheet->setCellValue('G1', 'Stock In Hand');
+
+    $row = 2;
+    foreach ($records as $r) {
+
+        $recommended = ($r['no_of_bookfairs'] > 0)
+            ? ceil($r['sales_qty'] / $r['no_of_bookfairs'])
+            : 0;
+
+        $sheet->setCellValue("A{$row}", $r['author_name']);
+        $sheet->setCellValue("B{$row}", $r['book_title']);
+        $sheet->setCellValue("C{$row}", $r['no_of_bookfairs']);
+        $sheet->setCellValue("D{$row}", $r['allocated_qty']);
+        $sheet->setCellValue("E{$row}", $r['sales_qty']);
+        $sheet->setCellValue("F{$row}", $recommended);
+        $sheet->setCellValue("G{$row}", $r['stock_in_hand']);
+
+        $row++;
+    }
+
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    $fileName = "bookfair_export_" . $priority . ".xlsx";
+
+    return $this->response
+        ->setHeader('Content-Type', 'application/vnd.ms-excel')
+        ->setHeader("Content-Disposition", "attachment; filename=\"{$fileName}\"")
+        ->setHeader('Cache-Control', 'max-age=0')
+        ->setBody($writer->save('php://output'));
+}
+public function BookfairView($book_id)
+    {
+        $model = new BookFairModel();
+
+        $data = [
+            'title'              => '',
+            'book'               => $model->getBookDetails($book_id),
+            'allocations'        => $model->getAllocationDetails($book_id),
+            'sales'              => $model->getSalesDetails($book_id),
+        ];
+
+        return view('BookFair/BookfairView', $data);
+    }
+    
 }

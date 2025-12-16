@@ -20,7 +20,7 @@
                     <th>Type</th>
                     <th>Purpose</th>
                     <th>Copies</th>
-                    <th>Completed Date</th>
+                    <th>Shipped Date</th>
                 </tr>
             </thead>
             <tbody style="font-weight: normal;">
@@ -39,10 +39,10 @@
                         <td><?php echo $print_book['quantity']; ?></td>
                         <td>
                         <?php
-                        if ($print_book['completed_date']== NULL) {
+                        if ($print_book['ship_date']== NULL) {
                             echo '';
                         } else {
-                            echo date('d-m-Y', strtotime($print_book['completed_date'])); 
+                            echo date('d-m-Y', strtotime($print_book['ship_date'])); 
                         }?>
                         </td>
                     </tr>
