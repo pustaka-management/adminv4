@@ -38,7 +38,7 @@
                             <td style="text-align: center;"><?= esc($book['book_id']); ?></td>
                             <td style="word-wrap: break-word; white-space: normal;"><?= esc($book['book_title']); ?></td>
                             <td style="word-wrap: break-word; white-space: normal;"><?= esc($book['regional_book_title']); ?></td>
-                            <td><?= esc($book['author_name']); ?></td>
+                            <td><?= esc($book['author']); ?></td>
                             <td style="text-align: center;"><?= esc($book['paper_back_inr']); ?></td>
                             <td style="text-align: center;"><?= esc($book['number_of_page']); ?></td>
                             <td style="text-align: center;"><?= esc($book['stock_in_hand']); ?></td>

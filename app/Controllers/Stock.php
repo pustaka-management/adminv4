@@ -217,48 +217,35 @@ class Stock extends BaseController
 
         return view('stock/stockEntryDetailsView', $data);
     }
+
     public function validateStock()
-    {
-        if (!session()->get('user_id')) {
-            return redirect()->to(base_url('adminv4'))->with('error', 'Please login first.');
-        }
-
-        $book_id = $this->request->getPost('book_id');
-        $user_id = session()->get('user_id');
-        $validate_date = date('Y-m-d H:i:s');
-
-        if (empty($book_id)) {
-            return redirect()->back()->with('error', 'Book ID is missing.');
-        }
-
-          
-        $updated = $this->StockModel->updateValidationInfo($book_id, $user_id, $validate_date);
-
-        if ($updated) {
-                $data = ['title' => 'Stock validated successfully'];
-                return view('partials/closeWindow', $data);
-
-        } else {
-            return redirect()->back()->with('error', 'Validation failed.');
-        }
-
-        if (empty($book_id)) {
-            return redirect()->to('stock/stockdashboard')->with('error', 'Invalid request!');
-        }
-
-          
-
-        $data = [
-            'book_id' => $book_id,
-            'book_details' => $this->StockModel->getBookDetails($book_id),
-            'author_transaction' => $this->StockModel->getAuthorTransaction($book_id),
-            'stock_ledger' => $this->StockModel->getStockLedger($book_id),
-            'title' => 'Stock Entry Details',
-            'subTitle' => 'Overview',
-        ];
-
-        return view('stock/stockEntryDetailsView', $data);
+{
+    if (!session()->get('user_id')) {
+        return redirect()->to(base_url('adminv4'))->with('error', 'Please login first.');
     }
+
+    $book_id = $this->request->getPost('book_id');
+
+    if (empty($book_id)) {
+        return redirect()->back()->with('error', 'Book ID is missing.');
+    }
+
+    $updated = $this->StockModel->updateValidationInfo(
+        $book_id,
+        session()->get('user_id'),
+        date('Y-m-d H:i:s')
+    );
+
+    if (!$updated) {
+        return redirect()->back()->with('error', 'Validation failed.');
+    }
+
+    return view('partials/closeWindow', [
+        'title' => 'Stock validated successfully'
+    ]);
+}
+
+
     function otherdistribution(){
 
 		$data =[
