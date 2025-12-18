@@ -193,18 +193,21 @@ class Pod extends BaseController
             return redirect()->to(base_url('adminv4'));
         }
 
-        $podModel = new \App\Models\PodModel();
-        $data['publisher_list'] = $podModel->getPodPublishers();
-        $data['title'] = '';
+        $model = new PodModel();
+        $data['publisher_list'] = $model->getPodPublishers();
+        $data['title'] = 'Create POD Order';
+
         return view('printorders/pod/podAddBook', $data);
     }
 
     public function podBookPost()
     {
-        $podModel = new \App\Models\PodModel();
-        $result = $podModel->addPodBook();
-        
-        return $this->response->setJSON($result);
+        $model = new PodModel();
+        $result = $model->addPodBook();
+
+        return $this->response->setJSON([
+            'status' => $result ? 1 : 0
+        ]);
     }
     public function completedPodOrders()
     {

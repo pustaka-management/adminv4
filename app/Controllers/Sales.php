@@ -3,16 +3,19 @@
 namespace App\Controllers;
 
 use App\Models\SalesModel;
+use App\Models\EbookSalesModel;
 use CodeIgniter\Controller;
 
 class Sales extends BaseController
 {
     protected $salesmodel;
+    protected $ebooksalesmodel;
 
     public function __construct()
     {
         helper(['form', 'url', 'file', 'email', 'html', 'cookie', 'string']);
         $this->salesmodel = new SalesModel();
+        $this->ebooksalesmodel = new EbookSalesModel();
     }
 
     public function salesdashboard()
@@ -90,4 +93,38 @@ class Sales extends BaseController
 
         return view('sales/amazon/amazonBookwiseDetails',$data);
     }
+   public function EbookAmazondetails()
+{
+    $model = new EbookSalesModel();
+
+    $data['summary'] = $model->getAmazonEbookSummary();
+
+    // Top 10 selling and returned books
+    $books = $model->getTopSellingAndReturnedBooks(10);
+    $data['top_selling_books']  = $books['top_selling_books'];
+    $data['top_returned_books'] = $books['top_returned_books'];
+
+    $data['title']    = 'Amazon E-Book';
+    $data['subTitle'] = 'Sales Summary';
+
+    return view('sales/ebook/ebookAmazonDetails', $data);
+}
+
+public function EbookOverdriveDetails()
+{
+    $model = new EbookSalesModel();
+
+    $data = [
+        'title'        => 'OverDrive eBook Dashboard',
+        'subTitle'     => 'Sales Summary',
+        'summary'      => $model->getOverdriveEbookSummary(),
+        'topBooks'     => $model->getTopSellingOverdriveBooks(10),
+        'topRetailers' => $model->getTopOverdriveRetailers(10),
+    ];
+
+    return view('sales/ebook/ebookOverdriveDetails', $data);
+}
+
+
+
 }

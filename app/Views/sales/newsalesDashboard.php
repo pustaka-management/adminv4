@@ -111,66 +111,86 @@ function formatIndianCurrency($number) {
                 </div>
             </div>
             <!-- Ebook Revenue Summary Table -->
-            <?php
+           <?php
                 $channelwise = $channelwise ?? $data['channelwise'] ?? [];
-                $ebook_channels = ['pustaka', 'amazon', 'overdrive', 'scribd', 'storytel', 'google', 'pratilipi', 'kobo'];
+
+                $ebook_channels = [
+                    'pustaka',
+                    'amazon',
+                    'overdrive',
+                    'scribd',
+                    'storytel',
+                    'google',
+                    'pratilipi',
+                    'kobo'
+                ];
+
                 $ebook_totals = [];
+
                 foreach ($ebook_channels as $channel) {
-                    $sum = 0;
                     $yearwise = $channelwise[$channel . '_yearwise'] ?? [];
-                    foreach ($yearwise as $row) {
-                        $sum += $row['revenue'] ?? 0;
-                    }
-                    $ebook_totals[$channel] = $sum;
+                    $ebook_totals[$channel] = array_sum(array_column($yearwise, 'revenue') ?: [0]);
                 }
+
                 $grand_total_ebook = array_sum($ebook_totals);
-            ?>
 
-           <div class="mt-5">
-                <h6 class="text-center mb-3">E-Book Revenue Summary</h6>
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle text-center">
-                        <thead class="table-primary">
-                            <tr>
-                                <?php foreach ($ebook_channels as $channel): ?>
-                                    <th><?= ucfirst($channel) ?></th>
-                                <?php endforeach; ?>
-                                <th>Grand Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Totals Row -->
-                            <tr>
-                                <?php foreach ($ebook_channels as $channel): ?>
-                                    <td>
-                                        <?= isset($ebook_totals[$channel]) ? formatIndianCurrency($ebook_totals[$channel]) : '-' ?>
-                                    </td>
-                                <?php endforeach; ?>
-                                <td>
-                                    <strong><?= formatIndianCurrency($grand_total_ebook) ?></strong>
-                                </td>
-                            </tr>
+                $ebook_routes = [
+                    'pustaka'   => 'dashboard/pustakaebook',
+                    'amazon'    => 'sales/ebookamazondetails',
+                    'overdrive' => 'sales/ebookoverdrivedetails',
+                    'scribd'    => 'dashboard/scribd',
+                    'storytel'  => 'dashboard/storytel',
+                    'google'    => 'dashboard/googleplay',
+                    'pratilipi' => 'dashboard/pratilipi',
+                    'kobo'      => 'dashboard/kobo',
+                ];
+                ?>
 
-                            <!-- Buttons Row -->
-                            <!-- <tr>
-                                <?php foreach ($ebook_channels as $channel): ?>
+                <div class="mt-5">
+                    <h6 class="text-center mb-3">E-Book Revenue Summary</h6>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle text-center">
+                            <thead class="table-primary">
+                                <tr>
+                                    <?php foreach ($ebook_channels as $channel): ?>
+                                        <th><?= ucfirst($channel) ?></th>
+                                    <?php endforeach; ?>
+                                    <th>Grand Total</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <!-- Totals Row -->
+                                <tr>
+                                    <?php foreach ($ebook_channels as $channel): ?>
+                                        <td><?= formatIndianCurrency($ebook_totals[$channel]) ?></td>
+                                    <?php endforeach; ?>
+                                    <td><strong><?= formatIndianCurrency($grand_total_ebook) ?></strong></td>
+                                </tr>
+
+                                <!-- Individual Dashboard Buttons Row -->
+                                <tr>
+                                    <?php foreach ($ebook_channels as $channel): ?>
+                                        <td>
+                                            <a href="<?= base_url($ebook_routes[$channel]) ?>"
+                                            class="btn btn-sm btn-primary">
+                                                Dashboard
+                                            </a>
+                                        </td>
+                                    <?php endforeach; ?>
                                     <td>
-                                        <a href="<?= base_url('dashboard/' . strtolower($channel)) ?>" class="btn btn-sm btn-primary">
-                                            <?= ucfirst($channel) ?>
-                                            Dashboard
+                                        <a href="<?= base_url('dashboard/ebook') ?>"
+                                        class="btn btn-sm btn-success">
+                                            View All
                                         </a>
                                     </td>
-                                <?php endforeach; ?>
-                                <td>
-                                    <a href="<?= base_url('dashboard') ?>" class="btn btn-sm btn-success">
-                                        View All
-                                    </a>
-                                </td>
-                            </tr> -->
-                        </tbody>
-                    </table>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+
 
             <!-- Audiobook Revenue Summary Table -->
             <?php

@@ -212,177 +212,153 @@
 </div>
 
 <script type="text/javascript">
-    var base_url = window.location.origin;
+    // ✅ CI4 SAFE base_url
+    var base_url = "<?= base_url(); ?>";
 
+    /* ---------------------------
+       Publisher change validation
+    ----------------------------*/
     function validateForm() {
-        var tmp = document.getElementById('publisher_id');
-        var publisher_id = tmp.options[tmp.selectedIndex].value;
-        var selectedOption = document.getElementById('publisher_id').options[document.getElementById('publisher_id').selectedIndex];
-        var selectedId = selectedOption.value;
-        var selectedAddress = selectedOption.getAttribute('data-address');
-        var selectedcity = selectedOption.getAttribute('data-city');
-        var selectedcontact = selectedOption.getAttribute('data-contact_person');
-        var selectedmobile = selectedOption.getAttribute('data-contact_mobile');
-            
-        document.getElementById('bill_addr').value = selectedAddress + '\nCity: ' + selectedcity +'\nContact: '+selectedcontact+'\nMobile: '+selectedmobile;
-        document.getElementById('ship_address').value = selectedAddress + '\nCity: ' + selectedcity +'\nContact: '+selectedcontact+'\nMobile: '+selectedmobile;
-        
-        if (publisher_id == 0){
-            var custom_publisher_name = document.getElementById('custom_publisher_name').value;
-            if (!custom_publisher_name)
+        var select = document.getElementById('publisher_id');
+        var publisher_id = select.value;
+        var selectedOption = select.options[select.selectedIndex];
+
+        var address = selectedOption.getAttribute('data-address') || '';
+        var city = selectedOption.getAttribute('data-city') || '';
+        var contact = selectedOption.getAttribute('data-contact_person') || '';
+        var mobile = selectedOption.getAttribute('data-contact_mobile') || '';
+
+        document.getElementById('bill_addr').value =
+            address + '\nCity: ' + city + '\nContact: ' + contact + '\nMobile: ' + mobile;
+
+        document.getElementById('ship_address').value =
+            address + '\nCity: ' + city + '\nContact: ' + contact + '\nMobile: ' + mobile;
+
+        // ✅ FIXED braces issue
+        if (publisher_id == 0) {
+            var customName = document.getElementById('custom_publisher_name').value;
+            if (!customName) {
                 alert("Publisher name required for Custom");
                 return false;
-        }
-    }
-    document.getElementById('publisher_id').addEventListener('change', validateForm);
-
-    // Storing all values from form into variables
-    function add_publisher_book() {
-    var tmp = document.getElementById('publisher_id');
-    var publisher_id = tmp.options[tmp.selectedIndex].value;
-    var custom_publisher_name = (publisher_id == 0)
-        ? document.getElementById('custom_publisher_name').value
-        : "None";
-
-    var publisher_reference = document.getElementById('publisher_reference').value;            
-    var title = document.getElementById('book_title').value;
-    var num_pages = document.getElementById('num_pages').value;
-    var num_copies = document.getElementById('num_copies').value;
-
-    var tmp = document.getElementById('book_size');
-    var book_size = tmp.options[tmp.selectedIndex].value;
-    if (book_size == "Custom")
-        book_size = document.getElementById('custom_book_size').value;
-
-    var tmp = document.getElementById('cover_paper');
-    var cover_paper = tmp.options[tmp.selectedIndex].value;
-    if (cover_paper == "Custom")
-        cover_paper = document.getElementById('custom_cover_paper').value;
-
-    var tmp = document.getElementById('cover_gsm');
-    var cover_gsm = tmp.options[tmp.selectedIndex].value;
-
-    var tmp = document.getElementById('content_paper');
-    var content_paper = tmp.options[tmp.selectedIndex].value;
-    if (content_paper == "Custom")
-        content_paper = document.getElementById('custom_content_paper').value;
-
-    var tmp = document.getElementById('content_gsm');
-    var content_gsm = tmp.options[tmp.selectedIndex].value;
-
-    var content_colour_radios = document.getElementsByName('content_colour');
-    var content_colour = '';
-    for (var i = 0; i < content_colour_radios.length; i++) {
-        if (content_colour_radios[i].checked) {
-            content_colour = content_colour_radios[i].value;
-            break;
-        }
-    }
-    var lamination = document.getElementById('lamination').value;
-    var binding_radios = document.getElementsByName('binding');
-    var binding = '';
-    for (var i = 0; i < binding_radios.length; i++) {
-        if (binding_radios[i].checked) {
-            binding = binding_radios[i].value;
-            break;
-        }
-    }
-
-    var num_pages_quote = document.getElementById('num_pages_quote').value;
-    var cost_per_page = document.getElementById('cost_per_page').value;
-    var num_pages_quote1 = document.getElementById('num_pages_quote1').value || 0;
-    var cost_per_page1 = document.getElementById('cost_per_page1').value || 0;
-    var fixed_charge = document.getElementById('fixed_charge').value || 0;
-    var transport_charges = document.getElementById('transport_charges').value || 0;
-    var design_charges = document.getElementById('design_charges').value || 0;
-    var content_location = document.getElementById('content_location').value;
-    var delivery_date = document.getElementById('delivery_date').value;
-    var remarks = document.getElementById('remarks').value;
-    var ship_address = document.getElementById('ship_address').value;
-
-    // 🧩 AJAX CALL
-    $.ajax({
-        url: base_url + '/pod/podbookpost',
-        type: 'POST',
-        data: {
-            "publisher_id": publisher_id,
-            "custom_publisher_name": custom_publisher_name,
-            "publisher_reference": publisher_reference,
-            "book_title": title,
-            "total_num_pages": num_pages,
-            "num_copies": num_copies,
-            "book_size": book_size,
-            "cover_paper": cover_paper,
-            "cover_gsm": cover_gsm,
-            "content_paper": content_paper,
-            "content_gsm": content_gsm,
-            "content_colour": content_colour,
-            "lamination_type": lamination,
-            "binding_type": binding,
-            "content_location": content_location,
-            "num_pages_quote1": num_pages_quote,
-            "cost_per_page1": cost_per_page,
-            "num_pages_quote2": num_pages_quote1,
-            "cost_per_page2": cost_per_page1,
-            "fixed_charge_book": fixed_charge,
-            "delivery_date": delivery_date,
-            "transport_charges": transport_charges,
-            "design_charges": design_charges,
-            "remarks": remarks,
-            "ship_address": ship_address
-        },
-        success: function(data) {
-            if (data == 1) {
-                alert("✅ Successfully added book!");
-            } else {
-                alert("❌ Book not added! Please check your details.");
             }
-        },
-        error: function() {
-            alert("⚠️ Error connecting to the server. Try again later.");
         }
-    });
-}
+        return true;
+    }
 
+    document.getElementById('publisher_id')
+        .addEventListener('change', validateForm);
+
+    /* ---------------------------
+       ADD POD BOOK (AJAX)
+    ----------------------------*/
+    function add_publisher_book() {
+
+        if (!validateForm()) return;
+
+        $.ajax({
+            url: base_url + "/pod/podbookpost",
+            type: "POST",
+            dataType: "json",
+            data: {
+                "<?= csrf_token() ?>": "<?= csrf_hash() ?>",
+
+                publisher_id: $('#publisher_id').val(),
+                custom_publisher_name:
+                    ($('#publisher_id').val() == 0)
+                        ? $('#custom_publisher_name').val()
+                        : 'None',
+
+                publisher_reference: $('#publisher_reference').val(),
+                book_title: $('#book_title').val(),
+                total_num_pages: $('#num_pages').val(),
+                num_copies: $('#num_copies').val(),
+
+                book_size:
+                    ($('#book_size').val() == 'Custom')
+                        ? $('#custom_book_size').val()
+                        : $('#book_size').val(),
+
+                cover_paper:
+                    ($('#cover_paper').val() == 'Custom')
+                        ? $('#custom_cover_paper').val()
+                        : $('#cover_paper').val(),
+
+                cover_gsm: $('#cover_gsm').val(),
+
+                content_paper:
+                    ($('#content_paper').val() == 'Custom')
+                        ? $('#custom_content_paper').val()
+                        : $('#content_paper').val(),
+
+                content_gsm: $('#content_gsm').val(),
+                content_colour: $('input[name="content_colour"]:checked').val(),
+                lamination_type: $('#lamination').val(),
+                binding_type: $('input[name="binding"]:checked').val(),
+                content_location: $('#content_location').val(),
+
+                num_pages_quote1: $('#num_pages_quote').val(),
+                cost_per_page1: $('#cost_per_page').val(),
+                num_pages_quote2: $('#num_pages_quote1').val() || 0,
+                cost_per_page2: $('#cost_per_page1').val() || 0,
+
+                fixed_charge_book: $('#fixed_charge').val() || 0,
+                transport_charges: $('#transport_charges').val() || 0,
+                design_charges: $('#design_charges').val() || 0,
+                delivery_date: $('#delivery_date').val(),
+                remarks: $('#remarks').val(),
+                ship_address: $('#ship_address').val()
+            },
+            success: function (res) {
+                if (res.status == 1) {
+                    alert("✅ Successfully added book!");
+                    location.reload();
+                } else {
+                    alert("❌ Book not added!");
+                }
+            },
+            error: function (xhr) {
+                console.error(xhr.responseText);
+                alert("⚠️ Server Error");
+            }
+        });
+    }
+
+    /* ---------------------------
+       QUOTATION CALCULATION
+    ----------------------------*/
     function fill_quotation_data() {
-        var num_pages = document.getElementById('num_pages_quote').value;
-        var num_copies = document.getElementById('num_copies_quote').value;
-        var cost_per_page = document.getElementById('cost_per_page').value;
-        var fixed_charge = document.getElementById('fixed_charge').value;
-        var num_pages1 = document.getElementById('num_pages_quote1').value;
-        var cost_per_page1 = document.getElementById('cost_per_page1').value;
+        var p1 = Number($('#num_pages_quote').val());
+        var c1 = Number($('#cost_per_page').val());
+        var p2 = Number($('#num_pages_quote1').val() || 0);
+        var c2 = Number($('#cost_per_page1').val() || 0);
+        var fixed = Number($('#fixed_charge').val() || 0);
+        var copies = Number($('#num_copies_quote').val() || 0);
 
-        var tmp = cost_per_page * num_pages;
-        document.getElementById('content_cost').value = tmp;
-        var tmp1 = cost_per_page1 * num_pages1;
-        document.getElementById('content_cost1').value = tmp1;
-        var cost_per_book = Number(tmp) + Number(tmp1) + Number(fixed_charge);
-        document.getElementById('cost_per_book').value = cost_per_book;
-        var total_cost = cost_per_book * num_copies;
-        document.getElementById('total_book_cost').value = total_cost;
+        var cost1 = p1 * c1;
+        var cost2 = p2 * c2;
+
+        $('#content_cost').val(cost1);
+        $('#content_cost1').val(cost2);
+
+        var cost_per_book = cost1 + cost2 + fixed;
+        $('#cost_per_book').val(cost_per_book);
+        $('#total_book_cost').val(cost_per_book * copies);
     }
 
     function populate_quotation_data() {
-        var num_pages = document.getElementById('num_pages').value;
-        var num_copies = document.getElementById('num_copies').value;
-        document.getElementById('num_pages_quote').value = num_pages;
-        document.getElementById('num_copies_quote').value = num_copies;
-        if (num_pages >= 50 && num_pages <=75)
-            document.getElementById('cost_per_page').value = 0.5;
-        if (num_pages >= 76 && num_pages <=100)
-            document.getElementById('cost_per_page').value = 0.45;
-        if (num_pages >= 101 && num_pages <=150)
-            document.getElementById('cost_per_page').value = 0.41;
-        if (num_pages >= 101 && num_pages >=151)
-            document.getElementById('cost_per_page').value = 0.38;
-        var cost_per_page = document.getElementById('cost_per_page').value;            
-        var tmp = cost_per_page * num_pages;
-        document.getElementById('content_cost').value = tmp;
-        var cost_per_book = Number(tmp);
-        document.getElementById('cost_per_book').value = cost_per_book;
-        var total_cost = cost_per_book * num_copies;
-        document.getElementById('total_book_cost').value = total_cost;
+        var pages = Number($('#num_pages').val());
+        var copies = Number($('#num_copies').val());
 
+        $('#num_pages_quote').val(pages);
+        $('#num_copies_quote').val(copies);
+
+        if (pages >= 50 && pages <= 75) $('#cost_per_page').val(0.5);
+        else if (pages >= 76 && pages <= 100) $('#cost_per_page').val(0.45);
+        else if (pages >= 101 && pages <= 150) $('#cost_per_page').val(0.41);
+        else if (pages >= 151) $('#cost_per_page').val(0.38);
+
+        fill_quotation_data();
     }
 </script>
+
 <?= $this->endSection(); ?>

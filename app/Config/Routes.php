@@ -259,6 +259,8 @@ $routes->group('sales', function($routes) {
     $routes->get('ebooksales', 'Sales::ebookSales');
     $routes->get('audiobooksales', 'Sales::audiobookSales');
     $routes->get('paperbacksales', 'Sales::paperbackSales');
+    $routes->get('ebookamazondetails', 'Sales::EbookAmazondetails');
+    $routes->get('ebookoverdrivedetails', 'Sales::EbookOverdrivedetails');
 });
 //Sales dashboard
 $routes->group('dashboard', function($routes) {

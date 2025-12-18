@@ -477,94 +477,75 @@ class PodModel extends Model
 
         return $data;
 	}
-    // Add Publisher Book
     public function addPodBook()
     {
-        $request = service('request');
-        $post = $request->getPost();
+        $post = service('request')->getPost();
 
-        // Fetch Publisher details to determine IGST or SGST/CGST
-        $publisherId = $post['publisher_id'];
-        $podPublisherSql = "SELECT * FROM pod_publisher WHERE id = ?";
-        $podPublisherQuery = $this->db->query($podPublisherSql, [$publisherId]);
-        $podPublisher = $podPublisherQuery->getRowArray();
+        $publisher = $this->db->table('pod_publisher')
+            ->where('id', $post['publisher_id'])
+            ->get()->getRowArray();
 
-        // Extract form fields
-        $num_pages_quote1 = $post['num_pages_quote1'];
-        $num_pages_quote2 = $post['num_pages_quote2'];
-        $cost_per_page1   = $post['cost_per_page1'];
-        $cost_per_page2   = $post['cost_per_page2'];
-        $fixed_charge_book = $post['fixed_charge_book'];
-        $num_copies        = $post['num_copies'];
-        $design_charges    = $post['design_charges'];
-        $transport_charges = $post['transport_charges'];
+        $num_pages1 = $post['num_pages_quote1'];
+        $num_pages2 = $post['num_pages_quote2'];
+        $cost1 = $post['cost_per_page1'];
+        $cost2 = $post['cost_per_page2'];
 
-        // Cost Calculations
-        $book_cost1 = $num_pages_quote1 * $cost_per_page1;
-        $book_cost2 = $num_pages_quote2 * $cost_per_page2;
-        $book_cost  = $book_cost1 + $book_cost2 + $fixed_charge_book;
-        $invoice_value = $book_cost * $num_copies + $design_charges;
+        $book_cost = ($num_pages1 * $cost1) + ($num_pages2 * $cost2) + $post['fixed_charge_book'];
+        $invoice_value = ($book_cost * $post['num_copies']) + $post['design_charges'];
 
-        if ($transport_charges > 1000) {
-            $invoice_value += $transport_charges;
+        if ($post['transport_charges'] > 1000) {
+            $invoice_value += $post['transport_charges'];
         }
 
         $sub_total = $invoice_value / 1.12;
         $gst = $invoice_value - $sub_total;
 
-        if (!empty($podPublisher) && $podPublisher['igst_flag'] == 1) {
+        if (!empty($publisher) && $publisher['igst_flag'] == 1) {
             $igst = $gst;
-            $sgst = 0;
-            $cgst = 0;
+            $sgst = $cgst = 0;
         } else {
-            $sgst = $gst / 2;
-            $cgst = $sgst;
+            $sgst = $cgst = $gst / 2;
             $igst = 0;
         }
 
-        if ($transport_charges < 1000) {
-            $invoice_value += $transport_charges;
+        if ($post['transport_charges'] < 1000) {
+            $invoice_value += $post['transport_charges'];
         }
 
-        // Prepare data for insert
-        $publisherBookData = [
-            'publisher_id'        => $post['publisher_id'],
+        $data = [
+            'publisher_id' => $post['publisher_id'],
             'custom_publisher_name' => $post['custom_publisher_name'],
             'publisher_reference' => $post['publisher_reference'],
-            'book_title'          => $post['book_title'],
-            'total_num_pages'     => $post['total_num_pages'],
-            'num_copies'          => $num_copies,
-            'book_size'           => $post['book_size'],
-            'cover_paper'         => $post['cover_paper'],
-            'cover_gsm'           => $post['cover_gsm'],
-            'content_paper'       => $post['content_paper'],
-            'content_gsm'         => $post['content_gsm'],
-            'content_colour'      => $post['content_colour'],
-            'lamination_type'     => $post['lamination_type'],
-            'binding_type'        => $post['binding_type'],
-            'content_location'    => $post['content_location'],
-            'num_pages_quote1'    => $num_pages_quote1,
-            'cost_per_page1'      => $cost_per_page1,
-            'num_pages_quote2'    => $num_pages_quote2,
-            'cost_per_page2'      => $cost_per_page2,
-            'fixed_charge_book'   => $fixed_charge_book,
-            'delivery_date'       => $post['delivery_date'],
-            'transport_charges'   => $transport_charges,
-            'design_charges'      => $design_charges,
-            'remarks'             => $post['remarks'],
-            'ship_address'        => $post['ship_address'],
-            'sub_total'           => $sub_total,
-            'sgst'                => $sgst,
-            'cgst'                => $cgst,
-            'igst'                => $igst,
-            'invoice_value'       => $invoice_value
+            'book_title' => $post['book_title'],
+            'total_num_pages' => $post['total_num_pages'],
+            'num_copies' => $post['num_copies'],
+            'book_size' => $post['book_size'],
+            'cover_paper' => $post['cover_paper'],
+            'cover_gsm' => $post['cover_gsm'],
+            'content_paper' => $post['content_paper'],
+            'content_gsm' => $post['content_gsm'],
+            'content_colour' => $post['content_colour'],
+            'lamination_type' => $post['lamination_type'],
+            'binding_type' => $post['binding_type'],
+            'content_location' => $post['content_location'],
+            'num_pages_quote1' => $num_pages1,
+            'cost_per_page1' => $cost1,
+            'num_pages_quote2' => $num_pages2,
+            'cost_per_page2' => $cost2,
+            'fixed_charge_book' => $post['fixed_charge_book'],
+            'delivery_date' => $post['delivery_date'],
+            'transport_charges' => $post['transport_charges'],
+            'design_charges' => $post['design_charges'],
+            'remarks' => $post['remarks'],
+            'ship_address' => $post['ship_address'],
+            'sub_total' => $sub_total,
+            'sgst' => $sgst,
+            'cgst' => $cgst,
+            'igst' => $igst,
+            'invoice_value' => $invoice_value
         ];
 
-        // Insert into database
-        $builder = $this->db->table('pod_publisher_books');
-        $builder->insert($publisherBookData);
-
-        return 1;
+        return $this->db->table('pod_publisher_books')->insert($data);
     }
     public function editPublisherBookDetails($book_id)
 {
