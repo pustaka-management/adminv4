@@ -3,7 +3,7 @@
 <div id="content" class="main-content">
 	<div class="layout-px-spacing">
 		<div class="page-header">
-			<a href="<?= base_url('paperback/pustakaamazonorderbookslist'); ?>" 
+			<a href="<?= base_url('paperback/paperbackamazonorder'); ?>" 
 				class="btn btn-outline-secondary btn-sm float-end">
 					← Back
 			</a>
@@ -27,45 +27,65 @@
 									<br><br>
 									<table class="table table-bordered mb-4 zero-config">
 										<thead>
-											<th>S.No</th>
-											<th>Book ID</th>
-											<th>Title</th>
-											<th>Author Name</th>
-											<th>quantity</th>
-											<th>Stock Status</th>
-											<th>In progress<th>
-											<th>Stock In Hand</th>
+											<tr>
+												<th>S.No</th>
+												<th>Book ID</th>
+												<th>Title</th>
+												<th>Author Name</th>
+												<th>Quantity</th>
+												<th>Stock Status</th>
+												<th>In Progress</th>
+												<th>Stock In Hand</th>
+											</tr>
 										</thead>
-											<tbody>
-												<?php 
-												$i = 1;
-												$j = 0;
-												foreach ($amazon_paperback_stock as $orders) {
-													$quantity_details = $book_qtys[$j];
-													?>
-													<tr>
-														<td><?php echo $i++; ?></td>
-														<td>
-															<input type="text" class="form-control" value="<?php echo $orders['bookID'] ?>" name="book_id<?php echo $j; ?>">
-														</td>
-														<td><?php echo $orders['book_title'] ?></td>
-														<td><?php echo $orders['author_name'] ?></td>
-														<td><input type="hidden" name="quantity_details<?php echo $j++; ?>" value="<?php echo  $quantity_details; ?>"><?php echo $quantity_details ?></td>
-														<?php
-														$stockStatus = $quantity_details <= $orders['stock_in_hand'] ? 'IN STOCK' : 'OUT OF STOCK';
-														?>
-														<td>
-															<?php echo $stockStatus; ?><br>
-															<?php if ($stockStatus == 'OUT OF STOCK') { ?>
-																<a href="<?php echo base_url()."paperback/initiateprintdashboard/".$orders['book_id']; ?>" class="btn btn-warning mb-1 mr-1" target="_blank">Initiate Print</a>
-															<?php } ?> 
-														</td>
-														<td><?php echo $orders['Qty'] ?></td>
-														<td><?php echo $orders['stock_in_hand'] ?></td>
-													</tr>
-													<?php
-												} ?>	
-											</tbody>
+										<tbody>
+											<?php 
+											$i = 1;
+											$j = 0;
+
+											foreach ($amazon_paperback_stock as $orders) {
+												$quantity_details = $book_qtys[$j];
+												$stockStatus = ($quantity_details <= $orders['stock_in_hand']) ? 'IN STOCK' : 'OUT OF STOCK';
+											?>
+												<tr>
+													<td><?= $i++; ?></td>
+
+													<td>
+														<input type="text" 
+															class="form-control" 
+															name="book_id<?= $j; ?>" 
+															value="<?= $orders['bookID']; ?>">
+													</td>
+
+													<td><?= $orders['book_title']; ?></td>
+													<td><?= $orders['author_name']; ?></td>
+
+													<td>
+														<input type="hidden" 
+															name="quantity_details<?= $j; ?>" 
+															value="<?= $quantity_details; ?>">
+														<?= $quantity_details; ?>
+													</td>
+
+													<td>
+														<?= $stockStatus; ?><br>
+														<?php if ($stockStatus === 'OUT OF STOCK') { ?>
+															<a href="<?= base_url('paperback/initiateprintdashboard/'.$orders['book_id']); ?>" 
+															class="btn btn-warning btn-sm mt-1" 
+															target="_blank">
+																Initiate Print
+															</a>
+														<?php } ?>
+													</td>
+
+													<td><?= $orders['Qty']; ?></td>
+													<td><?= $orders['stock_in_hand']; ?></td>
+												</tr>
+											<?php 
+												$j++;
+											} 
+											?>
+										</tbody>
 									</table>
 									<br>
 									<div class="d-sm-flex justify-content-between">
