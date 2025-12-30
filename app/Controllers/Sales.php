@@ -90,4 +90,18 @@ class Sales extends BaseController
 
         return view('sales/amazon/amazonBookwiseDetails',$data);
     }
+    public function offlinesales()
+    {
+        $chartFilter = $this->request->getGet('chart_filter') ?? 'all';
+
+        $offline_sales = $this->salesmodel->offlinesalesDetails($chartFilter);
+
+        return view('sales/offline/offlineSalesDetails', [
+            'offline_sales' => $offline_sales,
+            'chart_filter'  => $chartFilter,
+            'title'         => '',
+            'subTitle'      => ''
+        ]);
+    }
+
 }

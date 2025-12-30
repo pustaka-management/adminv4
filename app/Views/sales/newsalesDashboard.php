@@ -265,7 +265,7 @@ function formatIndianCurrency($number) {
                                 <a href="<?= base_url('dashboard/pustaka') ?>" class="btn btn-sm btn-primary">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard/offline') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/offlinesales') ?>" class="btn btn-sm btn-primary">Dashboard</a>
                             </td>
                             <td>
                                 <a href="<?= base_url('dashboard/bookfair') ?>" class="btn btn-sm btn-primary">Dashboard</a>
@@ -278,8 +278,7 @@ function formatIndianCurrency($number) {
                 </table>
             </div>
         </div>
-
-
+        
         <div class="mt-5">
             <h6 class="text-center mb-3">POD Revenue Summary</h6>
             <div class="table-responsive">

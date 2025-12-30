@@ -119,7 +119,7 @@ $routes->group('stock', function($routes) {
 // tppublisher
 $routes->group('tppublisher', function($routes) {
     $routes->get('/', 'TpPublisher::tppublisherDashboard', ['as' => 'tppublisher']);
-     $routes->get('tppublisherDashboard/(:any)', 'TpPublisher::tppublisherDashboard/$1');
+    $routes->get('tppublisherDashboard/(:any)', 'TpPublisher::tppublisherDashboard/$1');
     $routes->get('tppublisherdetails', 'TpPublisher::tpPublisherDetails'); 
     $routes->post('setpublisherstatus', 'TpPublisher::setpublisherstatus');
     $routes->get('tppublisherview', 'TpPublisher::tpPublisherView');
@@ -159,7 +159,7 @@ $routes->group('tppublisher', function($routes) {
     $routes->get('tporderfulldetails/(:num)', 'TpPublisher::tpOrderFullDetails/$1');
     $routes->post('tpbookorderdetails', 'TpPublisher::tpbookOrderDetails');
     $routes->post('tppublisherorderpost', 'TpPublisher::tppublisherOrderPost');
-    $routes->match(['GET', 'POST'], 'tppublisherordersubmit', 'TpPublisher::tppublisherOrderSubmit');
+    $routes->post('tppublisherordersubmit', 'TpPublisher::tppublisherOrderSubmit');
     $routes->get('tpordersuccess', 'TpPublisher::tpordersuccess'); 
     $routes->get('tpstockledgerdetails', 'TpPublisher::tpstockLedgerDetails');
     $routes->get('tpstockledgerview/(:num)', 'TpPublisher::tpstockLedgerView/$1');
@@ -184,7 +184,7 @@ $routes->group('tppublisher', function($routes) {
     $routes->get('tppublishercreateorder', 'TpPublisher::tppublisherCreateOrder');
     $routes->post('tppublishersorder', 'TpPublisher::tppublishersOrder');
     $routes->post('tppublisherorderstock', 'TpPublisher::tppublisherOrderStock');
-   $routes->get('orderpreview', 'TpPublisher::orderpreview');   // <-- ADD THIS
+    $routes->get('orderpreview', 'TpPublisher::orderpreview');  
     $routes->post('submitorder', 'TpPublisher::submitOrder');
     $routes->get('ordersuccess', 'TpPublisher::ordersuccess');
 
@@ -267,6 +267,7 @@ $routes->group('dashboard', function($routes) {
     $routes->get('audiobooksales', 'Sales::audiobookSales');
     $routes->get('paperbacksales', 'Sales::paperbackSales');
     $routes->get('amazonpbkbookdetails/(:num)', 'Sales::amazonpbkbookdetails/$1');
+    $routes->get('offlinesales', 'Sales::offlinesales');
     
 });
 
