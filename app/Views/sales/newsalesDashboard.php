@@ -205,7 +205,34 @@ function formatIndianCurrency($number) {
                                     <td><?= formatIndianCurrency($total) ?></td>
                                 <?php endforeach; ?>
                                 <td><strong><?= formatIndianCurrency($grand_total_audiobook) ?></strong></td>
+                                  <tr>
+                             <td>
+                                <a href="<?= base_url('dashboard/au') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard/flipkart') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard/amazonpaperback') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard/bookshop') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard/pustaka') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard/offline') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard/bookfair') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                            </td>
+                            <td>
+                                <a href="<?= base_url('dashboard') ?>" class="btn btn-sm btn-success">View All</a>
+                            </td>
+                        </tr>
                             </tr>
+
                         </tbody>
                     </table>
                 </div>
