@@ -115,9 +115,6 @@
         <input type="hidden" name="sales_channel[]" value="">
     </div>
 </td>
-
-
-
 </div>
 </tbody>
 
