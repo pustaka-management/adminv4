@@ -268,6 +268,7 @@ $routes->group('dashboard', function($routes) {
     $routes->get('paperbacksales', 'Sales::paperbackSales');
     $routes->get('amazonpbkbookdetails/(:num)', 'Sales::amazonpbkbookdetails/$1');
     $routes->get('offlinesales', 'Sales::offlinesales');
+    $routes->get('bookshopsales', 'Sales::bookshopsales');
     
 });
 

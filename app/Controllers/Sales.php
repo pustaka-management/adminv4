@@ -103,5 +103,16 @@ class Sales extends BaseController
             'subTitle'      => ''
         ]);
     }
+    public function bookshopsales()
+    {
+        $chart_filter = $this->request->getGet('chart_filter') ?? 'all';
+        $data['chart_filter'] = $chart_filter;
+        $data['bookshop_sales'] = $this->salesmodel->bookShopPaperbackDetails($chart_filter);
+        $data['chart_filter'] = $chart_filter;
+        $data['title'] = '';
+        $data['subTitle'] = '';
+
+        return view('sales/bookshop/bookshopSalesDetails',$data);
+    }
 
 }

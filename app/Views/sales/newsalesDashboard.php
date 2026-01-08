@@ -280,25 +280,25 @@ function formatIndianCurrency($number) {
                         <!-- Buttons Row -->
                         <tr>
                             <td>
-                                <a href="<?= base_url('dashboard/flipkart') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/flipkart') ?>" class="btn btn-sm btn-primary" target="_blank">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard/amazonpaperback') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/amazonpaperback') ?>" class="btn btn-sm btn-primary" target="_blank">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard/bookshop') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/bookshopsales') ?>" class="btn btn-sm btn-primary" target="_blank">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard/pustaka') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/pustaka') ?>" class="btn btn-sm btn-primary" target="_blank">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard/offlinesales') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/offlinesales') ?>" class="btn btn-sm btn-primary" target="_blank">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard/bookfair') ?>" class="btn btn-sm btn-primary">Dashboard</a>
+                                <a href="<?= base_url('dashboard/bookfair') ?>" class="btn btn-sm btn-primary" target="_blank">Dashboard</a>
                             </td>
                             <td>
-                                <a href="<?= base_url('dashboard') ?>" class="btn btn-sm btn-success">View All</a>
+                                <a href="<?= base_url('dashboard') ?>" class="btn btn-sm btn-success" target="_blank">View All</a>
                             </td>
                         </tr>
                     </tbody>

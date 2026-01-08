@@ -1375,4 +1375,131 @@ class SalesModel extends Model
 
         return $data;
     }
+    public function bookShopPaperbackDetails($chartFilter)
+    {
+        $data = [];
+        $where = "pod_bookshop_order.status = 1";
+
+        // Apply Filter
+        if ($chartFilter === 'current_fy') {
+            $where .= " AND pod_bookshop_order.order_date >= DATE_FORMAT(CURDATE(), '%Y-04-01')
+                        AND pod_bookshop_order.order_date <= DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 YEAR), '%Y-03-31')";
+        } elseif ($chartFilter === 'previous_fy') {
+            $where .= " AND pod_bookshop_order.order_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 YEAR), '%Y-04-01')
+                        AND pod_bookshop_order.order_date <= DATE_FORMAT(CURDATE(), '%Y-03-31')";
+        }
+        // ---------------- CHART ----------------
+        $sql = "SELECT 
+                DATE_FORMAT(pod_bookshop_order.order_date, '%Y-%m') AS order_month,
+                COUNT(DISTINCT pod_bookshop_order.order_id) AS total_orders,
+                COUNT(DISTINCT pod_bookshop_order_details.book_id) AS total_titles,
+                ROUND(SUM(pod_bookshop_order_details.total_amount)) AS total_mrp
+            FROM pod_bookshop_order
+            JOIN pod_bookshop_order_details 
+                ON pod_bookshop_order.order_id = pod_bookshop_order_details.order_id
+            JOIN pod_bookshop 
+                ON pod_bookshop_order.bookshop_id = pod_bookshop.bookshop_id
+            WHERE $where    
+            GROUP BY DATE_FORMAT(pod_bookshop_order.order_date, '%Y-%m')
+            ORDER BY order_month ASC";
+
+        $query = $this->db->query($sql);
+        $data['chart'] = $query->getResultArray();
+
+        $sql ="SELECT
+                (SELECT COUNT(order_id)
+                FROM pod_bookshop_order
+                WHERE status = 1) AS total_orders,
+
+                (SELECT COUNT(order_id)
+                FROM pod_bookshop_order
+                WHERE status = 1 AND payment_status = 'Paid') AS total_paid,
+
+                (SELECT COUNT(order_id)
+                FROM pod_bookshop_order
+                WHERE status = 1 AND payment_status = 'Pending') AS total_pending,
+
+                (SELECT COUNT(bookshop_id) 
+                FROM pod_bookshop where status=1) AS total_bookshops,
+
+                (SELECT ROUND(SUM(total_amount))
+                FROM pod_bookshop_order_details
+                WHERE ship_status = 1) AS total_amount,
+
+                (SELECT COUNT(book_id)
+                FROM pod_bookshop_order_details
+                WHERE ship_status = 1) AS total_titles";
+
+        $query = $this->db->query($sql);
+        $data['bookshop'] = $query->getRowArray();
+
+        $sql1="SELECT 
+                    pod_bookshop_order_details.book_id,
+                    book_tbl.book_title,
+                    COUNT(*) AS total_sold
+                FROM
+                    pod_bookshop_order_details
+                        
+                JOIN book_tbl ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                GROUP BY pod_bookshop_order_details.book_id
+                ORDER BY total_sold DESC
+                LIMIT 10";
+        $query = $this->db->query($sql1);
+        $data['top_selling'] = $query->getResultArray();
+
+        $sql2="SELECT 
+                    genre_details_tbl.genre_id,
+                    genre_details_tbl.genre_name,
+                    COUNT(pod_bookshop_order_details.book_id) AS total_sales
+                FROM pod_bookshop_order_details
+                JOIN book_tbl
+                    ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                JOIN genre_details_tbl
+                    ON genre_details_tbl.genre_id = book_tbl.genre_id
+                WHERE pod_bookshop_order_details.ship_status = 1
+                GROUP BY 
+                    genre_details_tbl.genre_id,
+                    genre_details_tbl.genre_name
+                ORDER BY total_sales DESC
+                LIMIT 10";
+        $query = $this->db->query($sql2);
+        $data['genre_sales'] = $query->getResultArray();
+
+        $sql3="SELECT 
+                    language_tbl.language_name,
+                    COUNT(DISTINCT pod_bookshop_order_details.order_id) AS bookshop_order_count
+                FROM 
+                    pod_bookshop_order_details
+                JOIN
+                    book_tbl 
+                        ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                JOIN
+                    language_tbl 
+                        ON language_tbl.language_id = book_tbl.language
+                GROUP BY 
+                    language_tbl.language_name";
+
+        $query = $this->db->query($sql3);
+        $data['language_sales'] = $query->getResultArray();
+
+        $sql4="SELECT
+                    author_tbl.author_id,
+                    author_tbl.author_name,
+                    COUNT(distinct(pod_bookshop_order_details.order_id)) as total_orders,
+                    SUM(pod_bookshop_order_details.total_amount) AS total_revenue
+                FROM pod_bookshop_order_details
+                JOIN book_tbl 
+                    ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                JOIN author_tbl 
+                    ON author_tbl.author_id = book_tbl.author_name
+                GROUP BY
+                    author_tbl.author_id,
+                    author_tbl.author_name
+                ORDER BY total_revenue DESC
+                LIMIT 10";
+        $query = $this->db->query($sql4);
+        $data['author_sales'] = $query->getResultArray();
+
+        return $data;
+    }
 }
