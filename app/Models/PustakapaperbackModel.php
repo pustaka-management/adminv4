@@ -1513,7 +1513,8 @@ class PustakapaperbackModel extends Model
                     paperback_stock.bookfair3,
                     paperback_stock.bookfair4,
                     paperback_stock.bookfair5,
-                    paperback_stock.lost_qty
+                    paperback_stock.lost_qty,
+                    paperback_stock.excess_qty
                 FROM amazon_paperback_orders
                 JOIN book_tbl ON amazon_paperback_orders.book_id = book_tbl.book_id
                 JOIN author_tbl ON book_tbl.author_name = author_tbl.author_id

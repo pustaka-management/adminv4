@@ -1,5 +1,7 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
+
+<?php helper('text'); ?>
 <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
     <a href="<?= base_url('dashboard/amazonpaperback'); ?>" 
        class="btn btn-sm btn-success radius-8 d-inline-flex align-items-center gap-1">
@@ -19,10 +21,11 @@
                 <tr>
                     <th>ID</th>
                     <th>Book ID</th>
+                    <th>Book Title</th>
                     <th>ASIN</th>
                     <th>Price</th>
                     <th>Copyright Owner</th>
-                    <th>Author ID</th>
+                    <th>Author</th>
                     <th>Language</th>
                 </tr>
             </thead>
@@ -35,11 +38,16 @@
                             <?= $row['book_id']; ?>
                         </a>
                     </td>
-                    <td><?= $row['asin']; ?></td>
-                    <td><?= $row['price']; ?></td>
-                    <td><?= $row['copyright_owner']; ?></td>
-                    <td><?= $row['author_id']; ?></td>
-                    <td><?= $row['language']; ?></td>
+                    <td title="<?= esc($row['book_title']); ?>">
+                        <?= character_limiter($row['book_title'], 40); ?>
+                    </td>
+                    <td><?= esc($row['asin']); ?></td>
+                    <td><?= esc($row['price']); ?></td>
+                    <td><?= esc($row['copyright_owner']); ?></td>
+                    <td>
+                        <?= $row['author_id']; ?> - <?= esc($row['author_name']); ?>
+                    </td>
+                    <td><?= esc($row['language_name']); ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -47,3 +55,4 @@
     </div>
 </div>
 <?= $this->endSection(); ?>
+ 

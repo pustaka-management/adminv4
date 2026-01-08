@@ -1,3 +1,5 @@
+<?= $this->extend('layout/layout1'); ?>
+<?= $this->section('content'); ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,10 +12,16 @@
 </h3>
 
 <script>
-    setTimeout(function() {
+    setTimeout(function () {
         window.close();
-    }, 300); \
+
+        // fallback if browser blocks close()
+        setTimeout(function () {
+            window.location.href = "<?= base_url('stock/stockdashboard') ?>";
+        }, 400);
+    }, 500);
 </script>
 
 </body>
 </html>
+<?= $this->endSection(); ?>

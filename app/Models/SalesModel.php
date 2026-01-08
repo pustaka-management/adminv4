@@ -1179,7 +1179,19 @@ class SalesModel extends Model
 	}
     public function amazonPaperbackRevenueDetails()
     {
-        $sql ="SELECT * FROM amazon_paperback_books";
+        $sql ="SELECT 
+                    amazon_paperback_books.*,
+                    book_tbl.book_title,
+                    author_tbl.author_name,
+                    language_tbl.language_name
+                FROM 
+                    amazon_paperback_books
+                JOIN book_tbl 
+                    ON book_tbl.book_id = amazon_paperback_books.book_id
+                JOIN author_tbl 
+                    ON author_tbl.author_id = amazon_paperback_books.author_id
+                JOIN language_tbl 
+                    ON language_tbl.language_id = amazon_paperback_books.language";
         $query = $this->db->query($sql);
         return $query->getResultArray();  
     }
@@ -1188,10 +1200,8 @@ class SalesModel extends Model
         $sql = "SELECT 
                     SUM(total_earnings) AS total_earnings,
                     (SUM(total_earnings) * 100.0 / (SELECT SUM(total_earnings) FROM amazon_paperback_transactions)) AS percentage_contribution
-                FROM 
-                    amazon_paperback_transactions
-                WHERE 
-                type like 'Order%' and sku = ?";
+                FROM amazon_paperback_transactions
+                WHERE type like 'Order%' and sku = ?";
         $query = $this->db->query($sql, [$sku]);
         $data['tot_count'] = $query->getRowArray();
 
@@ -1199,11 +1209,23 @@ class SalesModel extends Model
                         as total_credits, sum(total_earnings) as total_earnings, sum(tds) as total_tds,
                         sum(selling_fees) as total_selling_fees, sum(other_transaction_fees) as total_trans_fees, 
                         sum(shipping_fees) as total_shipping_fees, sum(final_royalty_value) as total_royalty_value 
-                  FROM amazon_paperback_transactions 
-                  WHERE type like 'Order%' AND sku = ?
-                  GROUP BY type";
+                FROM amazon_paperback_transactions 
+                WHERE type like 'Order%' AND sku = ?
+                GROUP BY type";
         $query = $this->db->query($sql_tot, [$sku]);
-        $data['total_earnings'] = $query->getResultArray()[0];
+
+
+        $data['total_earnings'] = $query->getRowArray() ?: [
+            'total_cnt' => 0,
+            'total_sales' => 0,
+            'total_credits' => 0,
+            'total_tds' => 0,
+            'total_selling_fees' => 0,
+            'total_trans_fees' => 0,
+            'total_shipping_fees' => 0,
+            'total_royalty_value' => 0,
+            'total_earnings' => 0,
+        ];
 
         $sql_mon ="SELECT 
                         COUNT(order_id) as total_orders,
@@ -1216,9 +1238,268 @@ class SalesModel extends Model
                     ORDER BY month DESC";
         $query = $this->db->query($sql_mon, [$sku]);
         $data['monthly_earnings'] = $query->getResultArray();
-        
+
         return $data;
     }
+   public function offlinesalesDetails($filter = 'all')
+    {
+        $year = date("Y");
 
+        if (date("m") >= 4) {
+            $current_fy_start = "$year-04-01";
+            $current_fy_end   = ($year + 1) . "-03-31";
+        } else {
+            $current_fy_start = ($year - 1) . "-04-01";
+            $current_fy_end   = "$year-03-31";
+        }
+
+        $prev_fy_start = date("Y-m-d", strtotime("-1 year", strtotime($current_fy_start)));
+        $prev_fy_end   = date("Y-m-d", strtotime("-1 year", strtotime($current_fy_end)));
+
+        $where = "";
+
+        switch ($filter) {
+            case "month":
+                $where = "AND MONTH(o.order_date)=MONTH(CURDATE()) 
+                        AND YEAR(o.order_date)=YEAR(CURDATE())";
+                break;
+
+            case "this_year":
+                $where = "AND o.order_date BETWEEN '$current_fy_start' AND '$current_fy_end'";
+                break;
+
+            case "prev_year":
+                $where = "AND o.order_date BETWEEN '$prev_fy_start' AND '$prev_fy_end'";
+                break;
+        }
+
+        /* ================= Chart ================= */
+        $chartSql = "
+            SELECT 
+                DATE_FORMAT(o.order_date, '%Y-%m') AS order_month,
+                COUNT(DISTINCT o.order_id) AS total_orders,
+                COUNT(DISTINCT d.book_id) AS total_titles,
+                SUM(d.total_amount) AS total_mrp
+            FROM pustaka_offline_orders o
+            JOIN pustaka_offline_orders_details d 
+                ON o.order_id = d.offline_order_id
+            WHERE 1=1 $where
+            GROUP BY order_month
+            ORDER BY order_month ASC
+        ";
+
+        $data['chart'] = $this->db->query($chartSql)->getResultArray();
+
+        /* ================= Summary ================= */
+        $summarySql = "
+            SELECT
+                COUNT(DISTINCT d.book_id) AS total_titles,
+                COUNT(DISTINCT o.order_id) AS total_orders,
+                SUM(o.payment_status='Pending') AS total_pending_orders,
+                SUM(o.payment_status='Paid') AS total_paid_orders,
+                SUM(d.total_amount) AS total_sales
+            FROM pustaka_offline_orders o
+            JOIN pustaka_offline_orders_details d 
+                ON o.order_id = d.offline_order_id
+            WHERE 1=1 $where
+        ";
+
+        $data['offline'] = $this->db->query($summarySql)->getRowArray();
+
+        /* ================= Top Selling ================= */
+        $topSql = "
+            SELECT 
+                d.book_id,
+                b.book_title,
+                COUNT(*) AS total_sold
+            FROM pustaka_offline_orders_details d
+            JOIN book_tbl b ON b.book_id = d.book_id
+            GROUP BY d.book_id
+            ORDER BY total_sold DESC
+            LIMIT 10
+        ";
+
+        $data['top_selling'] = $this->db->query($topSql)->getResultArray();
+
+        $genre_sql="SELECT 
+                        genre_details_tbl.genre_id,
+                        genre_details_tbl.genre_name,
+                        COUNT(pustaka_offline_orders_details.book_id) AS total_sales
+                    FROM pustaka_offline_orders_details
+                    JOIN book_tbl
+                        ON book_tbl.book_id = pustaka_offline_orders_details.book_id
+                    JOIN genre_details_tbl
+                        ON genre_details_tbl.genre_id = book_tbl.genre_id
+                    WHERE pustaka_offline_orders_details.ship_status = 1
+                    GROUP BY 
+                        genre_details_tbl.genre_id,
+                        genre_details_tbl.genre_name
+                    ORDER BY total_sales DESC
+                    LIMIT 10";
+        $query = $this->db->query($genre_sql);
+        $data['genre_sales'] = $query->getResultArray();
+
+        $lan_sql="SELECT 
+                        language_tbl.language_name,
+                        COUNT(distinct(pustaka_offline_orders_details.offline_order_id)) AS offline_order_count
+                    FROM 
+                        pustaka_offline_orders_details
+                    JOIN
+                        book_tbl 
+                            ON book_tbl.book_id = pustaka_offline_orders_details.book_id
+                    JOIN
+                        language_tbl 
+                            ON language_tbl.language_id = book_tbl.language
+                    GROUP BY 
+                        language_tbl.language_name";
+        $query = $this->db->query($lan_sql);
+        $data['language_sales'] = $query->getResultArray();
+
+        $auth_sql="SELECT
+                        author_tbl.author_id,
+                        author_tbl.author_name,
+                        COUNT(distinct(pustaka_offline_orders_details.offline_order_id)) as total_orders,
+                        SUM(pustaka_offline_orders_details.total_amount) AS total_revenue
+                    FROM pustaka_offline_orders_details
+                    JOIN book_tbl 
+                        ON book_tbl.book_id = pustaka_offline_orders_details.book_id
+                    JOIN author_tbl 
+                        ON author_tbl.author_id = book_tbl.author_name
+                    GROUP BY
+                        author_tbl.author_id,
+                        author_tbl.author_name
+                    ORDER BY total_revenue DESC
+                    LIMIT 10";
+        $query = $this->db->query($auth_sql);
+        $data['author_sales'] = $query->getResultArray();
+
+        return $data;
+    }
+    public function bookShopPaperbackDetails($chartFilter)
+    {
+        $data = [];
+        $where = "pod_bookshop_order.status = 1";
+
+        // Apply Filter
+        if ($chartFilter === 'current_fy') {
+            $where .= " AND pod_bookshop_order.order_date >= DATE_FORMAT(CURDATE(), '%Y-04-01')
+                        AND pod_bookshop_order.order_date <= DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 YEAR), '%Y-03-31')";
+        } elseif ($chartFilter === 'previous_fy') {
+            $where .= " AND pod_bookshop_order.order_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 YEAR), '%Y-04-01')
+                        AND pod_bookshop_order.order_date <= DATE_FORMAT(CURDATE(), '%Y-03-31')";
+        }
+        // ---------------- CHART ----------------
+        $sql = "SELECT 
+                DATE_FORMAT(pod_bookshop_order.order_date, '%Y-%m') AS order_month,
+                COUNT(DISTINCT pod_bookshop_order.order_id) AS total_orders,
+                COUNT(DISTINCT pod_bookshop_order_details.book_id) AS total_titles,
+                ROUND(SUM(pod_bookshop_order_details.total_amount)) AS total_mrp
+            FROM pod_bookshop_order
+            JOIN pod_bookshop_order_details 
+                ON pod_bookshop_order.order_id = pod_bookshop_order_details.order_id
+            JOIN pod_bookshop 
+                ON pod_bookshop_order.bookshop_id = pod_bookshop.bookshop_id
+            WHERE $where    
+            GROUP BY DATE_FORMAT(pod_bookshop_order.order_date, '%Y-%m')
+            ORDER BY order_month ASC";
+
+        $query = $this->db->query($sql);
+        $data['chart'] = $query->getResultArray();
+
+        $sql ="SELECT
+                (SELECT COUNT(order_id)
+                FROM pod_bookshop_order
+                WHERE status = 1) AS total_orders,
+
+                (SELECT COUNT(order_id)
+                FROM pod_bookshop_order
+                WHERE status = 1 AND payment_status = 'Paid') AS total_paid,
+
+                (SELECT COUNT(order_id)
+                FROM pod_bookshop_order
+                WHERE status = 1 AND payment_status = 'Pending') AS total_pending,
+
+                (SELECT COUNT(bookshop_id) 
+                FROM pod_bookshop where status=1) AS total_bookshops,
+
+                (SELECT ROUND(SUM(total_amount))
+                FROM pod_bookshop_order_details
+                WHERE ship_status = 1) AS total_amount,
+
+                (SELECT COUNT(book_id)
+                FROM pod_bookshop_order_details
+                WHERE ship_status = 1) AS total_titles";
+
+        $query = $this->db->query($sql);
+        $data['bookshop'] = $query->getRowArray();
+
+        $sql1="SELECT 
+                    pod_bookshop_order_details.book_id,
+                    book_tbl.book_title,
+                    COUNT(*) AS total_sold
+                FROM
+                    pod_bookshop_order_details
+                        
+                JOIN book_tbl ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                GROUP BY pod_bookshop_order_details.book_id
+                ORDER BY total_sold DESC
+                LIMIT 10";
+        $query = $this->db->query($sql1);
+        $data['top_selling'] = $query->getResultArray();
+
+        $sql2="SELECT 
+                    genre_details_tbl.genre_id,
+                    genre_details_tbl.genre_name,
+                    COUNT(pod_bookshop_order_details.book_id) AS total_sales
+                FROM pod_bookshop_order_details
+                JOIN book_tbl
+                    ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                JOIN genre_details_tbl
+                    ON genre_details_tbl.genre_id = book_tbl.genre_id
+                WHERE pod_bookshop_order_details.ship_status = 1
+                GROUP BY 
+                    genre_details_tbl.genre_id,
+                    genre_details_tbl.genre_name
+                ORDER BY total_sales DESC
+                LIMIT 10";
+        $query = $this->db->query($sql2);
+        $data['genre_sales'] = $query->getResultArray();
+
+        $sql3="SELECT 
+                    language_tbl.language_name,
+                    COUNT(DISTINCT pod_bookshop_order_details.order_id) AS bookshop_order_count
+                FROM 
+                    pod_bookshop_order_details
+                JOIN
+                    book_tbl 
+                        ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                JOIN
+                    language_tbl 
+                        ON language_tbl.language_id = book_tbl.language
+                GROUP BY 
+                    language_tbl.language_name";
+
+        $query = $this->db->query($sql3);
+        $data['language_sales'] = $query->getResultArray();
+
+        $sql4="SELECT
+                    author_tbl.author_id,
+                    author_tbl.author_name,
+                    COUNT(distinct(pod_bookshop_order_details.order_id)) as total_orders,
+                    SUM(pod_bookshop_order_details.total_amount) AS total_revenue
+                FROM pod_bookshop_order_details
+                JOIN book_tbl 
+                    ON book_tbl.book_id = pod_bookshop_order_details.book_id
+                JOIN author_tbl 
+                    ON author_tbl.author_id = book_tbl.author_name
+                GROUP BY
+                    author_tbl.author_id,
+                    author_tbl.author_name
+                ORDER BY total_revenue DESC
+                LIMIT 10";
+        $query = $this->db->query($sql4);
+        $data['author_sales'] = $query->getResultArray();
+
+        return $data;
+    }
 }
-

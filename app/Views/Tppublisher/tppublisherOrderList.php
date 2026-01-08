@@ -26,12 +26,10 @@
 
     if (needsText.includes(channel)) {
         textBox.classList.remove("d-none");
-        textBox.value = "";
-        hiddenInput.value = channel;
-
-        textBox.oninput = function () {
-            hiddenInput.value = channel + " - " + this.value;
-        };
+        textBox.addEventListener("input", function() {
+            hiddenInput.value = "Book Fair - " + this.value;
+        });
+        hiddenInput.value = ""; // wait for user to type
     } else {
         textBox.classList.add("d-none");
         textBox.value = "";
@@ -94,29 +92,22 @@
 </tr>
 <?php endforeach; ?>
 <td>
-    <div class="channel-wrapper">
-        <select class="form-select form-select-sm"
-                onchange="handleChannelChange(this)"
-                required
-                style="width:250px;">
-            <option value="">Select Channel</option>
-            <option value="Pustaka">Pustaka</option>
-            <option value="Amazon">Amazon</option>
-            <option value="Book Fair">Book Fair</option>
-            <option value="Others">Others</option>
-        </select>
+    <select class="form-select form-select-sm" onchange="handleChannelChange(this)" required style="width:250px";>
+        <option value="">Select Channel</option>
+        <option value="Pustaka">Pustaka</option>
+        <option value="Book Fair">Book Fair</option>
+        <option value="Amazon">Amazon</option>
+        <option value="Others">Others</option>
+    </select>
 
-        <!-- Extra textbox for Book Fair & Others -->
-        <input type="text"
-               class="form-control form-control-sm mt-2 d-none channel-extra"
-               placeholder="Enter details">
+    <!-- Book Fair textbox (hidden by default) -->
+    <input type="text" class="form-control form-control-sm mt-2 d-none"
+           placeholder="(eg)ChennaiJune2025">
 
         <!-- Hidden input that will store final value -->
         <input type="hidden" name="sales_channel[]" value="">
     </div>
 </td>
-
-
 
 </div>
 </tbody>

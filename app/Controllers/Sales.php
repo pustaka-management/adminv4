@@ -96,6 +96,31 @@ class Sales extends BaseController
 
         return view('sales/amazon/amazonBookwiseDetails',$data);
     }
+    public function offlinesales()
+    {
+        $chartFilter = $this->request->getGet('chart_filter') ?? 'all';
+
+        $offline_sales = $this->salesmodel->offlinesalesDetails($chartFilter);
+
+        return view('sales/offline/offlineSalesDetails', [
+            'offline_sales' => $offline_sales,
+            'chart_filter'  => $chartFilter,
+            'title'         => '',
+            'subTitle'      => ''
+        ]);
+    }
+    public function bookshopsales()
+    {
+        $chart_filter = $this->request->getGet('chart_filter') ?? 'all';
+        $data['chart_filter'] = $chart_filter;
+        $data['bookshop_sales'] = $this->salesmodel->bookShopPaperbackDetails($chart_filter);
+        $data['chart_filter'] = $chart_filter;
+        $data['title'] = '';
+        $data['subTitle'] = '';
+
+        return view('sales/bookshop/bookshopSalesDetails',$data);
+    }
+
    public function EbookAmazondetails()
     {
         $model = new EbookSalesModel();

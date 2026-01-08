@@ -130,25 +130,30 @@
                         <td>
                             Ledger: <?php echo $order_books['qty'] ?><br>
                             Fair / Store: <?php echo ($order_books['bookfair'] + $order_books['bookfair2'] + $order_books['bookfair3'] + $order_books['bookfair4'] + $order_books['bookfair5']) ?><br>
-                            <?php if ($order_books['lost_qty'] < 0) { ?>
-                                <span style="color:#008000;">Excess: <?php echo abs($order_books['lost_qty']) ?></span><br>
-                            <?php } elseif ($order_books['lost_qty'] > 0) { ?>
+                                <span style="color:#008000;">Excess: <?php echo abs($order_books['excess_qty']) ?></span><br>
                                 <span style="color:#ff0000;">Lost: <?php echo $order_books['lost_qty'] ?><br></span>
-                            <?php } ?>
                         </td>
                         <?php
-                        $stockStatus = ($order_books['quantity'] <= ($order_books['stock_in_hand'] + $order_books['lost_qty'])) ? 'IN STOCK' : 'OUT OF STOCK';
+                        $stockStatus = ($order_books['quantity'] <= ($order_books['stock_in_hand'] )) ? 'IN STOCK' : 'OUT OF STOCK';
                         $recommendationStatus = "";
                         if ($stockStatus == 'IN STOCK') {
-                            if ($order_books['quantity'] > $order_books['stock_in_hand']) {
-                                $recommendationStatus = "Print using <span style='color:#ff0000;'>LOST</span> Qty! No Initiate to Print";
-                            }
+                    
                         } else {
                             // OUT OF STOCK
-                            if ($order_books['quantity'] > $order_books['stock_in_hand']) {
-                                $recommendationStatus = "Print using <span style='color:#008000;'>EXCESS</span> Qty! Initiate Print Also";
+                            if ($order_books['excess_qty'] > 0) {
+                                $recommendationStatus =
+                                    "Print using <span style='color:#008000;'>EXCESS</span> Qty! Initiate Print Also";
+                            } 
+                            else if ($order_books['lost_qty'] > 0) {
+                                $recommendationStatus =
+                                    "Print using <span style='color:#ff0000;'>LOST</span> Qty! No Initiate to Print";
+                            } 
+                            else {
+                                $recommendationStatus =
+                                    "";
                             }
                         }
+
                         ?>
                         <td>
                             <?php echo $stockStatus ?>

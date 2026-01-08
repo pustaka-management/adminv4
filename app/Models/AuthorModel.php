@@ -945,6 +945,7 @@ class AuthorModel extends Model
         $sql = "SELECT 
                 *,
                 DATE_FORMAT(author_tbl.created_at, '%d %M, %Y') AS formatted_created_at,
+                author_tbl.email AS author_email,
                 author_tbl.address AS author_address,
                 author_tbl.agreement_details,
                 author_tbl.copy_right_owner_name,
