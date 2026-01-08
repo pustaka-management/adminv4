@@ -218,41 +218,36 @@ class ProspectiveManagement extends Controller
 }
 
      public function updateInprogress($id)
-    {
-        $request = service('request');
-        $model   = new ProspectiveManagementModel();
+{
+    $request = service('request');
+    $model   = new ProspectiveManagementModel();
 
-        $result = $model->updateInprogressFromPost($id, $request);
+    $result = $model->updateInprogressFromPost($id, $request);
 
-        if ($request->isAJAX()) {
-            if ($result === true) {
-                return $this->response->setJSON([
-                    'success' => true,
-                    'message' => 'Prospect updated successfully.'
-                ]);
-            } elseif ($result === 0) {
-                return $this->response->setJSON([
-                    'success' => false,
-                    'message' => 'No changes detected.'
-                ]);
-            } else {
-                return $this->response->setJSON([
-                    'success' => false,
-                    'message' => 'Prospect not found or update failed.'
-                ]);
-            }
-        }
-
-        if ($result) {
-            return redirect()
-                ->to(base_url('prospectivemanagement/addProspectBook/' . $id))
-                ->with('success', 'Prospect updated successfully.');
+    if ($request->isAJAX()) {
+        if ($result === true) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Prospect updated successfully.'
+            ]);
         } else {
-            return redirect()
-                ->back()
-                ->with('info', 'No changes detected.');
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'No changes detected or update failed.'
+            ]);
         }
     }
+
+    if ($result === true) {
+        return redirect()
+            ->to(base_url('prospectivemanagement/addProspectBook/' . $id))
+            ->with('success', 'Prospect updated successfully.');
+    } else {
+        return redirect()
+            ->back()
+            ->with('info', 'No changes detected or update failed.');
+    }
+}
     public function updateProspector($id)
 {
     $db      = \Config\Database::connect();
@@ -396,7 +391,7 @@ public function viewProspector($id)
     // All general remarks
     $data['generalRemarks'] = $model->getProspectorGeneralRemarks($id);
 
-    // 👉 Latest remark (only first row)
+    //  Latest remark (only first row)
     $data['latestRemark'] = !empty($data['generalRemarks'])
         ? $data['generalRemarks'][0]
         : null;
@@ -817,6 +812,26 @@ public function updateBook($prospector_id = null, $id = null)
 
         return view('ProspectiveManagement/addProspectBook', $data);
     }
+   public function hold()
+{
+    $db = \Config\Database::connect();
+
+    $data = [];
+
+    // Page Title
+    $data['title'] = 'Hold Prospects';
+
+    // Fetch Hold prospects (status = 3)
+    $data['prospects'] = $db->table('prospectors_details')
+        ->where('prospectors_status', 3)
+        ->orderBy('id', 'DESC')
+        ->get()
+        ->getResultArray();
+
+    return view('ProspectiveManagement/hold', $data);
+}
+
+
 
 
 }

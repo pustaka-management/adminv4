@@ -15,20 +15,27 @@
         let updatedList = existingList ? book_id + ',' + existingList : book_id;
         selectedInput.value = updatedList;
     }
-    function handleChannelChange(select) {
-    let textBox = select.nextElementSibling;       // textbox
-    let hiddenInput = textBox.nextElementSibling;  // hidden input
+   function handleChannelChange(select) {
+    let wrapper     = select.closest('.channel-wrapper');
+    let textBox     = wrapper.querySelector('.channel-extra');
+    let hiddenInput = wrapper.querySelector('input[name="sales_channel[]"]');
+    let channel     = select.value;
 
-    if (select.value === "Book Fair") {
+    // Channels that need textbox
+    let needsText = ["Book Fair", "Others"];
+
+    if (needsText.includes(channel)) {
         textBox.classList.remove("d-none");
-        textBox.addEventListener("input", function() {
-            hiddenInput.value = "Book Fair - " + this.value;
-        });
-        hiddenInput.value = ""; // wait for user to type
+        textBox.value = "";
+        hiddenInput.value = channel;
+
+        textBox.oninput = function () {
+            hiddenInput.value = channel + " - " + this.value;
+        };
     } else {
         textBox.classList.add("d-none");
         textBox.value = "";
-        hiddenInput.value = select.value;
+        hiddenInput.value = channel;
     }
 }
 </script>
@@ -87,21 +94,29 @@
 </tr>
 <?php endforeach; ?>
 <td>
-    <select class="form-select form-select-sm" onchange="handleChannelChange(this)" required style="width:250px";>
-        <option value="">Select Channel</option>
-        <option value="Pustaka">Pustaka</option>
-        <option value="Book Fair">Book Fair</option>
-        <option value="Amazon">Amazon</option>
-        <option value="Others">Others</option>
-    </select>
+    <div class="channel-wrapper">
+        <select class="form-select form-select-sm"
+                onchange="handleChannelChange(this)"
+                required
+                style="width:250px;">
+            <option value="">Select Channel</option>
+            <option value="Pustaka">Pustaka</option>
+            <option value="Amazon">Amazon</option>
+            <option value="Book Fair">Book Fair</option>
+            <option value="Others">Others</option>
+        </select>
 
-    <!-- Book Fair textbox (hidden by default) -->
-    <input type="text" class="form-control form-control-sm mt-2 d-none"
-           placeholder="(eg)ChennaiJune2025">
+        <!-- Extra textbox for Book Fair & Others -->
+        <input type="text"
+               class="form-control form-control-sm mt-2 d-none channel-extra"
+               placeholder="Enter details">
 
-    <!-- Final hidden input (will hold the correct value) -->
-    <input type="hidden" name="sales_channel[]" value="">
+        <!-- Hidden input that will store final value -->
+        <input type="hidden" name="sales_channel[]" value="">
+    </div>
 </td>
+
+
 
 </div>
 </tbody>
@@ -122,3 +137,4 @@
 </div>
 
 <?= $this->endSection(); ?>
+

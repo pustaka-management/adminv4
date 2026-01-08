@@ -3,7 +3,7 @@
 
 <div class="card basic-data-table mb-5">
     <div class="card-body">
-        <form action="<?= base_url('tppublisher/tppublisherorderssubmit') ?>" method="post">
+        <form action="<?= base_url('tppublisher/tppublisherordersubmit') ?>" method="post">
             <?= csrf_field() ?>
             
             <!-- Hidden Inputs -->

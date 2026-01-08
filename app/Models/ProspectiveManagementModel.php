@@ -56,18 +56,17 @@ class ProspectiveManagementModel extends Model
 
     if (!$old) return false;
 
-    // -----------------------
     // INPUT VALUES
-    // -----------------------
+   
     $emailFlag = $request->getPost('email_sent_flag');
     $emailDate = trim($request->getPost('email_sent_date'));
 
     $callFlag  = $request->getPost('initial_call_flag');
     $callDate  = trim($request->getPost('initial_call_date'));
 
-    // -----------------------
+   
     // EMAIL DATE LOGIC
-    // -----------------------
+   
     if ($emailFlag == 1) {
         // If date entered → use it
         // If no date entered → keep OLD date
@@ -77,18 +76,18 @@ class ProspectiveManagementModel extends Model
         $finalEmailDate = null;
     }
 
-    // -----------------------
+   
     // CALL DATE LOGIC
-    // -----------------------
+   
     if ($callFlag == 1) {
         $finalCallDate = $callDate !== "" ? $callDate : $old['initial_call_date'];
     } else {
         $finalCallDate = null;
     }
 
-    // -----------------------
+   
     // DATA BUILD
-    // -----------------------
+   
     $data = [
         'name'                => $request->getPost('name'),
         'phone'               => $request->getPost('phone'),
@@ -106,9 +105,9 @@ class ProspectiveManagementModel extends Model
         'last_update_date'    => date('Y-m-d H:i:s'),
     ];
 
-    // -----------------------
+   
     // UPDATE ONLY CHANGED VALUES
-    // -----------------------
+   
     $changes = [];
     foreach ($data as $key => $newValue) {
         $oldValue = $old[$key] ?? null;
@@ -127,9 +126,9 @@ class ProspectiveManagementModel extends Model
     // Perform update
     $builder->where('id', $id)->update($changes);
 
-    // -----------------------
+   
     // REMARK LOGIC
-    // -----------------------
+   
     $remarks = trim($request->getPost('remarks'));
     $finalRemark = "";
     $createDate = null;
@@ -162,40 +161,24 @@ class ProspectiveManagementModel extends Model
     $db      = \Config\Database::connect();
     $builder = $db->table('prospectors_details');
 
-    // Fetch old data
     $old = $builder->where('id', $id)->get()->getRowArray();
     if (!$old) return false;
 
-    // -----------------------------
-    //     NORMAL VALUE FIELDS
-    // -----------------------------
     $postedStatus = $request->getPost('prospectors_status');
-    $prospectors_status = ($postedStatus == 1 ? 1 : ($postedStatus == 2 ? 2 : 0));
+    $prospectors_status = 0;
+    if ($postedStatus == 1) $prospectors_status = 1;
+    elseif ($postedStatus == 2) $prospectors_status = 2;
+    elseif ($postedStatus == 3) $prospectors_status = 3; // Hold
 
-    // -----------------------------
-    //        DATE FIELDS
-    // -----------------------------
-    // Email Sent Date
+    // Email & Call Dates
     $email_sent_flag   = $request->getPost('email_sent_flag');
     $posted_email_date = $request->getPost('email_sent_date');
-    $final_email_date  = $old['email_sent_date'];
+    $final_email_date  = ($email_sent_flag == "1") ? $posted_email_date : $old['email_sent_date'];
 
-    if ($email_sent_flag == "1" && $posted_email_date !== $old['email_sent_date']) {
-        $final_email_date = $posted_email_date;
-    }
-
-    // Initial Call Date
     $initial_call_flag = $request->getPost('initial_call_flag');
     $posted_call_date  = $request->getPost('initial_call_date');
-    $final_call_date   = $old['initial_call_date'];
+    $final_call_date   = ($initial_call_flag == "1") ? $posted_call_date : $old['initial_call_date'];
 
-    if ($initial_call_flag == "1" && $posted_call_date !== $old['initial_call_date']) {
-        $final_call_date = $posted_call_date;
-    }
-
-    // -----------------------------
-    //         NEW DATA ARRAY
-    // -----------------------------
     $data = [
         'name'                => $request->getPost('name'),
         'phone'               => $request->getPost('phone'),
@@ -211,59 +194,47 @@ class ProspectiveManagementModel extends Model
         'last_update_date'    => date('Y-m-d H:i:s'),
     ];
 
-    // -----------------------------
-    //      CHANGE DETECTION
-    // -----------------------------
+    // Detect changes
     $hasChanges = false;
-
     foreach ($data as $key => $value) {
-        $oldVal = $old[$key] ?? null;
-
-        // compare after converting null to empty string
-        if ((string)$oldVal !== (string)$value) {
+        if ((string)($old[$key] ?? '') !== (string)$value) {
             $hasChanges = true;
             break;
         }
     }
 
-    // -----------------------------
-    //       ONLY IF CHANGED
-    // -----------------------------
-    if ($hasChanges) {
-        $builder->where('id', $id)->update($data);
-    }
+    if ($hasChanges) $builder->where('id', $id)->update($data);
 
-    // -----------------------------
-    //        REMARK LOGIC
-    // -----------------------------
+    // Remark Logic
     $remarks = trim($request->getPost('remarks'));
     $finalRemark = '';
-    $createDate  = null;
+    $createDate = null;
 
-    // Plan change
-    if ($old['recommended_plan'] != $data['recommended_plan']) {
+    if ($prospectors_status == 3) {
+        $finalRemark = !empty($remarks) ? $remarks . " | Prospect put on Hold" : "Prospect put on Hold";
+        $createDate  = date('Y-m-d H:i:s');
+    } elseif ($old['recommended_plan'] != $data['recommended_plan']) {
         $planChangeText = "Plan changed: {$old['recommended_plan']} → {$data['recommended_plan']}";
         $finalRemark = $remarks ? $remarks . " | " . $planChangeText : $planChangeText;
-        $createDate = date('Y-m-d H:i:s');
-
+        $createDate  = date('Y-m-d H:i:s');
     } elseif (!empty($remarks)) {
         $finalRemark = $remarks;
         $createDate  = date('Y-m-d H:i:s');
     }
 
     if (!empty($finalRemark)) {
-        $remarkData = [
+        $db->table('prospectors_remark_details')->insert([
             'prospectors_id' => $id,
             'title'          => $old['title'] ?? null,
             'remarks'        => $finalRemark,
             'create_date'    => $createDate,
             'created_by'     => session()->get('username') ?? 'System',
-        ];
-        $db->table('prospectors_remark_details')->insert($remarkData);
+        ]);
     }
 
     return $hasChanges;
 }
+
     public function updateProspectStatus($id, $status)
     {
         return $this->db->table('prospectors_details')
@@ -327,6 +298,10 @@ class ProspectiveManagementModel extends Model
         // Denied (status = 2)
         $data['deniedCount'] = $db->table('prospectors_details')
             ->where('prospectors_status', 2)
+            ->countAllResults();
+           
+        $data['holdCount'] = $db->table('prospectors_details')
+            ->where('prospectors_status', 3)
             ->countAllResults();
 
         //Today counts

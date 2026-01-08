@@ -28,41 +28,43 @@
     </div><br>
 
     <!-- Status Overview -->
-    <div class="row mb-4 g-3">
-        <?php 
-        $statusCards = [
-            ['label' => 'In Progress', 'count' => $prospectCounts['inProgressCount'] ?? 0, 'color' => 'primary', 'icon' => 'mdi:progress-clock', 'link' => 'inprogress'],
-            ['label' => 'Closed', 'count' => $prospectCounts['closedCount'] ?? 0, 'color' => 'success', 'icon' => 'mdi:check-circle-outline', 'link' => 'closed'],
-            ['label' => 'Denied', 'count' => $prospectCounts['deniedCount'] ?? 0, 'color' => 'danger', 'icon' => 'mdi:close-circle-outline', 'link' => 'denied'],
-        ];
-        foreach($statusCards as $card): ?>
-        <div class="col-xl-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-<?= $card['color']; ?> bg-opacity-10 rounded-3 p-3 me-3">
-                                <iconify-icon icon="<?= $card['icon']; ?>" class="fs-3 text-<?= $card['color']; ?>"></iconify-icon>
-                            </div>
-                            <div>
-                                <h6 class="mb-1"><?= $card['label']; ?></h6>
-                                <h6 class="fw-bold mb-0"><?= $card['count']; ?></h6>
-                            </div>
-                        </div>
-                        <div class="badge bg-<?= $card['color']; ?> bg-opacity-10 text-<?= $card['color']; ?> px-3 py-2 rounded-pill">
-                            
-                        </div>
+<div class="row mb-4 g-3">
+
+<?php 
+$statusCards = [
+    ['label' => 'In Progress', 'count' => $prospectCounts['inProgressCount'] ?? 0, 'color' => 'primary', 'icon' => 'mdi:progress-clock', 'link' => 'inprogress'],
+    ['label' => 'Closed', 'count' => $prospectCounts['closedCount'] ?? 0, 'color' => 'success', 'icon' => 'mdi:check-circle-outline', 'link' => 'closed'],
+    ['label' => 'Denied', 'count' => $prospectCounts['deniedCount'] ?? 0, 'color' => 'danger', 'icon' => 'mdi:close-circle-outline', 'link' => 'denied'],
+    ['label' => 'Hold', 'count' => $prospectCounts['holdCount'] ?? 0, 'color' => 'warning', 'icon' => 'mdi:pause-circle-outline', 'link' => 'hold'],
+];
+
+foreach($statusCards as $card): ?>
+    
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-<?= $card['color']; ?> bg-opacity-10 rounded-3 p-3 me-3">
+                        <iconify-icon icon="<?= $card['icon']; ?>" class="fs-3 text-<?= $card['color']; ?>"></iconify-icon>
+                    </div>
+                    <div>
+                        <h6 class="mb-1"><?= $card['label']; ?></h6>
+                        <h6 class="fw-bold mb-0"><?= $card['count']; ?></h6>
                     </div>
                 </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <a href="<?= base_url('prospectivemanagement/' . $card['link']); ?>" class="btn btn-outline-<?= $card['color']; ?> btn-sm w-100 d-flex align-items-center justify-content-center">
-                        <iconify-icon icon="mdi:arrow-right" class="me-2 fs-5"></iconify-icon> View Details
-                    </a>
-                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0">
+                <a href="<?= base_url('prospectivemanagement/' . $card['link']); ?>" 
+                   class="btn btn-outline-<?= $card['color']; ?> btn-sm w-100">
+                    View Details
+                </a>
             </div>
         </div>
-        <?php endforeach; ?>
-    </div><br>
+    </div>
+
+<?php endforeach; ?>
+</div>
+<br>
 
     <!-- Plans & Payments -->
     <div class="row g-4">

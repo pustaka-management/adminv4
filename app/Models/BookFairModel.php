@@ -225,7 +225,3 @@ class BookFairModel extends Model
     }
 
     }
-
-
-
-

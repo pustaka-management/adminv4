@@ -174,6 +174,9 @@
             <label class="mt-3">Transport Charges</label>
             <input type="text" value="<?= esc($book['transport_charges'] ?? '') ?>" class="form-control" readonly />
 
+            <label class="mt-3">Invoice Number</label>
+            <input type="text" value="<?= !empty($book['invoice_number']) ? esc($book['invoice_number']) : 'No Invoice Number Assigned' ?>" class="form-control text-danger fw-bold" readonly />
+
             <label class="mt-3">Design Charges</label>
             <input type="text" value="<?= esc($book['design_charges'] ?? '') ?>" class="form-control" readonly />
 

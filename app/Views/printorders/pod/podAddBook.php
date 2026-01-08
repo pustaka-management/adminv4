@@ -2,11 +2,6 @@
 <?= $this->section('content'); ?>
 
     <div class="layout-px-spacing">
-    <div class="page-header">
-        <div class="page-title">
-            <h6>Create New PoD Order</h6>
-        </div>
-    </div>
     <div class="row">
         <div class="col-6">
             <h6 class="mt-3">Book Details</h6>

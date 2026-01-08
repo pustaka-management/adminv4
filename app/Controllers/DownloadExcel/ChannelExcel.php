@@ -367,119 +367,122 @@ class ChannelExcel extends BaseController
     }
 
     public function storytel_excel()
-    {
-        $langcode = [
-            1 => "ta",
-            2 => "kn",
-            3 => "te",
-            4 => "ml",
-            5 => "en"
-        ];
+{
+    $db = db_connect();
 
-        $genre_id = [
-            1 => "Fiction",
-            2 => "Thrillers",
-            3 => "Crime",
-            4 => "History",
-            5 => "Fiction",
-            6 => "Thrillers",
-            7 => "Thrillers",
-            8 => "Personal Development",
-            9 => "Non-Fiction",
-            10 => "Personal Development",
-            11 => "Fiction",
-            12 => "Religion & Spirituality",
-            13 => "Classics",
-            14 => "Biographies",
-            15 => "Children",
-            16 => "Language",
-            17 => "Personal Development",
-            18 => "Non-Fiction",
-            19 => "Fantasy & Scifi",
-            20 => "Personal Development",
-            21 => "Non-Fiction",
-            22 => "Non-Fiction",
-            23 => "Romance",
-            24 => "Romance",
-            25 => "Non-Fiction",
-            26 => "Fiction",
-            27 => "Economy & Business",
-            28 => "Non-Fiction",
-            29 => "Romance",
-            30 => "Fiction",
-            31 => "Non-Fiction",
-            32 => "Non-Fiction",
-            33 => "Non-Fiction",
-            34 => "Non-Fiction",
-            35 => "Non-Fiction",
-            36 => "Romance",
-        ];
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
 
-        $book_ids = $this->request->getPost('book_ids');
-        $book_id = explode(",", $book_ids);
+    /* ===================== LANGUAGE CODES ===================== */
+    $langcode = [
+        1 => "ta",
+        2 => "kn",
+        3 => "te",
+        4 => "ml",
+        5 => "en"
+    ];
 
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $i = 1;
+    /* ===================== GENRE MAP ===================== */
+    $genre_id = [
+        1=>"Fiction",2=>"Thrillers",3=>"Crime",4=>"History",5=>"Fiction",
+        6=>"Thrillers",7=>"Thrillers",8=>"Personal Development",
+        9=>"Non-Fiction",10=>"Personal Development",11=>"Fiction",
+        12=>"Religion & Spirituality",13=>"Classics",14=>"Biographies",
+        15=>"Children",16=>"Language",17=>"Personal Development",
+        18=>"Non-Fiction",19=>"Fantasy & Scifi",20=>"Personal Development",
+        21=>"Non-Fiction",22=>"Non-Fiction",23=>"Romance",24=>"Romance",
+        25=>"Non-Fiction",26=>"Fiction",27=>"Economy & Business",
+        28=>"Non-Fiction",29=>"Romance",30=>"Fiction",31=>"Non-Fiction",
+        32=>"Non-Fiction",33=>"Non-Fiction",34=>"Non-Fiction",
+        35=>"Non-Fiction",36=>"Romance"
+    ];
 
-        foreach ($book_id as $bk) {
-            $bk_result = $this->db->table('book_tbl')->where('book_id', $bk)->get()->getRowArray();
-            if (!$bk_result) continue;
-
-            // Skip specific authors
-            if (in_array($bk_result['author_name'], [80, 76, 82, 81])) continue;
-
-            $auth_result = $this->db->table('author_tbl')->where('author_id', $bk_result['author_name'])->get()->getRowArray();
-
-            $short_description = !empty($bk_result['description']) ? $bk_result['description'] : ($auth_result['description'] ?? '');
-
-            if ($bk_result['book_category'] == "Short Stories") {
-                $genre = "Short Stories";
-            } elseif ($bk_result['book_category'] == "Poetry") {
-                $genre = "Lyric Poetry";
-            } else {
-                $genre = $genre_id[$bk_result['genre_id']] ?? '';
-            }
-
-            $sheet->setCellValue('A'.$i, $bk_result['book_id']);
-            $sheet->setCellValue('B'.$i, $bk_result['book_title']);
-            $sheet->setCellValue('C'.$i, $langcode[$bk_result['language']] ?? '');
-            $sheet->setCellValue('D'.$i, $auth_result['author_name'] ?? '');
-            $sheet->setCellValue('E'.$i, '');
-            $sheet->setCellValue('F'.$i, '');
-            $sheet->setCellValue('G'.$i, $bk_result['regional_book_title']);
-            $sheet->setCellValue('H'.$i, $genre);
-            $sheet->setCellValue('I'.$i, '');
-            $sheet->setCellValue('J'.$i, '');
-            $sheet->setCellValue('K'.$i, '');
-            $sheet->setCellValue('L'.$i, '');
-            $sheet->setCellValue('M'.$i, '');
-            $sheet->setCellValue('N'.$i, date('Ymd'));
-            $sheet->setCellValue('O'.$i, "Pustaka Digital Media");
-            $sheet->setCellValue('P'.$i, $short_description);
-            $sheet->setCellValue('Q'.$i, '');
-            $sheet->setCellValue('R'.$i, '');
-            $sheet->setCellValue('S'.$i, '');
-            $sheet->setCellValue('T'.$i, "World");
-            $i++;
-        }
-
-        foreach (range('A', 'T') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        $filename = 'storytel.xls';
-
-        if (ob_get_length()) ob_end_clean();
-
-        header('Content-Type: application/vnd.ms-excel');
-        header('Content-Disposition: attachment;filename="'.$filename.'"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xls($spreadsheet);
-        $writer->save('php://output');
-        exit;
+    /* ===================== BOOK IDS ===================== */
+    $book_ids = $this->request->getPost('book_ids');
+    if (!$book_ids) {
+        return redirect()->back()->with('error', 'No Book IDs provided');
     }
+
+    $book_ids = explode(',', $book_ids);
+
+    $row = 1;
+
+    foreach ($book_ids as $bk) {
+
+        $bk_result = $db->table('book_tbl')
+                        ->where('book_id', trim($bk))
+                        ->get()
+                        ->getRowArray();
+
+        if (!$bk_result) continue;
+
+        if (in_array($bk_result['author_name'], [80,76,82,81])) continue;
+
+        /* ===================== ISBN ===================== */
+        if (!empty($bk_result['isbn_number'])) {
+            $ebook_isbn = str_replace('-', '', $bk_result['isbn_number']);
+        } else {
+            $lang_num = str_pad($bk_result['language'], 2, '0', STR_PAD_LEFT);
+            $auth_num = str_pad($bk_result['author_name'], 3, '0', STR_PAD_LEFT);
+            $bk_num   = str_pad($bk_result['book_id'], 5, '0', STR_PAD_LEFT);
+            $ebook_isbn = '658' . $lang_num . $auth_num . $bk_num;
+        }
+
+        /* ===================== AUTHOR ===================== */
+        $author = $db->table('author_tbl')
+                     ->where('author_id', $bk_result['author_name'])
+                     ->get()
+                     ->getRowArray();
+
+        if (!$author) continue;
+
+        $short_description = $bk_result['description'] ?: $author['description'];
+
+        /* ===================== GENRE ===================== */
+        $genre_data = $db->table('genre_details_tbl')
+                         ->where('genre_id', $bk_result['genre_id'])
+                         ->get()
+                         ->getRowArray();
+
+        $genre_code = $genre_data['storytel_genre_code'] ?? '';
+
+        /* ===================== NARRATOR ===================== */
+        $narrator_name = '';
+        if ($bk_result['narrator_id']) {
+            $narrator = $db->table('narrator_tbl')
+                           ->where('narrator_id', $bk_result['narrator_id'])
+                           ->get()
+                           ->getRowArray();
+            $narrator_name = $narrator['narrator_name'] ?? '';
+        }
+
+        
+        $sheet->setCellValue('A'.$row, $bk_result['book_id']);
+        $sheet->setCellValue('B'.$row, $bk_result['book_title']);
+        $sheet->setCellValue('C'.$row, $langcode[$bk_result['language']] ?? '');
+        $sheet->setCellValue('D'.$row, $author['author_name']);
+        $sheet->setCellValue('E'.$row, $bk_result['type_of_book'] == 1 ? '' : $narrator_name);
+        $sheet->setCellValue('G'.$row, $bk_result['regional_book_title']);
+        $sheet->setCellValue('H'.$row, $genre_code);
+        $sheet->setCellValue('L'.$row, $ebook_isbn);
+        $sheet->setCellValue('N'.$row, date('Ymd'));
+        $sheet->setCellValue('O'.$row, 'Pustaka Digital Media');
+        $sheet->setCellValue('P'.$row, $short_description);
+        $sheet->setCellValue('T'.$row, 'World');
+
+        $row++;
+    }
+
+    $filename = 'storytel.xls';
+
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment; filename="'.$filename.'"');
+    header('Cache-Control: max-age=0');
+
+    $writer = new Xls($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
     public function storytel_audio_excel()
 {
     // Use PhpSpreadsheet instead of PHPExcel

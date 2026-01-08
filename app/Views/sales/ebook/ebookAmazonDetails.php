@@ -7,24 +7,40 @@
     <div class="row g-3 mb-4">
 
         <!-- Titles & Authors -->
-        <div class="col-xxl-3 col-sm-6">
-            <div class="card px-24 py-16 shadow-none radius-8 border h-100 bg-gradient-start-1">
-                <div class="card-body p-0 d-flex align-items-center gap-3">
-                    <div class="w-64-px h-64-px radius-16 bg-base-50 d-flex justify-content-center align-items-center">
-                        <span class="w-40-px h-40-px bg-primary-600 text-white d-flex justify-content-center align-items-center radius-8 h6 mb-0">
-                            <iconify-icon icon="mdi:book-open-page-variant"></iconify-icon>
-                        </span>
-                    </div>
-                    <div>
-                        <span class="fw-medium text-secondary-light text-md">Amazon Titles</span>
-                        <h6 class="fw-semibold my-1"><?= esc($summary['total_titles']) ?></h6>
-                        <p class="text-sm mb-0">
-                            Authors : <span class="fw-medium text-primary-main"><?= esc($summary['total_authors']) ?></span>
-                        </p>
-                    </div>
-                </div>
+        <!-- Amazon Titles -->
+<div class="col-xxl-3 col-sm-6">
+    <div class="card px-24 py-16 shadow-none radius-8 border h-100 bg-gradient-start-1">
+        <div class="card-body p-0 d-flex align-items-center gap-3">
+            <div class="w-64-px h-64-px radius-16 bg-base-50 d-flex justify-content-center align-items-center">
+                <span class="w-40-px h-40-px bg-primary-600 text-white d-flex justify-content-center align-items-center radius-8 h6 mb-0">
+                    <iconify-icon icon="mdi:book-open-page-variant"></iconify-icon>
+                </span>
+            </div>
+            <div>
+                <span class="fw-medium text-secondary-light text-md">Amazon Titles</span>
+                <h6 class="fw-semibold my-1"><?= esc($summary['total_titles']) ?></h6>
             </div>
         </div>
+    </div>
+</div>
+<!-- Authors -->
+<div class="col-xxl-3 col-sm-6">
+    <div class="card px-24 py-16 shadow-none radius-8 border h-100 bg-gradient-start-2">
+        <div class="card-body p-0 d-flex align-items-center gap-3">
+            <div class="w-64-px h-64-px radius-16 bg-base-50 d-flex justify-content-center align-items-center">
+                <span class="w-40-px h-40-px bg-success-600 text-white d-flex justify-content-center align-items-center radius-8 h6 mb-0">
+                    <iconify-icon icon="mdi:account-multiple"></iconify-icon>
+                </span>
+            </div>
+            <div>
+                <span class="fw-medium text-secondary-light text-md">Authors</span>
+                <h6 class="fw-semibold my-1"><?= esc($summary['total_authors']) ?></h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
         <!-- Units -->
         <!-- <div class="col-xxl-3 col-sm-6">
@@ -101,10 +117,10 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>Selling BookId</th>
+                            <th>BookId</th>
                             <th>Title</th>
                             <th class="text-success">Units Sold</th>
-                            <th>Returned BookId</th>
+                            <th>BookId</th>
                             <th>Title</th>
                             <th class="text-danger">Units Refunded</th>
                         </tr>
