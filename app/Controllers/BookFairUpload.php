@@ -15,10 +15,10 @@ public function uploadItemwiseSale()
 {
     ini_set('max_execution_time', 300);
 
-    $fileName = "Pondy_Bookfair_Final.xlsx";
-    $bookfairName = "Pondy-Dec2025";
-    $bookfairStartDate = "2025-12-19 00:00:00";
-    $bookfairEndDate = "2025-12-29 00:00:00";
+    $fileName = "Bangalore BookFair25.xlsx";
+    $bookfairName = "Bangalore-December-2025";
+    $bookfairStartDate = "2025-12-05 00:00:00";
+    $bookfairEndDate = "2025-12-14 00:00:00";
 
     $inputFileName = WRITEPATH . 'uploads/BookfairReports/' . $fileName;
 
@@ -209,7 +209,7 @@ public function uploadItemwiseSale()
 
 
 
-
+// This part for mechaine generate  bookfair sale report update purpose
 
 public function uploadItemwiseSaleReport()
 {
@@ -359,6 +359,106 @@ public function uploadItemwiseSaleReport()
     }
 }
 
+// Below function update allocate bookfair excel
+
+public function bookfair_allocated_books()
+{
+    ini_set('max_execution_time', 300);
+    ini_set('memory_limit', '512M');
+
+    $file_name     = "Pondy_Bookfair_List.xlsx";
+    $bookfair_name = "Pondy-december2025";
+    $bookfair_id   = 29;
+
+    $db = \Config\Database::connect();
+
+    $inputFileName = APPPATH . 'bookfair_reports/' . $file_name;
+
+    if (!file_exists($inputFileName)) {
+        return 'File not found: ' . $inputFileName;
+    }
+
+    try {
+        // ✅ Load Excel
+        $spreadsheet = IOFactory::load($inputFileName);
+        $sheet       = $spreadsheet->getActiveSheet();
+        $data        = $sheet->toArray(null, true, true, true);
+
+        if (count($data) < 2) {
+            return 'No data found in Excel.';
+        }
+
+        // Column mapping (same as CI3)
+        $column_name = [
+            'A','B','C','D','E','F','G','H','I','J',
+            'K','L','M','N','O','P','Q','R','S','T'
+        ];
+
+        $inserted = 0;
+        $skipped  = 0;
+
+        foreach ($data as $rowIndex => $row) {
+
+            // Skip header
+            if ($rowIndex == 1) {
+                continue;
+            }
+
+            $book_id  = trim((string) ($row[$column_name[0]] ?? ''));
+            $quantity = trim((string) ($row[$column_name[8]] ?? 0));
+
+            $book_id = (int) $book_id;
+
+            if ($book_id === 0) {
+                continue;
+            }
+
+            // ✅ Get author_id (author_name in your table)
+            $book = $db->query(
+                "SELECT author_name FROM book_tbl WHERE book_id = ?",
+                [$book_id]
+            )->getRowArray();
+
+            if (!$book) {
+                continue;
+            }
+
+            $author_id = $book['author_name'];
+
+            // ✅ Check existing allocation
+            $existing = $db->table('bookfair_allocated_books')
+                ->where([
+                    'book_id'       => $book_id,
+                    'bookfair_name' => $bookfair_name
+                ])
+                ->get()
+                ->getRowArray();
+
+            if ($existing) {
+                $skipped++;
+                continue;
+            }
+
+            // ✅ Insert data
+            $insert_data = [
+                'book_id'       => $book_id,
+                'author_id'     => $author_id,
+                'quantity'      => $quantity,
+                'bookfair_name' => $bookfair_name,
+                'bookfair_id'   => $bookfair_id,
+            ];
+
+            $db->table('bookfair_allocated_books')->insert($insert_data);
+            $inserted++;
+        }
+
+        return "Completed ✔️ Inserted: {$inserted}, Skipped: {$skipped}";
+
+    } catch (\Throwable $e) {
+        log_message('error', $e->getMessage());
+        return $e->getMessage();
+    }
+}
 
 
 
