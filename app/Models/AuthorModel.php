@@ -1995,6 +1995,18 @@ class AuthorModel extends Model
     {
         $db  = \Config\Database::connect();
 
+       $getcopyrightowner = "
+            SELECT copyright_owner 
+            FROM author_tbl 
+            WHERE author_id = ?
+        ";
+
+        $query  = $db->query($getcopyrightowner, [$author_id]);
+        $author = $query->getRowArray();
+
+        $copyright_owner = $author['copyright_owner'] ?? null;
+
+
         // --- Total Pending Royalty ---
         $sql = "SELECT 
                     SUM(revenue) AS total_revenue, 
@@ -2003,6 +2015,7 @@ class AuthorModel extends Model
                     royalty_consolidation 
                 WHERE 
                     author_id = $author_id 
+                    AND copyright_owner = $copyright_owner
                     AND pay_status = 'O'";
 
         $query = $db->query($sql);
@@ -2030,6 +2043,7 @@ class AuthorModel extends Model
                     ON channels_list.channel = royalty_consolidation.channel 
                     AND royalty_consolidation.pay_status = 'O' 
                     AND royalty_consolidation.author_id = $author_id
+                    AND copyright_owner = $copyright_owner
                 GROUP BY channels_list.channel
                 ORDER BY channels_list.channel";
 
