@@ -2660,53 +2660,74 @@ class PustakapaperbackModel extends Model
     }
 
     public function submitBookshopOrders(array $post)
-    {
-        $db = \Config\Database::connect();
-        $num_of_books = isset($post['num_of_books']) ? (int)$post['num_of_books'] : 0;
-        $order_id = time(); // unique order ID
+{
+    $db = \Config\Database::connect();
+    $num_of_books = isset($post['num_of_books']) ? (int)$post['num_of_books'] : 0;
+    $order_id = time();
 
-        $insert_data = [
-            'bookshop_id' => $post['bookshop_id'] ?? null,
-            'order_id' => $order_id,
-            'order_date' => date('Y-m-d H:i:s'),
-            'preferred_transport' => $post['preferred_transport'] ?? null,
-            'preferred_transport_name' => $post['preferred_transport_name'] ?? null,
-            'transport_payment' => $post['transport_payment'] ?? null,
-            'ship_date' => date('Y-m-d H:i:s'),
-            'ship_address' => $post['ship_address'] ?? null,
-            'payment_type' => $post['payment_type'] ?? null,
-            'payment_status' => $post['payment_status'] ?? null,
-            'vendor_po_order_number' => $post['vendor_po_order_number'] ?? null
-        ];
+    $insert_data = [
+        'bookshop_id' => $post['bookshop_id'] ?? null,
+        'order_id' => $order_id,
+        'order_date' => date('Y-m-d H:i:s'),
+        'preferred_transport' => $post['preferred_transport'] ?? null,
+        'preferred_transport_name' => $post['preferred_transport_name'] ?? null,
+        'transport_payment' => $post['transport_payment'] ?? null,
+        'ship_date' => date('Y-m-d H:i:s'),
+        'ship_address' => $post['ship_address'] ?? null,
+        'payment_type' => $post['payment_type'] ?? null,
+        'payment_status' => $post['payment_status'] ?? null,
+        'vendor_po_order_number' => $post['vendor_po_order_number'] ?? null
+    ];
 
-        try {
-            // Insert main order
-            $db->table('pod_bookshop_order')->insert($insert_data);
+    try {
 
-            // Insert order details
-            for ($i = 1; $i <= $num_of_books; $i++) {
-                if (!isset($post['book_id' . $i])) continue;
+        $db->transStart(); // 
 
-                $data = [
-                    'bookshop_id' => $post['bookshop_id'],
-                    'order_id' => $order_id,
-                    'order_date' => date('Y-m-d H:i:s'),
-                    'book_id' => $post['book_id' . $i],
-                    'book_price' => $post['bk_inr' . $i],
-                    'discount' => $post['bk_dis' . $i],
-                    'quantity' => $post['bk_qty' . $i],
-                    'total_amount' => $post['tot_amt' . $i],
-                    'ship_status' => 0
-                ];
+        
+        $db->table('pod_bookshop_order')->insert($insert_data);
 
-                $db->table('pod_bookshop_order_details')->insert($data);
-            }
+        
+        for ($i = 1; $i <= $num_of_books; $i++) {
 
-            return ['status' => 1, 'message' => 'Order added successfully!'];
-        } catch (\Exception $e) {
-            return ['status' => 0, 'message' => 'Database error: ' . $e->getMessage()];
+            if (!isset($post['book_id' . $i])) continue;
+
+            $price    = (float) $post['bk_inr' . $i];
+            $qty      = (int) $post['bk_qty' . $i];
+            $discount = (float) ($post['bk_dis' . $i] ?? 0); // %
+
+           
+            $gross_amount     = $price * $qty;
+            $discount_amount  = ($gross_amount * $discount) / 100;
+            $final_amount     = $gross_amount - $discount_amount;
+
+            $data = [
+                'bookshop_id'   => $post['bookshop_id'],
+                'order_id'      => $order_id,
+                'order_date'    => date('Y-m-d H:i:s'),
+                'book_id'       => $post['book_id' . $i],
+                'book_price'    => $price,
+                'discount'      => $discount,
+                'quantity'      => $qty,
+                'total_amount'  => $final_amount,
+                'ship_status'   => 0
+            ];
+
+            $db->table('pod_bookshop_order_details')->insert($data);
         }
+
+        $db->transComplete(); 
+
+        if ($db->transStatus() === false) {
+            throw new \Exception('Transaction failed');
+        }
+
+        return ['status' => 1, 'message' => 'Order added successfully!'];
+
+    } catch (\Exception $e) {
+        return ['status' => 0, 'message' => 'Database error: ' . $e->getMessage()];
     }
+}
+
     
     public function bookshopProgressBooks()
     {

@@ -16,18 +16,21 @@
         selectedInput.value = updatedList;
     }
    function handleChannelChange(select) {
-    let wrapper = select.closest('.channel-wrapper');
-    let textBox = wrapper.querySelector('.channel-extra');
+    let wrapper     = select.closest('.channel-wrapper');
+    let textBox     = wrapper.querySelector('.channel-extra');
     let hiddenInput = wrapper.querySelector('input[name="sales_channel[]"]');
-    let channel = select.value;
+    let channel     = select.value;
 
-    if(channel === "Others"){
+    // Channels that need textbox
+    let needsText = ["Book Fair", "Others"];
+
+    if (needsText.includes(channel)) {
         textBox.classList.remove("d-none");
         textBox.value = "";
-        hiddenInput.value = "";
+        hiddenInput.value = channel;
 
-        textBox.oninput = function() {
-            hiddenInput.value = "Others - " + this.value;
+        textBox.oninput = function () {
+            hiddenInput.value = channel + " - " + this.value;
         };
     } else {
         textBox.classList.add("d-none");
@@ -99,10 +102,11 @@
             <option value="">Select Channel</option>
             <option value="Pustaka">Pustaka</option>
             <option value="Amazon">Amazon</option>
+            <option value="Book Fair">Book Fair</option>
             <option value="Others">Others</option>
         </select>
 
-        <!-- Extra textbox only for 'Others' -->
+        <!-- Extra textbox for Book Fair & Others -->
         <input type="text"
                class="form-control form-control-sm mt-2 d-none channel-extra"
                placeholder="Enter details">
@@ -111,6 +115,7 @@
         <input type="hidden" name="sales_channel[]" value="">
     </div>
 </td>
+
 
 
 </div>

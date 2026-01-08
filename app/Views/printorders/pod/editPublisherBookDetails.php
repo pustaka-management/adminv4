@@ -270,7 +270,8 @@
 
 
         <label class="mt-3">Shipping Address</label>
-       <textarea name="ship_address" id="ship_address" rows="5" class="form-control" style="color: black;"><?php echo $pod_publisher_book['ship_address']; ?></textarea>
+       <textarea name="ship_address" id="ship_address" rows="5" class="form-control" style="color: black;"><?= esc($pod_publisher_book['ship_address']) ?>
+</textarea>
 
     </div>
 </div>

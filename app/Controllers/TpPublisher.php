@@ -937,12 +937,14 @@ public function tppublisherOrderPost()
         $discount      = round($total_amount * 0.40, 2);
         $author_amount = $total_amount - $discount;
 
-        $channel_type = match (strtolower($channel)) {
-            'amazon'     => 'AMZ',
-            'book fair'  => 'BFR',
-            'pustaka'    => 'PUS',
-            'others'     => 'OTH',
-            default      => 'BFR',
+       $channel_clean = strtolower(trim($channel));
+
+        $channel_type = match (true) {
+            str_starts_with($channel_clean, 'amazon')    => 'AMZ',
+            str_starts_with($channel_clean, 'pustaka')   => 'PUS',
+            str_starts_with($channel_clean, 'book fair') => 'BFR',
+            str_starts_with($channel_clean, 'others')    => 'OTH',
+            default                                      => 'BFR',
         };
 
         // Insert into sales table

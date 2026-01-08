@@ -23,6 +23,10 @@
                 <i class="fas fa-file-excel me-1"></i> Download Excel
             </button>
 
+            <a href="<?= base_url('stock/allocatedbooks') ?>" class="btn btn-info btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Allocated
+            </a>
+
             <a href="<?= base_url('stock/bookfairdashboard') ?>" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i> Back
             </a>

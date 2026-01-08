@@ -80,6 +80,8 @@ $routes->group('stock', function($routes) {
     $routes->get('bookfairdashboard', 'Stock::bookfairDashboard');
     $routes->get('exportExcel', 'Stock::exportExcel');
     $routes->get('bookfairview/(:num)', 'Stock::BookfairView/$1');
+    $routes->get('allocatedbooks', 'Stock::allocatedBooks');
+    $routes->post('saveallocation', 'Stock::saveAllocation');
 
     
     //stock Derails for paperbackledgerbooks
@@ -257,6 +259,24 @@ $routes->group('sales', function($routes) {
     $routes->get('ebooksales', 'Sales::ebookSales');
     $routes->get('audiobooksales', 'Sales::audiobookSales');
     $routes->get('paperbacksales', 'Sales::paperbackSales');
+    $routes->get('ebookamazondetails', 'Sales::EbookAmazondetails');
+    $routes->get('ebookoverdrivedetails', 'Sales::EbookOverdrivedetails');
+    $routes->get('overdrivebooks', 'Sales::overdriveBooks');
+    $routes->get('overdriveauthors', 'Sales::overdriveAuthors');
+    $routes->get('overdrivebooktransactions/(:num)', 'Sales::overdriveBookTransactions/$1');
+    $routes->get('overdriveauthorbooks/(:num)', 'Sales::overdriveAuthorBooks/$1');
+    $routes->get('overdriveorders', 'Sales::overdriveOrders');
+    $routes->get('ebookscribddetails', 'Sales::EbookScribddetails');
+    $routes->get('scribdbooks', 'Sales::scribdBooks');
+    $routes->get('scribdbookdetails/(:num)', 'Sales::scribdBookDetails/$1');
+    $routes->get('ebookstoryteldetails', 'Sales::EbookStoryteldetails');
+   $routes->get('audibleaudiobookdetails', 'Sales::AudibleAudiobookDetails');
+   $routes->get('audiobookoverdrivedetails', 'Sales::AudiobookOverdriveDetails');
+   $routes->get('audiobookgoogledetails', 'Sales::audiobookGoogleDetails');
+   $routes->get('audiobookstoryteldetails', 'Sales::audiobookStorytelDetails');
+    $routes->get('youtubedetails', 'Sales::youtubeDetails');
+    $routes->get('kukufmdetails', 'Sales::kukuFMDetails');
+
 });
 //Sales dashboard
 $routes->group('dashboard', function($routes) {
@@ -268,6 +288,7 @@ $routes->group('dashboard', function($routes) {
     $routes->get('paperbacksales', 'Sales::paperbackSales');
     $routes->get('amazonpbkbookdetails/(:num)', 'Sales::amazonpbkbookdetails/$1');
     $routes->get('offlinesales', 'Sales::offlinesales');
+    $routes->get('bookshopsales', 'Sales::bookshopsales');
     
 });
 
@@ -733,5 +754,6 @@ $routes->group('prospectivemanagement', function($routes) {
     $routes->get('editbook/(:num)/(:num)', 'ProspectiveManagement::editBook/$1/$2');
     $routes->post('updatebook/(:num)/(:num)', 'ProspectiveManagement::updateBook/$1/$2');
      $routes->get('viewbook/(:num)/(:num)', 'ProspectiveManagement::viewBook/$1/$2');
+     $routes->get('hold', 'ProspectiveManagement::hold');
 
 });

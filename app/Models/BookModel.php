@@ -207,12 +207,12 @@ class BookModel extends Model
     if (!$map) return ['id' => null, 'name' => '-'];
 
     // Get author details
-    $authorQuery = $db->query("SELECT author_id, author_name FROM author_tbl WHERE author_id = ?", [$map['author_id']]);
+    $authorQuery = $db->query("SELECT author_id, author_name, copyright_owner FROM author_tbl WHERE author_id = ?", [$map['author_id']]);
     $author = $authorQuery->getRowArray();
 
     if ($author) {
         return [
-            'id'   => $author['author_id'],
+            'id'   => $author['copyright_owner'],
             'name' => $author['author_name']
         ];
     }

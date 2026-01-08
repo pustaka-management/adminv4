@@ -4,7 +4,7 @@
 <script>
 $(document).ready(function () {
 
-    // Toggle date fields based on radio buttons
+    // Toggle date fields
     function toggleDateFields() {
         if ($("input[name='email_sent_flag']:checked").val() == "1") {
             $("#emailSentDate").removeClass("d-none");
@@ -20,38 +20,48 @@ $(document).ready(function () {
             $("#initial_call_date").val("");
         }
     }
-
     $("input[name='email_sent_flag'], input[name='initial_call_flag']").change(toggleDateFields);
     toggleDateFields();
 
-    // Accept / Reject buttons (AJAX)
-    $(".actionBtn").click(function () {
-        let status = $(this).data("status");
-        let actionText = status == 1 ? "accept" : "deny";
+    // Accept / Reject / Hold buttons AJAX
+    // Accept / Reject / Hold buttons AJAX
+$(".actionBtn").click(function () {
+    let status = $(this).data("status");
+    let actionText = status == 1 ? "accept" : (status == 2 ? "deny" : "hold");
 
-        if (!confirm(`Are you sure you want to ${actionText} this prospect?`)) return;
+    if (!confirm(`Are you sure you want to ${actionText} this prospect?`)) return;
 
-        let formData = $("#prospectForm").serialize() + "&prospectors_status=" + status;
+    let formData = $("#prospectForm").serialize() + "&prospectors_status=" + status;
 
-        $.ajax({
-            url: "<?= base_url('prospectivemanagement/updateinprogress/' . $prospect['id']); ?>",
-            type: "POST",
-            data: formData,
-            dataType: "json",
-            success: function (response) {
-                alert(response.message);
-                if (response.success) {
+    $.ajax({
+        url: "<?= base_url('prospectivemanagement/updateinprogress/' . $prospect['id']); ?>",
+        type: "POST",
+        data: formData,
+        dataType: "json",
+        success: function (response) {
+            alert(response.message);
+
+            if (response.success) {
+                if (status == 1 || status == 2) {
+                    // Accept / Reject → redirect to Add Book
                     setTimeout(() => {
                         window.location.href = "<?= base_url('prospectivemanagement/addProspectBook/' . $prospect['id']); ?>";
                     }, 1000);
+                } else if (status == 3) {
+                    // Hold → redirect to Dashboard
+                    setTimeout(() => {
+                        window.location.href = "<?= base_url('prospectivemanagement/dashboard'); ?>";
+                    }, 1000);
                 }
-            },
-            error: function (xhr) {
-                alert("Server Error: " + xhr.statusText);
             }
-        });
+        },
+        error: function (xhr) {
+            alert("Server Error: " + xhr.statusText);
+        }
     });
-    
+});
+
+
 });
 </script>
 <?= $this->endSection(); ?>
@@ -178,24 +188,28 @@ $(document).ready(function () {
         <!-- Buttons -->
         <div class="text-center mt-4">
             <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
-                <!-- Update Prospect (normal POST) -->
+                <!-- Update Prospect -->
                 <button type="submit" class="btn btn-primary px-4">
                     <i class="fa fa-save me-2"></i> Update Prospect
                 </button>
 
-                <!-- Accept (AJAX) -->
+                <!-- Accept -->
                 <button type="button" class="btn btn-success actionBtn px-4" data-status="1">
                     <i class="fa fa-check me-2"></i> Accept & Add Book
                 </button>
 
-                <!-- Reject (AJAX) -->
+                <!-- Reject -->
                 <button type="button" class="btn btn-danger actionBtn px-4" data-status="2">
                     <i class="fa fa-times me-2"></i> Reject & Denied
+                </button>
+
+                <!-- Hold -->
+                <button type="button" class="btn btn-warning actionBtn px-4" data-status="3">
+                    <i class="fa fa-pause me-2"></i> Hold
                 </button>
             </div>
         </div>
 
     </form>
-
 </div>
 <?= $this->endSection(); ?>

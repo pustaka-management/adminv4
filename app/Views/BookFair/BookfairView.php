@@ -5,10 +5,6 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold">Bookfair Details</h4>
-
-        <a href="<?= base_url('adminv4/bookfairlist') ?>" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
     </div>
 
     <!-- BOOK INFO -->
