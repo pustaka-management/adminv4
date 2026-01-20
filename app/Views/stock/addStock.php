@@ -2,7 +2,8 @@
 
 <?= $this->section('content'); ?>
 
-        <div class="d-flex justify-content-end mb-2">
+       
+       <div class="d-flex justify-content-end mb-2">
             <a href="<?= base_url('stock/bulkupload') ?>" 
             class="btn btn-sm btn-warning radius-8">
                  Bulk Stock Upload

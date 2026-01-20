@@ -366,13 +366,14 @@ public function bookfair_allocated_books()
     ini_set('max_execution_time', 300);
     ini_set('memory_limit', '512M');
 
-    $file_name     = "Pondy_Bookfair_List.xlsx";
-    $bookfair_name = "Pondy-december2025";
-    $bookfair_id   = 29;
+    $file_name     = "Chennai2026-JaiSaiRam.xlsx";
+    $bookfair_name = "Chennai2026-JaiSaiRam";
+    $bookfair_id   = 30;
 
     $db = \Config\Database::connect();
 
-    $inputFileName = APPPATH . 'bookfair_reports/' . $file_name;
+    $inputFileName = WRITEPATH . 'uploads/BookfairReports/' . $file_name;
+
 
     if (!file_exists($inputFileName)) {
         return 'File not found: ' . $inputFileName;

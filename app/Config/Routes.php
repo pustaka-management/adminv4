@@ -51,6 +51,7 @@ $routes->match(['get', 'post'], 'book/amazonPaperback_excel_download', 'Download
 
 // Bookfair sales details
 $routes->get('bookfair/uploaditemwisesale', 'BookFairUpload::uploadItemwiseSale');
+$routes->get('bookfair/allocatedBooks', 'BookFairUpload::bookfair_allocated_books');
 
 // stock
 $routes->group('stock', function($routes) {

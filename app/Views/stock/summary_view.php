@@ -65,7 +65,7 @@ $(document).on("change", ".book-item .form-check-input", function() {
         </div>
 
 
-            <a href="<?= base_url('orders/uploadForm'); ?>" class="btn btn-outline-secondary btn-sm d-flex align-items-center shadow-sm">
+            <a href="<?= base_url('stock/bulkupload'); ?>" class="btn btn-outline-secondary btn-sm d-flex align-items-center shadow-sm">
                 <iconify-icon icon="mdi:arrow-left" class="me-1 fs-5"></iconify-icon> Back
             </a>
         </div>
@@ -107,7 +107,7 @@ $(document).on("change", ".book-item .form-check-input", function() {
                             <th>Excel Title</th>
                             <th>Database Title (Editable)</th>
                             <th>Quantity</th>
-                            <th>Discount</th>
+                           
                         </tr>
                     </thead>
                     <tbody>
@@ -140,13 +140,7 @@ $(document).on("change", ".book-item .form-check-input", function() {
                                     style="width: 80px;">
                             </td>
 
-                            <td>
-                                <input type="text"
-                                    name="discount[<?= esc($m['book_id']) ?>]"
-                                    value="<?= esc($m['discount']) ?>"
-                                    class="form-control form-control-sm"
-                                    style="width: 80px;">
-                            </td>
+                           
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -174,7 +168,9 @@ $(document).on("change", ".book-item .form-check-input", function() {
         <!-- Collapsed Section -->
         <div id="matchedBody" style="display:none; margin-top:10px;">
 
-            <?php if (!empty($matched)): ?>
+            <?php    session()->set('accept_books', $matched);
+            if (!empty($matched)): ?>
+                
             <table class="table table-bordered table-striped table-hover zero-pagination px-4">
                 <thead class="bg-base">
                     <tr>
@@ -182,8 +178,7 @@ $(document).on("change", ".book-item .form-check-input", function() {
                         <th>Book ID</th>
                         <th>Title</th>
                         <th>Quantity</th>
-                        <th>Discount</th>
-                        <th>Price</th>
+                       
                     </tr>
                 </thead>
 
@@ -196,8 +191,6 @@ $(document).on("change", ".book-item .form-check-input", function() {
                         <td><?= esc($b['book_id']) ?></td>
                         <td><?= esc($b['title']) ?></td>
                         <td><?= esc($b['quantity']) ?></td>
-                        <td><?= esc($b['discount']) ?></td>
-                        <td><?= esc($b['price']) ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -217,11 +210,12 @@ $(document).on("change", ".book-item .form-check-input", function() {
             </button>
         </form>
 
-         <form action="<?= base_url('stock/BulkbookshopReturn') ?>" method="post" class="px-4 pb-4">
+        
+         <!-- <form action="<?= base_url('stock/BulkbookshopReturn') ?>" method="post" class="px-4 pb-4">
             <button type="submit" class="btn btn-primary mt-3">
                 Return bookshop Stock
             </button>
-        </form>
+        </form> -->
         <?php endif; ?>
         </div>
 

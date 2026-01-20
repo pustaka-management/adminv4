@@ -491,6 +491,8 @@ class Stock extends BaseController
             'print'=>$this->StockModel->otherdistributionbooksstatus(),    
         ];
 
+        // echo "<pre>";
+        // print_r($data);
         return view('stock/otherdistributionbooksstatus', $data);
     }
      //free book Initiate Print
@@ -598,41 +600,85 @@ class Stock extends BaseController
 
     public function uploadProcess()
     {
-        // echo "<pre>";
-        // print_r($_POST);
         helper(['form', 'url']);
 
-        $file = $this->request->getFile('excel_file');
-        if (!$file->isValid()) {
-            return redirect()->back()->with('error', 'Please upload a valid Excel file.');
+        $uploadType = $this->request->getPost('upload_type');
+        $rows = [];
+
+        /* =======================
+        * 1. READ INPUT DATA
+        * ======================= */
+        if ($uploadType === 'excel') {
+
+            $file = $this->request->getFile('excel_file');
+            if (!$file || !$file->isValid()) {
+                return redirect()->back()->with('error', 'Please upload a valid Excel file.');
+            }
+
+            $newName = $file->getRandomName();
+            $file->move(WRITEPATH . 'uploads', $newName);
+            $filePath = WRITEPATH . 'uploads/' . $newName;
+
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray(null, true, true, true);
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Error reading Excel: ' . $e->getMessage());
+            }
+
+        } elseif ($uploadType === 'manual') {
+
+            $manualStock = trim($this->request->getPost('manual_stock'));
+            if (empty($manualStock)) {
+                return redirect()->back()->with('error', 'Manual stock cannot be empty.');
+            }
+
+            /*
+            manual_stock example:
+            2-2,7839-1
+            */
+
+            $pairs = explode(',', $manualStock);
+
+            foreach ($pairs as $pair) {
+                if (!str_contains($pair, '-')) continue;
+
+                [$bookId, $qty] = array_map('trim', explode('-', $pair));
+
+                if (!is_numeric($bookId) || !is_numeric($qty)) continue;
+
+                $rows[] = [
+                    'A' => $bookId,
+                    'B' => '',           // title ignored
+                    'C' => (int) $qty,
+                    'D' => 0             // default discount
+                ];
+            }
+        } else {
+            return redirect()->back()->with('error', 'Invalid upload type.');
         }
 
-        $newName = $file->getRandomName();
-        $file->move(WRITEPATH . 'uploads', $newName);
-        $filePath = WRITEPATH . 'uploads/' . $newName;
-
-        try {
-            $spreadsheet = IOFactory::load($filePath);
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray(null, true, true, true);
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error reading Excel: ' . $e->getMessage());
-        }
-
+        /* =======================
+        * 2. COMMON PROCESSING
+        * ======================= */
         $matched = [];
         $mismatched = [];
 
         foreach ($rows as $i => $row) {
-            if ($i == 1) continue; // Skip header
 
-            $book_id = trim($row['A'] ?? '');
+            // Skip header ONLY for Excel
+            if ($uploadType === 'excel' && $i == 1) {
+                continue;
+            }
+
+            $book_id     = trim($row['A'] ?? '');
             $excel_title = trim($row['B'] ?? '');
-            $quantity = (int) ($row['C'] ?? 0);
-            $discount = (float) ($row['D'] ?? 0);
+            $quantity    = (int) ($row['C'] ?? 0);
+            $discount    = (float) ($row['D'] ?? 0);
 
-            if (empty($book_id)) continue;
+            if (empty($book_id) || $quantity <= 0) continue;
 
-            // Get details from database
             $dbBook = $this->db->table('book_tbl')
                 ->where('book_id', $book_id)
                 ->get()
@@ -641,50 +687,49 @@ class Stock extends BaseController
             if ($dbBook) {
                 $db_title = trim($dbBook['book_title']);
 
-                if (strcasecmp($excel_title, $db_title) === 0) {
-                    //  Matched
+                // Manual → skip title check
+                if ($uploadType === 'manual' || strcasecmp($excel_title, $db_title) === 0) {
+
                     $matched[] = [
-                        'book_id' => $book_id,
-                        'title' => $db_title,
+                        'book_id'  => $book_id,
+                        'title'    => $db_title,
                         'quantity' => $quantity,
-                        'discount' => $discount,
-                        'price' => $dbBook['paper_back_inr'] ?? 0,
                     ];
+
                 } else {
-                    //  Mismatch
                     $mismatched[] = [
-                        'book_id' => $book_id,
+                        'book_id'     => $book_id,
                         'excel_title' => $excel_title,
-                        'db_title' => $db_title,
-                        'quantity' => $quantity,
-                        'discount' => $discount
+                        'db_title'    => $db_title,
+                        'quantity'    => $quantity,
                     ];
                 }
             } else {
                 $mismatched[] = [
-                    'book_id' => $book_id,
+                    'book_id'     => $book_id,
                     'excel_title' => $excel_title,
-                    'db_title' => 'Not Found in DB',
-                    'quantity' => $quantity,
-                    'discount' => $discount
+                    'db_title'    => 'Not Found in DB',
+                    'quantity'    => $quantity,
                 ];
             }
         }
 
-      
-       session()->set('matched_books', $matched);
-       session()->set('mismatched_books', $mismatched);
+        /* =======================
+        * 3. STORE & RETURN VIEW
+        * ======================= */
 
-        $totalTitles = count($matched);
+        session()->set('matched_books', $matched);
+        session()->set('mismatched_books', $mismatched);
 
         return view('stock/summary_view', [
-            'matched' => $matched,
-            'mismatched' => $mismatched,
-            'totalTitles'=> $totalTitles,
-            'title' => '',
-            'subTitle' => '',
+            'matched'     => $matched,
+            'mismatched'  => $mismatched,
+            'totalTitles' => count($matched),
+            'title'       => '',
+            'subTitle'    => '',
         ]);
     }
+
 
      public function updateAcceptBooks()
     {
@@ -699,15 +744,6 @@ class Stock extends BaseController
 
         if (!empty($selected)) {
             foreach ($selected as $bookId) {
-
-                $query = $this->db->table('book_tbl')
-                        ->select('paper_back_inr')
-                        ->where('book_id', $bookId)
-                        ->get()
-                        ->getRowArray();
-
-                $dbPrice = $query['paper_back_inr'] ?? 0;
-
                 // Find that mismatched book
                 foreach ($mismatched as $key => $book) {
                     if ($book['book_id'] == $bookId) {
@@ -716,8 +752,6 @@ class Stock extends BaseController
                             'book_id'  => $book['book_id'],
                             'title'    => $titles[$bookId] ?? $book['db_title'],
                             'quantity' => $quantities[$bookId] ?? $book['quantity'],
-                            'discount' => $discounts[$bookId] ?? $book['discount'],
-                            'price'    => $dbPrice,
                         ];
 
                         // Remove from mismatched
@@ -729,11 +763,13 @@ class Stock extends BaseController
         }
 
         // Save updated data in session
-        session()->set('accept_books', $matched);
+
         session()->set('mismatched_books', $mismatched);
 
         $totalTitles = count($matched);
+     
         // Reload the same view
+       
         return view('stock/summary_view', [
             'matched' => $matched,
             'mismatched' => $mismatched,
@@ -747,15 +783,27 @@ class Stock extends BaseController
     {
        
         $acceptBooks = session()->get('accept_books');
+        
         // echo "<pre>";
+        //         print_r(session()->get());
         // print_r($acceptBooks);
-         
+        //       echo '<pre>';
+
         $result = $this->StockModel->saveBulkStock($acceptBooks);
 
         // // Set success flash message
         session()->setFlashdata('success', 
             'bulk Stock saved successfully!! '
         );
+
+        // CLEAR SESSION AFTER FINAL SAVE
+        session()->remove([
+            'matched_books',
+            'mismatched_books',
+            'upload_type',
+            'accept_books'
+        ]);
+
 
         // Redirect back to upload form
         return redirect()->to(base_url('stock/bulkupload'));

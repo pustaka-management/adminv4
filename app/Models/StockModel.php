@@ -846,12 +846,22 @@ class StockModel extends Model
         $data = [];
 
         // Not Started
-        $sql = "SELECT paperback_other_distribution.*,book_tbl.book_title,author_tbl.author_name
-                FROM paperback_other_distribution,book_tbl,author_tbl
-                WHERE author_tbl.author_id = book_tbl.author_name
-                AND paperback_other_distribution.book_id = book_tbl.book_id
-                AND paperback_other_distribution.status = 0
-                ORDER BY paperback_other_distribution.order_date ASC";
+        $sql = "SELECT 
+                    pod.*,
+                    bt.book_title,
+                    at.author_name,
+                    bt.url_name,
+                    ip.re_completed_flag,
+                    ip.rework_flag
+                FROM paperback_other_distribution AS pod
+                JOIN book_tbl AS bt 
+                    ON pod.book_id = bt.book_id
+                JOIN author_tbl AS at 
+                    ON at.author_id = bt.author_name
+                LEFT JOIN indesign_processing AS ip 
+                    ON pod.book_id = ip.book_id
+                WHERE pod.status = 0
+                ORDER BY pod.order_date ASC";
         $query = $db->query($sql);
         $data['book_not_start'] = $query->getResultArray();
 

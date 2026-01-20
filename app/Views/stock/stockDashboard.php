@@ -11,6 +11,12 @@
                 Add Stock
             </span>
         </a>
+        
+            <a href="<?= base_url('stock/bulkupload') ?>" 
+            class="badge text-sm fw-semibold bg-warning-600 px-20 py-9 radius-4 text-white btn-sm ">
+                 Bulk Stock Upload
+            </a>
+
         <a href="<?= base_url('stock/otherdistributionbooksstatus'); ?>">
             <span class="badge text-sm fw-semibold bg-info-600 px-20 py-9 radius-4 text-white">Other Distribution</span>
         </a>
