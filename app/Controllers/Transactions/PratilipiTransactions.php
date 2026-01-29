@@ -11,8 +11,10 @@ class PratilipiTransactions extends BaseController
 {
     public function UploadTransactions()
     {
-        $file_name = "pratilipi-Q3.xlsx";
+        $file_name = "Q4_2025.xlsx";
         $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'transactions' . DIRECTORY_SEPARATOR . 'pratilipi_reports' . DIRECTORY_SEPARATOR . $file_name;
+
+        $transaction_date = "2025-12-31";
 
         if (!file_exists($inputFileName)) {
             return $this->response->setJSON([
@@ -21,8 +23,7 @@ class PratilipiTransactions extends BaseController
             ]);
         }
 
-        $transaction_date = "2025-09-30";
-
+     
         try {
             $spreadsheet = IOFactory::load($inputFileName);
             $worksheet = $spreadsheet->getActiveSheet();
@@ -88,7 +89,7 @@ class PratilipiTransactions extends BaseController
                 $all_data[] = $insert_data;
 
                 // Uncomment if you want to insert
-                $db->table('pratilipi_transactions')->insert($insert_data);
+                // $db->table('pratilipi_transactions')->insert($insert_data);
             }
 
             return $this->response->setJSON([

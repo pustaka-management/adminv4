@@ -660,6 +660,8 @@ $routes->group('upload', function($routes) {
     $routes->get('overdriveaudiobooks', 'UploadExcel\Overdrive::uploadAudiobooks');
     $routes->get('amazonebooks', 'UploadExcel\Amazon::uploadEBooks');
     $routes->get('amazonpaperbacks', 'UploadExcel\Amazon::uploadPaperbacks');
+    $routes->get('googlebooks', 'UploadExcel\Google::Uploadbooks');
+    $routes->get('audible', 'UploadExcel\Audible::Uploadbooks');
 });
 
 //author

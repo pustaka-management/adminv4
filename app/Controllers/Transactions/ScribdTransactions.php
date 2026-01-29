@@ -20,7 +20,7 @@ class ScribdTransactions extends BaseController
     {
         $bk_converted_inr = 0;
         $converted_inr = 0;
-        $file_name = "Pustaka_scribd_Sep 2025.xlsx";
+        $file_name = "Pustaka_scribd_Dec 2025.xlsx";
         $exchange_rate_value = 70;
         $skipped_rows = [];
 

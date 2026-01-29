@@ -366,9 +366,9 @@ public function bookfair_allocated_books()
     ini_set('max_execution_time', 300);
     ini_set('memory_limit', '512M');
 
-    $file_name     = "Chennai2026-JaiSaiRam.xlsx";
-    $bookfair_name = "Chennai2026-JaiSaiRam";
-    $bookfair_id   = 30;
+    $file_name     = "Tiruppur_Success_Jan-Feb2026.xlsx";
+    $bookfair_name = "Tiruppur_Success_Feb2026";
+    $bookfair_id   = 39;
 
     $db = \Config\Database::connect();
 

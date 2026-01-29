@@ -12,8 +12,8 @@ class StorytelTransactions extends BaseController
 {
     public function EbookTransactions()
     {
-        $file_name = "storytel_Q3.xlsx";
-        $transaction_date = '2025-09-30';
+        $file_name = "Q4_2025_royalty_report.xlsx";
+        $transaction_date = '2025-12-31';
         $exchange_rate = 7.5;
         $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR .'transactions' . DIRECTORY_SEPARATOR .  'storytel_reports' . DIRECTORY_SEPARATOR . $file_name;
 
@@ -135,8 +135,8 @@ class StorytelTransactions extends BaseController
 
        public function AudiobookTransactions()
     {
-        $file_name = "storytel_Q3.xlsx";
-        $transaction_date = '2025-09-30';
+        $file_name = "Q4_2025_royalty_report.xlsx";
+        $transaction_date = '2025-12-31';
         $exchange_rate = 7.1;
         $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'transactions' . DIRECTORY_SEPARATOR . 'storytel_reports' . DIRECTORY_SEPARATOR . $file_name;
 
@@ -240,7 +240,7 @@ class StorytelTransactions extends BaseController
 
                 echo "<pre>"; print_r($insert_data); echo "<br/>";
                 // Uncomment below to insert into DB:
-                $db->table('storytel_transactions')->insert($insert_data);
+                // $db->table('storytel_transactions')->insert($insert_data);
             }
         } catch (\Throwable $e) {
             log_message('error', $e->getMessage());
