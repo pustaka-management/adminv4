@@ -209,17 +209,18 @@ public function uploadItemwiseSale()
 
 
 
-// This part for mechaine generate  bookfair sale report update purpose
+// This part for machine generate  bookfair sale report update purpose
+// example :- contain this fields like (Item Code,Item,Quantity,GrossAmt,SDAmt,CDAmt,Taxable,TaxAmt,CessAmt,Total,Profit,PP,itemid)
 
 public function uploadItemwiseSaleReport()
 {
     ini_set('max_execution_time', 1200); // Increase timeout
     ini_set('memory_limit', '512M');    // Increase memory
 
-    $fileName = "CBE-BookFair-Final.xlsx";
-    $bookfairName = "CoimbatoreJuly2025";
-    $bookfairStartDate = "2024-07-18 00:00:00";
-    $bookfairEndDate = "2024-07-27 00:00:00";
+    $fileName = "ChennaiBF2026-final.xlsx";
+    $bookfairName = "Chennai2026-Pustaka";
+    $bookfairStartDate = "2025-01-08 00:00:00";
+    $bookfairEndDate = "2025-01-21 00:00:00";
 
     $inputFileName = WRITEPATH . 'uploads/BookfairReports/' . $fileName;
 
@@ -238,7 +239,7 @@ public function uploadItemwiseSaleReport()
         $skippedRows = [];
 
         foreach ($data as $rowIndex => $row) {
-            if ($rowIndex <= 2) continue;
+            if ($rowIndex <= 1) continue;
 
             $isbn     = trim((string) ($row['A'] ?? ''));
             $item     = $row['B'] ?? '';
@@ -299,10 +300,23 @@ public function uploadItemwiseSaleReport()
                     $authorId = $book['author_name'];
                     $ownerId = $book['paper_back_copyright_owner'];
 
-                    $db->query("UPDATE paperback_stock SET quantity = quantity - ?, bookfair = 0 WHERE book_id = ?", [$quantity, $bookId]);
+                    $db->query(
+                            "UPDATE paperback_stock 
+                            SET 
+                                stock_in_hand = stock_in_hand - ?, 
+                                quantity = quantity - ?, 
+                                bookfair9 = 0 
+                            WHERE book_id = ?",
+                            [$quantity, $quantity, $bookId]
+                        );
 
-                    $stockInHand = $db->table('paperback_stock')->select('quantity')->where('book_id', $bookId)->get()->getRow('quantity') ?? 0;
-                    $db->query("UPDATE paperback_stock SET stock_in_hand = ? WHERE book_id = ?", [$stockInHand, $bookId]);
+
+                    // $db->query("UPDATE paperback_stock SET stock_in_hand = stock_in_hand - ?, bookfair = 0 WHERE book_id = ?", [$quantity, $bookId]);
+
+                    // $db->query("UPDATE paperback_stock SET quantity = quantity - ?, bookfair = 0 WHERE book_id = ?", [$quantity, $bookId]);
+
+                    // $stockInHand = $db->table('paperback_stock')->select('quantity')->where('book_id', $bookId)->get()->getRow('quantity') ?? 0;
+                    // $db->query("UPDATE paperback_stock SET stock_in_hand = ? WHERE book_id = ?", [$stockInHand, $bookId]);
 
                     $ledgerBatch[] = [
                         'book_id' => $bookId,
@@ -366,9 +380,9 @@ public function bookfair_allocated_books()
     ini_set('max_execution_time', 300);
     ini_set('memory_limit', '512M');
 
-    $file_name     = "Tiruppur_Success_Jan-Feb2026.xlsx";
-    $bookfair_name = "Tiruppur_Success_Feb2026";
-    $bookfair_id   = 39;
+    $file_name     = "library-packed-books.xlsx";
+    $bookfair_name = "Trichy-library-packed-books";
+    $bookfair_id   = 41;
 
     $db = \Config\Database::connect();
 
@@ -406,7 +420,7 @@ public function bookfair_allocated_books()
             }
 
             $book_id  = trim((string) ($row[$column_name[0]] ?? ''));
-            $quantity = trim((string) ($row[$column_name[8]] ?? 0));
+            $quantity = trim((string) ($row[$column_name[1]] ?? 0));
 
             $book_id = (int) $book_id;
 
@@ -449,7 +463,7 @@ public function bookfair_allocated_books()
                 'bookfair_id'   => $bookfair_id,
             ];
 
-            $db->table('bookfair_allocated_books')->insert($insert_data);
+            // $db->table('bookfair_allocated_books')->insert($insert_data);
             $inserted++;
         }
 

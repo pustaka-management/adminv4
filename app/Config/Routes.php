@@ -50,7 +50,7 @@ $routes->match(['get', 'post'], 'book/amazonPaperback_excel_download', 'Download
 
 
 // Bookfair sales details
-$routes->get('bookfair/uploaditemwisesale', 'BookFairUpload::uploadItemwiseSale');
+$routes->get('bookfair/uploaditemwisesale', 'BookFairUpload::uploadItemwiseSaleReport');
 $routes->get('bookfair/allocatedBooks', 'BookFairUpload::bookfair_allocated_books');
 
 // stock
@@ -249,7 +249,7 @@ $routes->get('royalty/download_bank_excel', 'DownloadExcel\RoyaltyExcel::Downloa
 
 $routes->group('bookId', function ($routes) {
     $routes->get('processBookExcel', 'DownloadExcel\BookIdExcel::processBookExcel');
-    $routes->post('uploadExcel', 'DownloadExcel\BookIdExcel::uploadExcel'); // opti
+    $routes->get('processTamilBookExcel', 'DownloadExcel\BookIdExcel::processTamilBookExcel'); // opti
 });
 
 
