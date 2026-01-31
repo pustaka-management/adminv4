@@ -163,11 +163,17 @@ class Author extends BaseController
         $data['channel_wise'] = $this->authorModel->authorWiseRoyalty($author_id);
         $data['channel_chart'] = $this->authorModel->channelWiseChart($author_id);
         $data['author'] = $this->authorModel->royaltySettlement($author_id);
+        $data['settlements'] = $this->authorModel->authorRoyaltySettlementDetails($author_id);
+        $data['list_details'] = $this->authorModel->authorSettlementList($author_id);
         $data['bookwise'] = $this->authorModel->authorBookroyaltyDetails($author_id);
         $data['pending'] = $this->authorModel->authorPendings($author_id);
-
+    
+        // echo "<pre>";
+        // print_r($data['list_details']);
+        
         return view('author/authorDetails', $data);
     }
+
     public function authorpustakadetails()
     {
         $data['title'] = '';

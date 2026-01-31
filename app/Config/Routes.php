@@ -432,6 +432,12 @@ $routes->group('paperback', function($routes){
     $routes->post('flipkartmarkshipped', 'Paperback::flipkartmarkshipped');
     $routes->post('flipkartmarkcancel', 'Paperback::flipkartmarkcancel');
     $routes->post('flipkartmarkreturn', 'Paperback::flipkartmarkreturn');
+
+    //bookfair sale or return
+    $routes->get('bookfairsaleorreturnview','Paperback::bookfairsaleorreturnview');
+    $routes->get('bookfairdetailsview/(:num)','Paperback::bookfairdetailsview/$1');
+    $routes->get('ship/(:num)', 'Paperback::ship/$1');
+
 });
 
 //book//
@@ -697,6 +703,7 @@ $routes->group('author', function($routes) {
     $routes->match(['get', 'post'], 'addauthorcopyrightdetails/(:num)', 'Author::addauthorcopyrightdetails/$1');
     $routes->post('saveauthorcopyrightdetails','Author::saveauthorcopyrightdetails');
     $routes->post('addauthornamelanguagepost','Author::addauthornamelanguagepost');
+
     //activate//
     $routes->get('activateauthordetails','Author::activateauthordetails');
     $routes->get('activateauthordetails/(:num)','Author::activateauthordetails/$1');
@@ -717,6 +724,11 @@ $routes->group('planauthor', function($routes) {
     $routes->get('addauthorform', 'PlanAuthor::addAuthorForm');
     $routes->post('saveauthor', 'PlanAuthor::saveAuthor');
     $routes->get('planauthor/edit/(:num)', 'PlanAuthor::editAuthor/$1');
+});
+
+//masterpage
+$routes->group('masterpage', function($routes) {
+    $routes->get('dashboard', 'MasterPage::dashboard');
 });
 
 //prospectivemanagement
@@ -749,11 +761,12 @@ $routes->group('prospectivemanagement', function($routes) {
     $routes->post('savePayment/(:num)', 'ProspectiveManagement::savePayment/$1');
 
     $routes->get('addbook', 'ProspectiveManagement::addBook');
-   $routes->get('addProspectBook/(:num)', 'ProspectiveManagement::addProspectBook/$1');
+    $routes->get('addProspectBook/(:num)', 'ProspectiveManagement::addProspectBook/$1');
     $routes->post('savebookdetails', 'ProspectiveManagement::saveBookDetails');
     $routes->get('editbook/(:num)/(:num)', 'ProspectiveManagement::editBook/$1/$2');
     $routes->post('updatebook/(:num)/(:num)', 'ProspectiveManagement::updateBook/$1/$2');
-     $routes->get('viewbook/(:num)/(:num)', 'ProspectiveManagement::viewBook/$1/$2');
-     $routes->get('hold', 'ProspectiveManagement::hold');
+    $routes->get('viewbook/(:num)/(:num)', 'ProspectiveManagement::viewBook/$1/$2');
+    $routes->get('hold', 'ProspectiveManagement::hold');
+
 
 });

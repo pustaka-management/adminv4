@@ -1175,6 +1175,58 @@ class SalesModel extends Model
 		$top_selling_query = $this->db->query($top_selling_sql);
 		$data['return'] = $top_selling_query->getResultArray();
 
+        $top_genre_sql="SELECT 
+                            genre_details_tbl.genre_id,
+                            genre_details_tbl.genre_name,
+                            COUNT(amazon_paperback_orders.book_id) AS total_sales
+                        FROM amazon_paperback_orders
+                        JOIN book_tbl
+                            ON book_tbl.book_id = amazon_paperback_orders.book_id
+                        JOIN genre_details_tbl
+                            ON genre_details_tbl.genre_id = book_tbl.genre_id
+                        WHERE amazon_paperback_orders.ship_status = 1
+                        GROUP BY 
+                            genre_details_tbl.genre_id,
+                            genre_details_tbl.genre_name
+                        ORDER BY total_sales DESC
+                        LIMIT 10";
+        $top_genre_query = $this->db->query($top_genre_sql);
+        $data['top_genres'] = $top_genre_query->getResultArray();
+
+        $top_author_sql="SELECT
+                            author_tbl.author_id,
+                            author_tbl.author_name,
+                            COUNT(distinct(amazon_paperback_transactions.order_id)) as total_orders,
+                            SUM(amazon_paperback_transactions.total_earnings) AS total_revenue
+                        FROM amazon_paperback_transactions
+                        JOIN book_tbl 
+                            ON book_tbl.book_id = amazon_paperback_transactions.sku
+                        JOIN author_tbl 
+                            ON author_tbl.author_id = book_tbl.author_name
+                        GROUP BY
+                            author_tbl.author_id,
+                            author_tbl.author_name
+                        ORDER BY total_revenue DESC
+                        LIMIT 10";
+        $top_author_query = $this->db->query($top_author_sql);
+        $data['top_authors'] = $top_author_query->getResultArray();
+
+        $top_language_sql="SELECT 
+                                language_tbl.language_name,
+                                COUNT(distinct(amazon_paperback_transactions.order_id)) AS order_count
+                            FROM 
+                                amazon_paperback_transactions
+                            JOIN
+                                book_tbl 
+                                    ON book_tbl.book_id = amazon_paperback_transactions.sku
+                            JOIN
+                                language_tbl 
+                                    ON language_tbl.language_id = book_tbl.language
+                            GROUP BY 
+                                language_tbl.language_name";
+        $top_language_query = $this->db->query($top_language_sql);
+        $data['top_languages'] = $top_language_query->getResultArray();
+
 		return $data;
 	}
     public function amazonPaperbackRevenueDetails()
