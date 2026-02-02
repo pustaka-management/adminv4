@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\PustakapaperbackModel;
 use App\Models\PodModel;
+use App\Models\PaperbackModel;
 
 
 
@@ -11,11 +12,13 @@ class Paperback extends BaseController
 {
     protected $PustakapaperbackModel;
     protected $PodModel;
+    protected $PaperbackModel;
 
     public function __construct()
     {
         $this->PustakapaperbackModel = new PustakapaperbackModel();
         $this->podModel = new PodModel();
+        $this->PaperbackModel = new PaperbackModel();
     }
 
     public function OrdersDashboard(){
@@ -191,6 +194,8 @@ class Paperback extends BaseController
         $customer_name   = $this->request->getPost('customer_name');
         $address         = $this->request->getPost('address');
         $mobile_no       = $this->request->getPost('mobile_no');
+        $email           = $this->request->getPost('email');
+        $remarks         = $this->request->getPost('remarks');
         $city            = $this->request->getPost('city');
 
         $book_ids  = [];
@@ -218,6 +223,9 @@ class Paperback extends BaseController
         $data['address']         = $address;
         $data['mobile_no']       = $mobile_no;
         $data['city']            = $city;
+        $data['email']   = $email;
+        $data['remarks'] = $remarks;
+
         $data['title'] = '';
         $data['subTitle'] = '';
 
@@ -1095,6 +1103,40 @@ class Paperback extends BaseController
         $data['subTitle'] = '';
         return view('printorders/flipkart/orderDetailsView', $data);
     }
+    public function bookfairsaleorreturnview()
+    {
+        $data['bookfair_sales'] = $this->PaperbackModel->getBookfairSalesDetails();
+        $data['title'] = '';
+        $data['subTitle'] = '';
 
+        return view('printorders/bookfair/bookfairSaleOrReturnView', $data);
+    }
+
+    public function bookfairdetailsview($order_id)
+    {
+        $data['order_id'] = $order_id;
+        $data['bookfair_details'] = $this->PaperbackModel->getBookFairdetails($order_id);
+        $data['title'] = '';
+        $data['subTitle'] = '';
+
+        return view('printorders/bookfair/bookfairDetailsView', $data);
+
+    }
+    public function ship($order_id)
+    {
+        $model = new PaperbackModel();
+
+        $result = $model->shipBookfairOrder($order_id);
+
+        if ($result) {
+            return redirect()
+                ->to(base_url('paperback/bookfairsaleorreturnview'))
+                ->with('success', 'Order shipped successfully');
+        } else {
+            return redirect()
+                ->back()
+                ->with('error', 'Order shipping failed');
+        }
+    }
     
 }

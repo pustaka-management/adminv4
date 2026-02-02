@@ -996,4 +996,135 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
 
         return $result;
     }
+    public function getBookfairSalesDetails()
+    {
+        $db = \Config\Database::connect(); 
+        
+        $sql ="SELECT 
+                    pod_bookshop.bookshop_name,
+                    bookfair_combo_pack.pack_name,
+                    bookfair_sale_or_return_orders.order_id,
+                    (LENGTH(bookfair_combo_pack.book_ids) 
+                    - LENGTH(REPLACE(bookfair_combo_pack.book_ids, ',', '')) + 1) 
+                        AS no_of_titles,
+                    bookfair_combo_pack.default_value AS quantity_per_title,
+                    (LENGTH(bookfair_combo_pack.book_ids) 
+                    - LENGTH(REPLACE(bookfair_combo_pack.book_ids, ',', '')) + 1)
+                        * bookfair_combo_pack.default_value AS total_quantity,
+                    DATE(bookfair_sale_or_return_orders.sending_date) AS sending_date
+                FROM 
+                    pustaka.bookfair_sale_or_return_orders
+                JOIN
+                    bookfair_combo_pack ON bookfair_combo_pack.combo_id = bookfair_sale_or_return_orders.combo_id
+                JOIN 
+                    pod_bookshop ON pod_bookshop.bookshop_id = bookfair_sale_or_return_orders.bookshop_id";
+
+        $query = $db->query($sql);
+        $data['bookfair_list'] = $query->getResultArray();
+        return $data;
+    }
+    public function getBookFairdetails($order_id)
+    {
+        $db = \Config\Database::connect(); 
+
+        // Bookfair basic details
+        $sql = "SELECT 
+                    bookfair_sale_or_return_orders.book_fair_name,
+                    bookfair_sale_or_return_orders.preferred_transport_name,
+                    pod_bookshop.contact_person_name,
+                    pod_bookshop.mobile,
+                    pod_bookshop.address
+                FROM 
+                    bookfair_sale_or_return_orders
+                JOIN 
+                    pod_bookshop 
+                    ON pod_bookshop.bookshop_id = bookfair_sale_or_return_orders.bookshop_id
+                WHERE
+                     bookfair_sale_or_return_orders.order_id = ?";
+
+        $query = $db->query($sql, [$order_id]);
+        $data['bookfair'] = $query->getResultArray();
+
+        // Combo details
+        $sql1 = "SELECT 
+                    bookfair_combo_pack.pack_name,
+                    bookfair_sale_or_return_orders.sending_date,
+                    bookfair_sale_or_return_orders.preferred_transport_name,
+                    bookfair_sale_or_return_orders.remark
+                FROM 
+                    bookfair_sale_or_return_orders
+                JOIN
+                    bookfair_combo_pack 
+                    ON bookfair_combo_pack.combo_id = bookfair_sale_or_return_orders.combo_id
+                WHERE 
+                     bookfair_sale_or_return_orders.order_id = ?";
+
+        $query1 = $db->query($sql1, [$order_id]);
+        $data['bookfair_combo'] = $query1->getResultArray();
+
+        $sql2="SELECT  
+                    bookfair_sale_or_return_order_details.id,
+                    bookfair_sale_or_return_orders.order_id,
+                    bookfair_sale_or_return_order_details.book_id,
+                    book_tbl.book_title,
+                    author_tbl.author_name,
+                    language_tbl.language_name,
+                    bookfair_sale_or_return_order_details.send_qty,
+                    bookfair_sale_or_return_order_details.book_price,
+                    bookfair_sale_or_return_order_details.sending_date
+                FROM
+                    bookfair_sale_or_return_order_details
+                JOIN
+                    bookfair_sale_or_return_orders
+                    ON bookfair_sale_or_return_orders.order_id = bookfair_sale_or_return_order_details.order_id
+                JOIN
+                    book_tbl
+                    ON book_tbl.book_id = bookfair_sale_or_return_order_details.book_id
+                JOIN
+                    author_tbl
+                    ON author_tbl.author_id = book_tbl.author_name
+                JOIN
+                    language_tbl
+                    ON language_tbl.language_id = book_tbl.language
+                WHERE
+                    bookfair_sale_or_return_orders.order_id = ?";
+
+        $query2 = $db->query($sql2, [$order_id]);
+        $data['bookfair_details'] = $query2->getResultArray();
+
+        return $data;
+    }
+    public function shipBookfairOrder($order_id)
+    {
+        $db = \Config\Database::connect();
+        $db->transStart(); // 🔐 Transaction start
+
+        $today = date('Y-m-d');
+
+        // 1️⃣ Update order details table (ALL BOOKS)
+        $db->table('bookfair_sale_or_return_order_details')
+            ->where('order_id', $order_id)
+            ->update([
+                'status'       => 1,
+                'sending_date' => $today
+            ]);
+
+        // 2️⃣ Update main order table
+        $db->table('bookfair_sale_or_return_orders')
+            ->where('order_id', $order_id)
+            ->update([
+                'status'       => 1,
+                'sending_date' => $today
+            ]);
+
+        $db->transComplete(); // 🔐 Transaction end
+
+        if ($db->transStatus() === false) {
+            return false;
+        }
+
+        return true;
+    }
+
+
 }

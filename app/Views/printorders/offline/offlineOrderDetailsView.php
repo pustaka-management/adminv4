@@ -151,6 +151,16 @@ foreach ($orderbooks['list'] as $books_details) {
     </div>
 </div>
 <br><br>
+<div class="d-flex justify-content-center">
+    <div class="col-lg-4 col-sm-6">
+        <div
+            class="p-16 bg-success-50 radius-8 border-start-width-3-px border-success-main border-top-0 border-end-0 border-bottom-0">
+            <h6 class="text-primary-light text-md mb-8">Remarks</h6>
+            <span class="text-success-main mb-0"><?= $orderbooks['details']['remarks']; ?></span>
+        </div>
+    </div>
+</div>
+<br>
 <!-- Book List Table -->
 <table class="table table-hover mt-4">
     <thead>

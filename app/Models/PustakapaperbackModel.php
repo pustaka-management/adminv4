@@ -405,10 +405,12 @@ class PustakapaperbackModel extends Model
         $data = [
             'order_id'       => $order_id,
             'customer_name'  => trim($request->getPost('customer_name')),
+            'email'          => trim($request->getPost('email')), 
             'payment_type'   => trim($request->getPost('payment_type')),
             'payment_status' => trim($request->getPost('payment_status')),
             'courier_charges'=> trim($request->getPost('courier_charges')),
             'address'        => trim($request->getPost('address')),
+            'remarks'        => trim($request->getPost('remarks')),
             'mobile_no'      => trim($request->getPost('mobile_no')),
             'ship_date'      => $request->getPost('ship_date'),
             'order_date'     => date('Y-m-d H:i:s'),
@@ -666,68 +668,259 @@ class PustakapaperbackModel extends Model
         return $query->getRowArray();
     }
 
-    function offlineMarkShipped()
-    {
-        $request = \Config\Services::request();
-        $offline_order_id = $request->getPost('offline_order_id');
-        $book_id = $request->getPost('book_id');
-        $tracking_id = $request->getPost('tracking_id');
-        $tracking_url = $request->getPost('tracking_url');
+    // function offlineMarkShipped()
+    // {
+    //     $request = \Config\Services::request();
+    //     $offline_order_id = $request->getPost('offline_order_id');
+    //     $book_id = $request->getPost('book_id');
+    //     $tracking_id = $request->getPost('tracking_id');
+    //     $tracking_url = $request->getPost('tracking_url');
+    //     $ship_type    = $request->getPost('ship_type');
 
-        $select_offline_order_id = "SELECT quantity from pustaka_offline_orders_details WHERE book_id = $book_id AND offline_order_id = $offline_order_id";
-        $tmp = $this->db->query($select_offline_order_id);
-        $record = $tmp->getResultArray()[0];
+    //     $select_offline_order_id = "SELECT quantity from pustaka_offline_orders_details WHERE book_id = $book_id AND offline_order_id = $offline_order_id";
+    //     $tmp = $this->db->query($select_offline_order_id);
+    //     $record = $tmp->getResultArray()[0];
 
-        $qty = $record['quantity'];
+    //     $qty = $record['quantity'];
 
-        $update_sql = "UPDATE paperback_stock set quantity = quantity - " . $qty . ",stock_in_hand = stock_in_hand - " . $qty . " where book_id = " . $book_id;
-        $tmp = $this->db->query($update_sql);
+    //     $update_sql = "UPDATE paperback_stock set quantity = quantity - " . $qty . ",stock_in_hand = stock_in_hand - " . $qty . " where book_id = " . $book_id;
+    //     $tmp = $this->db->query($update_sql);
 
-        $update_data = array(
-            "ship_status" => 1,
-            "tracking_id" => $tracking_id,
-            "tracking_url" => $tracking_url,
-            "ship_date" => date('Y-m-d'), //shipped date 
+    //     $update_data = array(
+    //         "ship_status" => 1,
+    //         "tracking_id" => $tracking_id,
+    //         "tracking_url" => $tracking_url,
+    //         "ship_date" => date('Y-m-d'), //shipped date 
+    //     );
+    //     $this->db->table('pustaka_offline_orders_details')
+    //         ->where(array('offline_order_id' => $offline_order_id, 'book_id' => $book_id))
+    //         ->update($update_data);
+
+    //     // inserting the record into pustaka_paperback_stock_ledger table 
+    //     $stock_sql = "SELECT pustaka_offline_orders_details.*,book_tbl.* ,pustaka_offline_orders_details.quantity as quantity,
+    //                 paperback_stock.quantity as current_stock
+    //                 from pustaka_offline_orders_details,book_tbl,paperback_stock
+    //                 where pustaka_offline_orders_details.book_id=book_tbl.book_id
+    //                 and paperback_stock.book_id=pustaka_offline_orders_details.book_id
+    //                 and book_tbl.book_id = " . $book_id . " AND pustaka_offline_orders_details.offline_order_id = '" . $offline_order_id . "'";
+    //     $temp = $this->db->query($stock_sql);
+    //     $stock = $temp->getResultArray()[0];
+
+    //     $book_id = $stock['book_id'];
+    //     $offline_order_id = $stock['offline_order_id'];
+    //     $author_id = $stock['author_name'];
+    //     $copyright_owner = $stock['paper_back_copyright_owner'];
+    //     $description = "Offline Sales";
+    //     $channel_type = "OFF";
+    //     $stock_out = $stock['quantity'];
+
+    //     $stock_data = array(
+    //         'book_id' => $book_id,
+    //         "order_id" => $offline_order_id,
+    //         "author_id" => $author_id,
+    //         "copyright_owner" => $copyright_owner,
+    //         "description" => $description,
+    //         "channel_type" => $channel_type,
+    //         "stock_out" => $stock_out,
+    //         'transaction_date' => date('Y-m-d H:i:s'),
+    //     );
+    //     $this->db->table('pustaka_paperback_stock_ledger')->insert($stock_data);
+
+    //     if ($this->db->affectedRows() > 0)
+    //         return 1;
+    //     else
+    //         return 0;
+    // }
+
+public function offlineMarkShipped()
+{
+    $request = \Config\Services::request();
+
+    $offline_order_id = $request->getPost('offline_order_id');
+    $book_id          = $request->getPost('book_id');
+    $tracking_id      = $request->getPost('tracking_id');
+    $tracking_url     = $request->getPost('tracking_url');
+    $ship_type        = $request->getPost('ship_type'); // mail / nomail
+
+    // ---- Quantity ----
+    $qty = $this->db->query(
+        "SELECT quantity FROM pustaka_offline_orders_details 
+         WHERE offline_order_id=? AND book_id=?",
+        [$offline_order_id, $book_id]
+    )->getRowArray()['quantity'];
+
+    // ---- Stock update ----
+    $this->db->query(
+        "UPDATE paperback_stock 
+         SET quantity = quantity - ?, stock_in_hand = stock_in_hand - ?
+         WHERE book_id = ?",
+        [$qty, $qty, $book_id]
+    );
+
+    // ---- Order update ----
+    $this->db->table('pustaka_offline_orders_details')
+        ->where([
+            'offline_order_id' => $offline_order_id,
+            'book_id' => $book_id
+        ])
+        ->update([
+            'ship_status' => 1,
+            'tracking_id' => $tracking_id,
+            'tracking_url' => $tracking_url,
+            'ship_date' => date('Y-m-d')
+        ]);
+
+    // ---- Ledger ----
+    $stock = $this->db->query(
+        "SELECT d.*, b.*
+         FROM pustaka_offline_orders_details d
+         JOIN book_tbl b ON b.book_id = d.book_id
+         WHERE d.offline_order_id=? AND d.book_id=?",
+        [$offline_order_id, $book_id]
+    )->getRowArray();
+
+    $this->db->table('pustaka_paperback_stock_ledger')->insert([
+        'book_id' => $book_id,
+        'order_id' => $offline_order_id,
+        'author_id' => $stock['author_name'],
+        'copyright_owner' => $stock['paper_back_copyright_owner'],
+        'description' => 'Offline Sales',
+        'channel_type' => 'OFF',
+        'stock_out' => $qty,
+        'transaction_date' => date('Y-m-d H:i:s')
+    ]);
+
+    // ---- SHIP WITH MAIL ----
+    if ($ship_type === 'mail') {
+
+        $emailData = $this->db->query(
+            "SELECT 
+                    pustaka_offline_orders.customer_name, 
+                    pustaka_offline_orders.email, 
+                    book_tbl.book_title
+                FROM pustaka_offline_orders_details 
+                JOIN book_tbl ON book_tbl.book_id = pustaka_offline_orders_details.book_id
+                JOIN pustaka_offline_orders ON pustaka_offline_orders.order_id = pustaka_offline_orders_details.offline_order_id
+                WHERE pustaka_offline_orders_details.offline_order_id=? AND pustaka_offline_orders_details.book_id=?",
+            [$offline_order_id, $book_id]
+        )->getRowArray();
+
+        $this->sendOfflineOrderShippedMail(
+            $emailData['email'],
+            $emailData['customer_name'],
+            $emailData['book_title'],
+            $tracking_id,
+            $tracking_url
         );
-        $this->db->table('pustaka_offline_orders_details')
-            ->where(array('offline_order_id' => $offline_order_id, 'book_id' => $book_id))
-            ->update($update_data);
-
-        // inserting the record into pustaka_paperback_stock_ledger table 
-        $stock_sql = "SELECT pustaka_offline_orders_details.*,book_tbl.* ,pustaka_offline_orders_details.quantity as quantity,
-                    paperback_stock.quantity as current_stock
-                    from pustaka_offline_orders_details,book_tbl,paperback_stock
-                    where pustaka_offline_orders_details.book_id=book_tbl.book_id
-                    and paperback_stock.book_id=pustaka_offline_orders_details.book_id
-                    and book_tbl.book_id = " . $book_id . " AND pustaka_offline_orders_details.offline_order_id = '" . $offline_order_id . "'";
-        $temp = $this->db->query($stock_sql);
-        $stock = $temp->getResultArray()[0];
-
-        $book_id = $stock['book_id'];
-        $offline_order_id = $stock['offline_order_id'];
-        $author_id = $stock['author_name'];
-        $copyright_owner = $stock['paper_back_copyright_owner'];
-        $description = "Offline Sales";
-        $channel_type = "OFF";
-        $stock_out = $stock['quantity'];
-
-        $stock_data = array(
-            'book_id' => $book_id,
-            "order_id" => $offline_order_id,
-            "author_id" => $author_id,
-            "copyright_owner" => $copyright_owner,
-            "description" => $description,
-            "channel_type" => $channel_type,
-            "stock_out" => $stock_out,
-            'transaction_date' => date('Y-m-d H:i:s'),
-        );
-        $this->db->table('pustaka_paperback_stock_ledger')->insert($stock_data);
-
-        if ($this->db->affectedRows() > 0)
-            return 1;
-        else
-            return 0;
     }
+
+    return ($this->db->affectedRows() > 0) ? 1 : 0;
+}
+
+/* ===========================
+   SHIPPING MAIL (STYLE SAME)
+   =========================== */
+private function sendOfflineOrderShippedMail(
+    $customerEmail,
+    $customerName,
+    $bookTitle,
+    $trackingId,
+    $trackingUrl
+) {
+    $email = \Config\Services::email();
+
+    $message = "
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'/>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+    <meta name='x-apple-disable-message-reformatting'/>
+
+    <link rel='preconnect' href='https://fonts.googleapis.com'>
+    <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+    <link href='https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap' rel='stylesheet'>
+</head>
+
+<body style='margin:0;padding:0;background:#ffffff;font-family:Quicksand,sans-serif;'>
+
+<table width='100%' cellpadding='0' cellspacing='0' style='padding:20px 0;'>
+<tr>
+<td align='center'>
+
+<table cellpadding='0' cellspacing='0' style='max-width:850px;min-width:350px;width:100%;background:#ffffff;'>
+
+    <!-- Header -->
+    <tr>
+        <td style='padding:30px;text-align:center;
+            background:linear-gradient(135deg,#4685ec 0%,#00296b 100%);'>
+            <img src='https://pustaka-assets.s3.ap-south-1.amazonaws.com/images/pustaka-logo-white-3x.png'
+                 style='max-width:170px;width:33%;'>
+        </td>
+        <tr>
+            <td style='padding:20px'>
+                <h2 style='text-align:center'>Your Order Has Been Shipped!</h2>
+                <p>Dear Sir/Madam,</p>
+                <p>Your order has been <b>successfully shipped</b>.</p>
+                <p><b>Book:</b> Book Name</p>
+                <p>
+                    <b>Tracking ID:</b> XXXXX<br>
+                    <b>Tracking URL:</b> <a href='#'>Track Order</a>
+                </p>
+                <p>Regards,<br>Pustaka Team</p>
+            </td>
+        </tr>
+            <td style='padding:25px;font-size:16px;color:#000000;'>
+            {{CONTENT}}
+        </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+        <td style='padding:20px;text-align:center;background:#f5f7fa;'>
+
+            <!-- Social Icons -->
+            <a href='https://www.facebook.com/yourpage' target='_blank' style='margin:0 8px;'>
+                <img src='https://cdn-icons-png.flaticon.com/512/733/733547.png'
+                     width='24' alt='Facebook'>
+            </a>
+
+            <a href='https://www.instagram.com/yourpage' target='_blank' style='margin:0 8px;'>
+                <img src='https://cdn-icons-png.flaticon.com/512/733/733558.png'
+                     width='24' alt='Instagram'>
+            </a>
+
+            <p style='margin-top:12px;font-size:13px;color:#666;'>
+                © " . date('Y') . " Pustaka. All rights reserved.
+            </p>
+
+        </td>
+    </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>";
+
+
+    $email->setFrom('admin@pustaka.co.in', 'Pustaka');
+    $email->setTo($customerEmail);
+    $email->setSubject('Your Order Has Been Shipped');
+    $email->setMessage($message);
+    $email->setMailType('html');
+
+    if (!$email->send()) {
+        log_message('error', $email->printDebugger());
+    } else {
+        log_message('info', 'Offline ship mail sent');
+    }
+}
+
 
     function offlineMarkCancel()
     {

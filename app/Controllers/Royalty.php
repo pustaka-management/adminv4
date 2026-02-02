@@ -53,6 +53,7 @@ class Royalty extends BaseController
         $data['author_id'] = $copyright_owner;
         $data['details']= $this->royaltyModel->publisherDetails($copyright_owner);
 		$data['summary'] = $this->royaltyModel->getRoyaltyConsolidatedDataByCopyrightOwner($copyright_owner);
+		$data['settlements']= $this->royaltyModel->RoyaltySettlementDetails($copyright_owner);
 
         return view('royalty/royaltybreakupview', $data);
         

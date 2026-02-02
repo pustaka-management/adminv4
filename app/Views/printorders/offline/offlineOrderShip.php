@@ -52,49 +52,56 @@
         <br>
         <center>
             <div class="field-wrapper">
-                <button type="button" onclick="mark_ship()" class="btn btn-success">Ship</button>
-                <a href="<?php echo base_url()."paperback/offlineorderbooksstatus"?>" class="btn btn-danger">Close</a>
+                <button type="button" onclick="mark_ship('mail')" class="btn btn-success">
+                    Ship with Mail
+                </button>
+
+                <button type="button" onclick="mark_ship('nomail')" class="btn btn-primary">
+                    Ship without Mail
+                </button>
+
+                <a href="<?= base_url('paperback/offlineorderbooksstatus') ?>" class="btn btn-danger">
+                    Cancel
+                </a>
             </div>
         </center>
     </div>
 </div>
 
-<script type="text/javascript">
-    var base_url = "<?= base_url(); ?>";
+<script>
+var base_url = "<?= base_url(); ?>";
 
-    function mark_ship(){
-        var offline_order_id = document.getElementById('offline_order_id').value;
-        var book_id = document.getElementById('book_id').value;
-        var tracking_id = document.getElementById('tracking_id').value;
-        var tracking_url = document.getElementById('tracking_url').value;
+function mark_ship(ship_type){
+    var offline_order_id = $('#offline_order_id').val();
+    var book_id = $('#book_id').val();
+    var tracking_id = $('#tracking_id').val();
+    var tracking_url = $('#tracking_url').val();
 
-        if (offline_order_id === '' || book_id === '' || tracking_id === '' || tracking_url === '') {
-            alert("Please fill in all fields before marking as shipped.");
-            return;
-        }
-
-        $.ajax({
-            url: base_url + '/paperback/offlinemarkshipped',
-            type: 'POST',
-            data: {
-                "offline_order_id": offline_order_id,
-                "book_id": book_id,
-                "tracking_id": tracking_id,
-                "tracking_url": tracking_url
-            },
-            success: function(data) {
-                if (data == 1) {
-                    alert("Completed Successfully!!");
-                    // optionally redirect after success
-                    window.location.href = base_url + "/paperback/offlineorderbooksstatus";
-                } else {
-                    alert("Unknown error!! Check again!");
-                }
-            },
-            error: function(xhr, status, error) {
-                alert("AJAX Error: " + error);
-            }
-        });
+    if (!offline_order_id || !book_id || !tracking_id || !tracking_url) {
+        alert("Please fill all fields");
+        return;
     }
-</script>  
+
+    $.ajax({
+        url: base_url + '/paperback/offlinemarkshipped',
+        type: 'POST',
+        data: {
+            offline_order_id: offline_order_id,
+            book_id: book_id,
+            tracking_id: tracking_id,
+            tracking_url: tracking_url,
+            ship_type: ship_type 
+        },
+        success: function(res){
+            if(res == 1){
+                alert("Order shipped successfully!");
+                window.location.href = base_url + "/paperback/offlineorderbooksstatus";
+            }else{
+                alert("Something went wrong!");
+            }
+        }
+    });
+}
+</script>
+
 <?= $this->endSection(); ?>

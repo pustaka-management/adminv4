@@ -1898,9 +1898,137 @@ class AuthorModel extends Model
 
         $query = $db->query($sql2);
         $data['total'] = $query->getResultArray();
+        
+        $sql3="SELECT 
+                    bank_acc_name,
+                    bank_acc_no,
+                    ifsc_code,
+                    bank_acc_type,
+                    pan_number
+                FROM publisher_tbl
+                WHERE copyright_owner = ?";
+        $query = $db->query($sql3, [$author_id]);
+        $data['bank_details'] = $query->getResultArray();
 
         return $data;
     }
+
+        public function authorRoyaltySettlementDetails($author_id)
+        {
+            $db = \Config\Database::connect();
+
+            // 1. Get copyright owners for author
+            $cp_sql = "
+                SELECT 
+                    GROUP_CONCAT(DISTINCT copyright_owner) AS copyright_owner
+                FROM copyright_mapping
+                WHERE author_id = ?
+            ";
+
+            $cp_query  = $db->query($cp_sql, [$author_id]);
+            $cp_result = $cp_query->getRow();
+
+            if (empty($cp_result->copyright_owner)) {
+                return [];
+            }
+
+            // 2. Convert comma separated owners to array
+            $copyrightOwners = explode(',', $cp_result->copyright_owner);
+
+            // 3. Prepare IN clause placeholders
+            $placeholders = implode(',', array_fill(0, count($copyrightOwners), '?'));
+
+            // 4. Settlement query
+            $sql = "
+                SELECT 
+                    fy,
+                    settlement_date,
+                    settlement_amount,
+                    tds_amount,
+                    payment_type,
+                    bank_transaction_details,
+                    month,
+                    year
+                FROM royalty_settlement
+                WHERE copy_right_owner_id IN ($placeholders)
+                ORDER BY settlement_date DESC
+            ";
+
+            $query  = $db->query($sql, $copyrightOwners);
+            $result = $query->getResultArray();
+
+            // 5. Group by financial year
+            $settlement_list = [];
+            foreach ($result as $row) {
+                $settlement_list[$row['fy']][] = $row;
+            }
+
+            return $settlement_list;
+        }
+
+
+    function authorSettlementList($author_id)
+    {
+        $db = \Config\Database::connect();
+
+        $sql_ebook="SELECT
+                        SUM(CASE WHEN pay_status = 'P' THEN royalty ELSE 0 END) AS total_ebook_royalty_paid,
+                        SUM(CASE WHEN pay_status = 'O' THEN royalty ELSE 0 END) AS total_ebook_royalty_pending
+                    FROM royalty_consolidation
+                    WHERE author_id = ?
+                    AND copyright_owner = ?
+                    AND (
+                            year < YEAR(CURDATE())
+                            OR (year = YEAR(CURDATE()) AND month <= MONTH(CURDATE()))
+                        )
+                    AND type = 'ebook'";
+        $query = $db->query($sql_ebook, [$author_id, $author_id]);
+        $data['ebook'] = $query->getResultArray();
+
+        $sql_audiobook="SELECT
+                            SUM(CASE WHEN pay_status = 'P' THEN royalty ELSE 0 END) AS total_audiobook_royalty_paid,
+                            SUM(CASE WHEN pay_status = 'O' THEN royalty ELSE 0 END) AS total_audiobook_royalty_pending
+                        FROM royalty_consolidation
+                        WHERE author_id = ?
+                        AND copyright_owner = ?
+                        AND (
+                                year < YEAR(CURDATE())
+                                OR (year = YEAR(CURDATE()) AND month <= MONTH(CURDATE()))
+                            )
+                        AND type = 'audiobook'";
+        $query = $db->query($sql_audiobook, [$author_id, $author_id]);
+        $data['audiobook'] = $query->getResultArray();
+
+
+        $sql_paperback="SELECT
+                            SUM(CASE WHEN pay_status = 'P' THEN royalty ELSE 0 END) AS total_paperback_royalty_paid,
+                            SUM(CASE WHEN pay_status = 'O' THEN royalty ELSE 0 END) AS total_paperback_royalty_pending
+                        FROM royalty_consolidation
+                        WHERE author_id = ?
+                        AND copyright_owner = ?
+                        AND (
+                                year < YEAR(CURDATE())
+                                OR (year = YEAR(CURDATE()) AND month <= MONTH(CURDATE()))
+                            )
+                        AND type = 'paperback'";
+        $query = $db->query($sql_paperback, [$author_id, $author_id]);
+        $data['paperback'] = $query->getResultArray();
+
+        $sql_bonus="SELECT
+                    (SELECT bonus_percentage
+                    FROM publisher_tbl
+                    WHERE copyright_owner = ?) AS bonus_percentage,
+                    (SELECT SUM(bonus_value)
+                    FROM royalty_settlement
+                    WHERE copy_right_owner_id = ?) AS total_bonus";
+
+        $query = $db->query($sql_bonus, [$author_id, $author_id]);
+        $data['bonus'] = $query->getResultArray();
+
+        return $data;
+    }
+
+
     public function authorBookroyaltyDetails($author_id)
     {
         $db  = \Config\Database::connect();

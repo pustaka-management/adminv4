@@ -68,6 +68,21 @@
                 <span class="line-height-1">Royalty</span>
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link d-flex align-items-center gap-2 fw-semibold text-primary-light radius-4 px-16 py-10"
+                id="pills-button-icon-settings-tab"
+                data-bs-toggle="pill"
+                data-bs-target="#royalty_settlement"
+                type="button"
+                role="tab"
+                aria-controls="royalty_settlement"
+                aria-selected="false"
+            >
+                <iconify-icon icon="mdi:bank-transfer" class="text-xl"></iconify-icon>
+                <span class="line-height-1">Royalty Settlement</span>
+            </button>
+        </li>
     </ul>
     <br>
     <div class="tab-content" id="pills-tabContent">
@@ -1000,7 +1015,7 @@
                 return $months[$monthNumber] ?? ''; 
             }
             ?>
-           <div class="card">
+            <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0 text-center">Month Wise Royalty Settlement</h5>
                 </div>
@@ -1374,7 +1389,202 @@
                     });
                 });
             </script>
-        </div> 
+        </div>
+        <div class="tab-pane fade" id="royalty_settlement" role="tabpanel" aria-labelledby="pills-button-icon-settings-tab">
+            <div class="row g-4">
+                <!-- Bank Details Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card p-3 shadow-2 radius-8 bg-gradient-end-4 h-100">
+                        <div class="card-body p-0">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <span class="w-48-px h-48-px bg-cyan-100 text-cyan-600 
+                                    d-flex justify-content-center align-items-center rounded-circle fs-4">
+                                    <i class="ri-bank-line"></i>
+                                </span>
+
+                                <div>
+                                    <h6 class="fw-semibold mb-0">Bank Account Details</h6>
+                                    <span class="text-secondary-light fs-6">Registered payout info</span>
+                                </div>
+                            </div>
+
+                            <?php foreach ($author['bank_details'] as $bank): ?>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold fs-5">Account Holder :</span>
+                                    <span class="fs-5 text-end" style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        <?= $bank['bank_acc_name']; ?>
+                                    </span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold fs-5">Account No :</span>
+                                    <span class="fs-5"><?= $bank['bank_acc_no']; ?></span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold fs-5">IFSC :</span>
+                                    <span class="fs-5"><?= $bank['ifsc_code']; ?></span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold fs-5">Bank :</span>
+                                    <span class="fs-5"><?= $bank['bank_acc_type']; ?></span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold fs-5">PAN :</span>
+                                    <span class="fs-5"><?= $bank['pan_number']; ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paid Royalties Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card shadow-none border bg-gradient-start-2 h-100">
+                        <div class="card-body p-20">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-primary-light mb-0">Paid Royalties</h6>
+                                <div class="w-50-px h-50-px bg-purple rounded-circle d-flex justify-content-center align-items-center">
+                                    <iconify-icon icon="mdi:tick-outline" class="text-white text-2xl"></iconify-icon>
+                                </div>
+                            </div>
+                            <h6 class="d-flex justify-content-between small mb-2">
+                                <span>Ebook :</span>
+                                <span>₹<?= number_format($list_details['ebook'][0]['total_ebook_royalty_paid'] ?? 0, 2) ?></span>
+                            </h6>
+                            <br>
+                            <h6 class="d-flex justify-content-between  small mb-2">
+                                <span>Audiobook :</span>
+                                <span>₹<?= number_format($list_details['audiobook'][0]['total_audiobook_royalty_paid'] ?? 0, 2) ?></span>
+                            </h6>
+                            <br>
+                            <h6 class="d-flex justify-content-between  small mb-0">
+                                <span>Paperback :</span>
+                                <span>₹<?= number_format($list_details['paperback'][0]['total_paperback_royalty_paid'] ?? 0, 2) ?></span>
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Pending Royalties Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card shadow-none border bg-gradient-start-2 h-100">
+                        <div class="card-body p-20">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="fw-bold text-primary-light mb-0">Pending Royalties</h6>
+                                <div class="w-50-px h-50-px bg-red rounded-circle d-flex justify-content-center align-items-center">
+                                    <iconify-icon icon="mdi:clock-outline" class="text-white text-2xl"></iconify-icon>
+                                </div>
+                            </div>
+
+                            <h6 class="d-flex justify-content-between small mb-2">
+                                <span>Ebook :</span>
+                                <span>₹<?= number_format($list_details['ebook'][0]['total_ebook_royalty_pending'] ?? 0, 2) ?></span>
+                            </h6>
+                            <br>
+                            <h6 class="d-flex justify-content-between small mb-2">
+                                <span>Audiobook :</span>
+                                <span>₹<?= number_format($list_details['audiobook'][0]['total_audiobook_royalty_pending'] ?? 0, 2) ?></span>
+                            </h6>
+                            <br>
+                            <h6 class="d-flex justify-content-between small mb-0">
+                                <span>Paperback :</span>
+                                <span>₹<?= number_format($list_details['paperback'][0]['total_paperback_royalty_pending'] ?? 0, 2) ?></span>
+                            </h6>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <br><br>
+            <div class="col-xxl-12">
+                <div class="card p-0 overflow-hidden position-relative radius-12 h-100">
+
+                    <div class="card-header py-16 px-24 bg-base border-bottom">
+                        <h6 class="text-lg mb-0">Financial year-wise details</h6>
+                    </div>
+
+                    <div class="card-body p-24 pt-10">
+                        <div class="d-flex align-items-start">
+
+                            <!-- ========== VERTICAL FY TABS ========== -->
+                            <ul class="nav button-tab nav-pills mb-16 me-24 flex-column"
+                                id="fy-tab"
+                                role="tablist">
+
+                                <?php $i = 0; foreach ($settlements as $fy => $rows): ?>
+                                    <li class="nav-item" role="presentation">
+                                        <button
+                                            class="nav-link fw-semibold text-primary-light radius-4 px-16 py-10 <?= $i === 0 ? 'active' : '' ?>"
+                                            id="fy-tab-<?= md5($fy) ?>"
+                                            data-bs-toggle="pill"
+                                            data-bs-target="#fy-content-<?= md5($fy) ?>"
+                                            type="button"
+                                            role="tab"
+                                            aria-selected="<?= $i === 0 ? 'true' : 'false' ?>">
+                                            <?= esc($fy) ?>
+                                        </button>
+                                    </li>
+                                <?php $i++; endforeach; ?>
+
+                            </ul>
+
+                            <!-- ========== TAB CONTENT ========== -->
+                            <div class="tab-content flex-grow-1" id="fy-tabContent">
+
+                                <?php $i = 0; foreach ($settlements as $fy => $rows): ?>
+                                    <div
+                                        class="tab-pane fade <?= $i === 0 ? 'show active' : '' ?>"
+                                        id="fy-content-<?= md5($fy) ?>"
+                                        role="tabpanel">
+
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered align-middle mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Amount</th>
+                                                        <th>TDS</th>
+                                                        <th>Mode</th>
+                                                        <th>Remarks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                <?php if (!empty($rows)): ?>
+                                                    <?php foreach ($rows as $row): ?>
+                                                        <tr>
+                                                            <td><?= date('d M Y', strtotime($row['settlement_date'])) ?></td>
+                                                            <td>Rs. <?= number_format($row['settlement_amount'], 2) ?></td>
+                                                            <td>Rs. <?= number_format($row['tds_amount'], 2) ?></td>
+                                                            <td><?= esc($row['payment_type'] ?: '0') ?></td>
+                                                            <td><?= esc($row['bank_transaction_details'] ?: '0') ?></td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <tr>
+                                                        <td colspan="5" class="text-center">No records found</td>
+                                                    </tr>
+                                                <?php endif; ?>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                <?php $i++; endforeach; ?>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?= $this->endSection(); ?>

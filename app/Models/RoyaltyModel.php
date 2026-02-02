@@ -1195,6 +1195,33 @@ public function getTopayQuarterData()
         'total_topay_sum' => $total_topay_sum
     ];
 }
+        public function RoyaltySettlementDetails($author_id)
+        {
+            $db = \Config\Database::connect();
+            $sql = "
+                SELECT 
+                    fy,
+                    settlement_date,
+                    settlement_amount,
+                    tds_amount,
+                    payment_type,
+                    bank_transaction_details,
+                    month,
+                    year
+                FROM royalty_settlement
+                WHERE copy_right_owner_id = ?
+                ORDER BY settlement_date DESC
+            ";
 
+            $query = $db->query($sql, [$author_id]);
+            $result = $query->getResultArray();
+
+            $settlement_list = [];
+            foreach ($result as $row) {
+                $settlement_list[$row['fy']][] = $row;
+            }
+
+            return $settlement_list; 
+        }
 
 }
