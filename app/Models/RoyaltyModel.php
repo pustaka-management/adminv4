@@ -252,7 +252,7 @@ class RoyaltyModel extends Model
                 FROM author_transaction
                 WHERE copyright_owner = ?
                 AND pay_status = 'O'
-                AND order_type IN (3,4,5,6)
+                AND order_type IN (3,4,5,6,8)
                 AND order_date <= ?
             ),
 
