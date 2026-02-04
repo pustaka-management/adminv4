@@ -357,7 +357,6 @@ class BookModel extends Model
 
         return ($this->db->affectedRows() > 0) ? 1 : 0;
     }
-
     // Edit Paperback Details
     public function editBookPaperbackDetails(array $postData)
 {

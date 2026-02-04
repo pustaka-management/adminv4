@@ -5,7 +5,6 @@
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
         <div class="row">
-
             <!-- Left Column -->
             <div class="col-md-6">
                 <form id="bookForm">

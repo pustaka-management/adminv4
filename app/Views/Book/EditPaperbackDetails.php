@@ -219,5 +219,4 @@ function count_chars() {
   document.getElementById('num_chars').textContent = num_chars;
 }
 </script>
-
 <?= $this->endSection(); ?>

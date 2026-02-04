@@ -1947,8 +1947,6 @@ public function indesignMarkCompleted()
 
         return view('Book/EditPaperbackDetails', $data);
     }
-
-
     public function editBookPaperbackDetailsPost()
     {
         $bookModel = new BookModel();

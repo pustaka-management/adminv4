@@ -619,7 +619,6 @@ $rate_per_page,$rate_remarks)
 
     return ($db->affectedRows()>0)?1:0;
 }
-
      public function paperbackReworkBook()
     {
         $db = \Config\Database::connect();
