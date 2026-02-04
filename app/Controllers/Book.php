@@ -1139,41 +1139,46 @@ public function checkBookUrl()
         return $this->response->setBody((string)$result);
     }
     public function completedBooksSubmit($book_id = null)
-    {
-        $model = new \App\Models\paperbackModel();
-        $data['completed'] = $model->completedBooksSubmit($book_id);
+{
+    $model = new \App\Models\paperbackModel();
 
-        $data['title'] = 'Completed Book Details';
-        $data['subTitle'] = 'View the details of the completed book';
+    $data['completed'] = $model->completedBooksSubmit($book_id);
+    $data['title'] = 'Completed Book Details';
+    $data['subTitle'] = 'View the details of the completed book';
 
-        return view('Book/CompletedBooksSubmit', $data);
-    }
-   public function indesignMarkCompleted()
-    {
-        $model = new \App\Models\paperbackModel();
-        $book_id = $this->request->getPost('book_id');
-        $pages = $this->request->getPost('pages');
-        $price = $this->request->getPost('price');
-        $royalty = $this->request->getPost('royalty');
-        $copyright_owner = $this->request->getPost('copyright_owner');
-        $isbn = $this->request->getPost('isbn');
-        $paper_back_desc = $this->request->getPost('paper_back_desc');
-        $paper_back_author_desc = $this->request->getPost('paper_back_author_desc');
+    return view('Book/CompletedBooksSubmit', $data);
+}
 
-        $result = $model->indesignMarkCompleted(
-            $book_id,
-            $pages,
-            $price,
-            $royalty,
-            $copyright_owner,
-            $isbn,
-            $paper_back_desc,
-            $paper_back_author_desc
-        );
+public function indesignMarkCompleted()
+{
+    $model = new \App\Models\paperbackModel();
 
-        return $this->response->setBody((string) $result);
-    }
+    $book_id = $this->request->getPost('book_id');
+    $pages = $this->request->getPost('pages');
+    $price = $this->request->getPost('price');
+    $royalty = $this->request->getPost('royalty');
+    $copyright_owner = $this->request->getPost('copyright_owner');
+    $isbn = $this->request->getPost('isbn');
+    $paper_back_desc = $this->request->getPost('paper_back_desc');
+    $paper_back_author_desc = $this->request->getPost('paper_back_author_desc');
+    $rate_per_page = $this->request->getPost('rate_per_page');
+    $rate_remarks = $this->request->getPost('rate_remarks');
 
+    $result = $model->indesignMarkCompleted(
+        $book_id,
+        $pages,
+        $price,
+        $royalty,
+        $copyright_owner,
+        $isbn,
+        $paper_back_desc,
+        $paper_back_author_desc,
+        $rate_per_page,
+        $rate_remarks
+    );
+
+    return $this->response->setBody((string)$result);
+}
     public function paperbackReworkBook()
     {
         $model = new \App\Models\paperbackModel();

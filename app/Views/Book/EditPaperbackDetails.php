@@ -92,6 +92,20 @@
                value="<?= esc($book_details['paper_back_pages']) ?>" 
                class="form-control">
       </div>
+      
+      <div class="mb-3">
+        <label>Rate Per Page</label>
+        <select id="rate_per_page" class="form-control">
+        <option value="">Select</option>
+        <?php
+        $sel=$book_details['rate_per_page']??'';
+        for($i=1.1;$i<=1.9;$i+=0.1){
+        $v=number_format($i,1);
+        ?>
+        <option value="<?= $v ?>" <?=($sel==$v)?'selected':''?>><?= $v ?></option>
+        <?php } ?>
+        </select>
+      </div>
 
       <!-- Paperback Readiness -->
 <div class="mb-3">
@@ -126,9 +140,21 @@
         <small class="form-text text-muted">Characters: <span id="num_chars">0</span></small>
       </div>
     </div>
+    
 
     <!-- Right column -->
     <div class="col-md-6">
+      <!-- NEW PRICE REMARKS -->
+<div class="mb-3">
+<label>New Price Remarks</label>
+<textarea id="rate_remarks" class="form-control"></textarea>
+</div>
+
+<div class="mb-3">
+<small>Previous Price Remarks</small>
+<textarea class="form-control" readonly><?= esc($book_details['rate_remarks'] ?? '') ?></textarea>
+</div>
+
       <?php if ($book_details['paper_back_flag'] == 1): ?>
         <div class="mb-3">
           <label for="paper_back_desc" class="form-label">Book Description</label>
@@ -171,7 +197,9 @@ function edit_paperback_details() {
     paper_back_weight: document.getElementById('paper_back_weight').value,
     paper_back_remarks: document.getElementById('paper_back_remarks').value,
     paper_back_desc: document.getElementById('paper_back_desc').value,
-    paper_back_author_desc: document.getElementById('paper_back_author_desc').value
+    paper_back_author_desc: document.getElementById('paper_back_author_desc').value,
+    rate_per_page: document.getElementById('rate_per_page').value,
+    rate_remarks: document.getElementById('rate_remarks').value,
   };
 
   $.post(base_url + '/book/editbookpaperbackdetailspost', payload, function(data) {

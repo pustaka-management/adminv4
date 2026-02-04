@@ -360,43 +360,74 @@ class BookModel extends Model
 
     // Edit Paperback Details
     public function editBookPaperbackDetails(array $postData)
-    {
-        $book_id = $postData['book_id'];
-        $sql = "UPDATE book_tbl SET 
-                paper_back_flag = ?,
-                paper_back_agreement_flag = ?, 
-                paper_back_royalty = ?, 
-                paper_back_copyright_owner = ?, 
-                paper_back_isbn = ?, 
-                paper_back_inr = ?, 
-                paper_back_pages = ?, 
-                paper_back_weight = ?, 
-                paper_back_remarks = ?, 
-                paper_back_readiness_flag = ?, 
-                paper_back_desc = ?, 
-                paper_back_author_desc = ? 
-                WHERE book_id = ?";
+{
+    $book_id = $postData['book_id'];
 
-        $params = [
-            $postData['paper_back_flag'],
-            $postData['paper_back_agreement_flag'], 
-            $postData['paper_back_royalty'], 
-            $postData['paper_back_copyright_owner'],
-            $postData['paper_back_isbn'],
-            $postData['paper_back_inr'],
-            $postData['paper_back_pages'],
-            $postData['paper_back_weight'],
-            $postData['paper_back_remarks'],
-            $postData['paper_back_readiness_flag'],
-            $postData['paper_back_desc'],
-            $postData['paper_back_author_desc'],
-            $book_id
-        ];
+    // Fetch existing rate remarks
+    $oldRow = $this->db->query(
+        "SELECT rate_remarks FROM book_tbl WHERE book_id = ?",
+        [$book_id]
+    )->getRowArray();
 
-        $this->db->query($sql, $params);
-        return ($this->db->affectedRows() > 0) ? 1 : 0;
+    $oldRemarks = $oldRow['rate_remarks'] ?? '';
+
+    $newRemark = trim($postData['rate_remarks'] ?? '');
+
+    if ($newRemark != '') {
+
+        $today = date('d-m-Y H:i');
+
+        $formattedRemark = $today . ' : ' . $newRemark;
+
+        if ($oldRemarks != '') {
+            $finalRateRemarks = $oldRemarks . "\n" . $formattedRemark;
+        } else {
+            $finalRateRemarks = $formattedRemark;
+        }
+
+    } else {
+        $finalRateRemarks = $oldRemarks;
     }
 
+    $sql = "UPDATE book_tbl SET 
+        paper_back_flag = ?,
+        paper_back_agreement_flag = ?, 
+        paper_back_royalty = ?, 
+        paper_back_copyright_owner = ?, 
+        paper_back_isbn = ?, 
+        paper_back_inr = ?, 
+        paper_back_pages = ?, 
+        paper_back_weight = ?, 
+        paper_back_remarks = ?, 
+        paper_back_readiness_flag = ?, 
+        paper_back_desc = ?, 
+        paper_back_author_desc = ?,
+        rate_per_page = ?,
+        rate_remarks = ?
+        WHERE book_id = ?";
+
+    $params = [
+        $postData['paper_back_flag'],
+        $postData['paper_back_agreement_flag'], 
+        $postData['paper_back_royalty'], 
+        $postData['paper_back_copyright_owner'],
+        $postData['paper_back_isbn'],
+        $postData['paper_back_inr'],
+        $postData['paper_back_pages'],
+        $postData['paper_back_weight'],
+        $postData['paper_back_remarks'],
+        $postData['paper_back_readiness_flag'],
+        $postData['paper_back_desc'],
+        $postData['paper_back_author_desc'],
+        $postData['rate_per_page'],
+        $finalRateRemarks,   
+        $book_id
+    ];
+
+    $this->db->query($sql, $params);
+
+    return ($this->db->affectedRows() > 0) ? 1 : 0;
+}
     // Edit Audiobook Details
     public function editBookAudiobookDetails(array $postData)
     {
