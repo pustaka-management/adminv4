@@ -996,6 +996,273 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
 
         return $result;
     }
+    // Bookfair Sales Details
+    
+    // Get Bookshops
+    public function getBookshops()
+    {
+        return $this->db->table('pod_bookshop')->get()->getResultArray();
+    }
+    public function getBookshopTransport($bookshopId)
+    {
+        return $this->db->table('pod_bookshop')
+            ->where('bookshop_id',$bookshopId)
+            ->get()
+            ->getRowArray();
+    }
+
+    // Get Combos
+    public function getCombos()
+    {
+        return $this->db->table('bookfair_combo_pack')->get()->getResultArray();
+    }
+
+   public function createOrder($orderData,$comboId)
+    {
+        $db = \Config\Database::connect();
+        $db->transBegin();
+
+        // MAIN ORDER INSERT
+        $db->table('bookfair_sale_or_return_orders')->insert($orderData);
+
+        if($db->error()['code'] != 0){
+            throw new \Exception($db->error()['message']);
+        }
+
+        // FETCH COMBO
+        $combo = $db->table('bookfair_combo_pack')
+                    ->where('combo_id',$comboId)
+                    ->get()
+                    ->getRowArray();
+
+        if(!$combo){
+            throw new \Exception('Combo not found');
+        }
+
+        $bookIds = explode(',',$combo['book_ids']);
+        $qty = (int)$combo['default_value'];
+
+        foreach($bookIds as $bookId){
+
+            $book = $db->table('book_tbl')
+                    ->where('book_id',$bookId)
+                    ->get()
+                    ->getRowArray();
+
+            if(!$book) continue;
+
+            $price = $book['paper_back_inr'];
+
+            $db->table('bookfair_sale_or_return_order_details')->insert([
+                'order_id' => $orderData['order_id'],
+                'bookshop_id' => $orderData['bookshop_id'],
+                'create_date' => $orderData['create_date'],
+                'book_id' => $bookId,
+                'send_qty' => $qty,
+                'book_price' => $price,
+                'discount' => 0,
+                'status' => 0
+            ]);
+
+            if($db->error()['code'] != 0){
+                throw new \Exception($db->error()['message']);
+            }
+        }
+
+        if($db->transStatus() === false){
+            $db->transRollback();
+            throw new \Exception('Transaction rollback');
+        }
+
+        $db->transCommit();
+        return true;
+    }
+    public function getPendingOrders()
+        {
+            return $this->db->table('bookfair_sale_or_return_orders')
+                ->where('status',0)
+                ->get()->getResultArray();
+        }
+
+        public function getReturnOrder($orderId)
+        {
+            $data['order'] = $this->db->table('bookfair_sale_or_return_orders')
+                ->where('order_id',$orderId)
+                ->get()->getRowArray();
+
+            $data['books'] = $this->db->table('bookfair_sale_or_return_order_details d')
+                ->select('d.*,b.book_title')
+                ->join('book_tbl b','b.book_id=d.book_id')
+                ->where('d.order_id',$orderId)
+                ->get()->getResultArray();
+
+            return $data;
+        }
+
+    public function processReturn($orderId, $returnQtyArr, $discount)
+    {
+        $db = $this->db;
+        $db->transBegin();
+
+        // Fetch order details
+        $details = $db->table('bookfair_sale_or_return_order_details')
+                    ->where('order_id', $orderId)
+                    ->get()
+                    ->getResultArray();
+
+        if (empty($details)) {
+            throw new \Exception("No order details found");
+        }
+
+        // Calculate total of all books (before discount)
+        $totalBeforeDiscount = 0;
+        foreach ($details as $row) {
+            $saleQty = isset($row['sale_qty']) ? (int)$row['sale_qty'] : (int)$row['send_qty'];
+            $totalBeforeDiscount += $saleQty * (float)$row['book_price'];
+        }
+
+        foreach ($details as $row) {
+
+            $bookId   = $row['book_id'];
+            $sendQty = (int)$row['send_qty'];
+            $saleQty = isset($row['sale_qty']) ? (int)$row['sale_qty'] : $sendQty;
+
+            $returnQty = isset($returnQtyArr[$bookId]) ? (int)$returnQtyArr[$bookId] : 0;
+
+            // Validation
+            if ($returnQty > $saleQty) $returnQty = $saleQty;
+            if ($saleQty < 0) $saleQty = 0;
+
+            $newSaleQty   = $saleQty - $returnQty;
+            $newReturnQty = ($row['return_qty'] ?? 0) + $returnQty;
+
+            $bookPrice = (float)$row['book_price'];
+
+            // Proportional discount
+            $proportionalDiscount = $totalBeforeDiscount > 0
+                ? ceil(($saleQty * $bookPrice / $totalBeforeDiscount) * $discount)
+                : 0;
+
+            $totalAmount = max(0, ($newSaleQty * $bookPrice) - $proportionalDiscount);
+
+            // Update order detail
+            $db->table('bookfair_sale_or_return_order_details')
+            ->where('order_id', $orderId)
+            ->where('book_id', $bookId)
+            ->update([
+                'sale_qty'     => $newSaleQty,
+                'return_qty'   => $newReturnQty,
+                'discount'     => $discount,
+                'total_amount' => $totalAmount,
+                'status'       => 2
+            ]);
+
+            // ===============================
+            // ADD RETURN QTY BACK TO STOCK
+            // ===============================
+
+            if ($returnQty > 0) {
+
+                $stockRow = $db->table('paperback_stock')
+                            ->where('book_id', $bookId)
+                            ->get()
+                            ->getRowArray();
+
+                if ($stockRow) {
+                    $db->table('paperback_stock')
+                    ->where('book_id', $bookId)
+                    ->set('stock_in_hand', 'stock_in_hand + ' . $returnQty, false)
+                    ->update();
+                }
+            }
+        }
+
+        // Update main order status
+        $db->table('bookfair_sale_or_return_orders')
+        ->where('order_id', $orderId)
+        ->update(['status' => 2]);
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+            throw new \Exception("Return transaction failed");
+        }
+
+        $db->transCommit();
+        return true;
+    }
+    public function getBookfairOrders($status)
+    {
+        return $this->db->table('bookfair_sale_or_return_orders o')
+            ->select('
+                o.order_id,
+                MAX(o.sending_date) as sending_date,
+                SUM(d.send_qty) as total_qty,
+                COUNT(DISTINCT d.book_id) as no_of_titles,
+                ROUND(SUM(d.send_qty)/COUNT(DISTINCT d.book_id),2) as qty_per_title,
+                c.pack_name,
+                s.bookshop_name
+            ')
+            ->join('bookfair_sale_or_return_order_details d','d.order_id=o.order_id','left')
+            ->join('pod_bookshop s','s.bookshop_id=o.bookshop_id','left')
+            ->join('bookfair_combo_pack c','c.combo_id=o.combo_id','left')
+            ->where('o.status',$status)
+            ->groupBy('o.order_id')
+            ->orderBy('o.order_id','DESC')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function getBookfairOrderDetails($orderId)
+    {
+        // Order + Bookshop + Combo
+        $details = $this->db->table('bookfair_sale_or_return_orders o')
+            ->select('
+                o.order_id,
+                o.bookshop_id,
+                o.combo_id,
+                o.sending_date,
+                c.pack_name,
+                s.bookshop_name,
+                s.contact_person_name,
+                s.mobile,
+                s.preferred_transport,
+                s.preferred_transport_name,
+                
+            ')
+            ->join('pod_bookshop s','s.bookshop_id=o.bookshop_id','left')
+            ->join('bookfair_combo_pack c','c.combo_id=o.combo_id','left')
+            ->where('o.order_id',$orderId)
+            ->get()
+            ->getRowArray();
+
+
+        // Book List
+        $list = $this->db->table('bookfair_sale_or_return_order_details d')
+            ->select('
+                d.book_id,
+                d.send_qty,
+                d.book_price,
+                d.total_amount,
+                d.sending_date,
+                d.sale_qty,
+                d.discount,
+                d.total_amount,
+                b.book_title,
+                a.author_name,
+                l.language_name
+            ')
+            ->join('book_tbl b','b.book_id=d.book_id','left')
+            ->join('author_tbl a','a.author_id=b.author_name','left')
+            ->join('language_tbl l','l.language_id=b.language','left')
+            ->where('d.order_id',$orderId)
+            ->get()
+            ->getResultArray();
+
+        return [
+            'details' => $details,
+            'list'    => $list
+        ];
+    }
     public function getBookfairSalesDetails()
     {
         $db = \Config\Database::connect(); 
@@ -1097,11 +1364,11 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
     public function shipBookfairOrder($order_id)
     {
         $db = \Config\Database::connect();
-        $db->transStart(); // 🔐 Transaction start
+        $db->transStart(); 
 
         $today = date('Y-m-d');
 
-        // 1️⃣ Update order details table (ALL BOOKS)
+        
         $db->table('bookfair_sale_or_return_order_details')
             ->where('order_id', $order_id)
             ->update([
@@ -1109,7 +1376,7 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
                 'sending_date' => $today
             ]);
 
-        // 2️⃣ Update main order table
+        
         $db->table('bookfair_sale_or_return_orders')
             ->where('order_id', $order_id)
             ->update([
@@ -1117,7 +1384,7 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
                 'sending_date' => $today
             ]);
 
-        $db->transComplete(); // 🔐 Transaction end
+        $db->transComplete(); 
 
         if ($db->transStatus() === false) {
             return false;
@@ -1125,6 +1392,5 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
 
         return true;
     }
-
 
 }

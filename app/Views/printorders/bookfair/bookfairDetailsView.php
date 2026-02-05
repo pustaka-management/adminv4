@@ -81,7 +81,9 @@
 
                                     <p class="mb-2">
                                         <strong>Sending Date:</strong>
-                                        <?= date('d-m-Y', strtotime(explode(' ', $combo['sending_date'])[0])); ?>
+                                        <?= !empty($combo['sending_date']) 
+                                            ? date('d-m-Y', strtotime(explode(' ', $combo['sending_date'])[0])) 
+                                            : '-' ?>
                                     </p>
                                 </div>
                             <?php else: ?>
@@ -94,22 +96,34 @@
 
                 <br><br><br>
 
+                <!-- Remarks -->
+                <?php if (!empty($combo['remark'])): ?>
                 <div class="d-flex justify-content-center">
                     <div class="col-lg-4 col-sm-6">
-                        <div
-                            class="p-16 bg-warning-50 radius-8 border-start-width-3-px border-warning-main border-top-0 border-end-0 border-bottom-0">
+                        <div class="p-16 bg-warning-50 radius-8 
+                            border-start-width-3-px border-warning-main border-top-0 border-end-0 border-bottom-0">
                             <h6 class="text-primary-light text-md mb-8">Remarks</h6>
-                            <span class="text-success-main mb-0"><?= $combo['remark']; ?></span>
+                            <span class="text-success-main mb-0">
+                                <?= esc($combo['remark']); ?>
+                            </span>
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <br><br><br>
 
                 <!-- Book List Table -->
+                <h6 class="text-center">List of Books</h6><br>
+                 <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="<?= base_url('paperback/downloadbookfairexcel/'.$order_id); ?>"
+                        class="btn btn-success btn-sm">
+                        ⬇ Download Excel
+                    </a>
+                </div>
+
                 <table class="table table-bordered mb-4" id="bookfairTable">
                     <thead>
-                        <h6 class="text-center">List of Books</h6><br>
                         <tr>
                             <th>S.No</th>
                             <th>Book ID</th>
@@ -139,19 +153,17 @@
                                     <td><?= esc($row['author_name']) ?></td>
                                     <td><?= esc($row['language_name']) ?></td>
                                     <td><?= esc($row['send_qty']) ?></td>
-                                    <td><?= esc(number_format($row['book_price'], 2)) ?></td>
-                                    <td>
-                                        <?= esc(date('d-m-Y', strtotime($row['sending_date']))) ?>
-                                    </td>
+                                    <td><?= number_format($row['book_price'], 2) ?></td>
+                                    <td><?= date('d-m-Y', strtotime($row['sending_date'])) ?></td>
                                     <td><?= number_format($total, 2) ?></td>
                                 </tr>
                             <?php endforeach; ?>
 
                             <tr>
-                                <td colspan="8" style="text-align:right;font-weight:bold;color:blue;">
+                                <td colspan="8" class="text-end fw-bold text-primary">
                                     Grand Total
                                 </td>
-                                <td style="font-weight:bold;color:blue;">
+                                <td class="fw-bold text-primary">
                                     <?= number_format($grandTotal, 2) ?>
                                 </td>
                             </tr>
@@ -165,28 +177,20 @@
                         <?php endif; ?>
                     </tbody>
                 </table>
-                <div style="height: 50px;"></div>
+
+                <!-- Actions -->
                 <div class="d-flex justify-content-center mt-4 mb-5">
                     <a href="<?= base_url('paperback/ship/'.$order_id); ?>"
-                    onclick="return confirm('Are you sure you want to ship this order?');"
-                    class="btn btn-outline-success-600 radius-8 px-20 py-11 me-3">
+                       onclick="return confirm('Are you sure you want to ship this order?');"
+                       class="btn btn-outline-success-600 radius-8 px-20 py-11 me-3">
                         Ship
                     </a>
 
                     <a href="<?= base_url('paperback/cancel/'.$order_id); ?>"
-                    class="btn btn-outline-danger-600 radius-8 px-20 py-11">
+                       class="btn btn-outline-danger-600 radius-8 px-20 py-11">
                         Cancel
                     </a>
                 </div>
-                <?php if ($combo['sending_date'] == null): ?>
-                    <a href="<?= base_url('paperback/ship/'.$order_id); ?>" class="btn btn-success">
-                        Ship
-                    </a>
-                <?php else: ?>
-                    <button class="btn btn-secondary" disabled>
-                        Already Shipped
-                    </button>
-                <?php endif; ?>
 
             <?php else: ?>
                 <div class="col-12">

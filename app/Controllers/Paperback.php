@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\PustakapaperbackModel;
 use App\Models\PodModel;
 use App\Models\PaperbackModel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 
 
@@ -1103,6 +1105,132 @@ class Paperback extends BaseController
         $data['subTitle'] = '';
         return view('printorders/flipkart/orderDetailsView', $data);
     }
+    //bookfair sale or return//
+
+    // Show Add Order Form
+    public function addSaleOrReturnOrder()
+    {
+         $data['title'] = '';
+        $data['bookshops'] = $this->PaperbackModel->getBookshops();
+        $data['combos']    = $this->PaperbackModel->getCombos();
+
+        return view('printorders/bookfair/saveSaleOrReturnOrder', $data);
+    }
+     public function getBookshopTransport()
+    {
+        $id = $this->request->getPost('bookshop_id');
+        return $this->response->setJSON(
+            $this->PaperbackModel->getBookshopTransport($id)
+        );
+    }
+
+    public function saveSaleOrReturnOrder()
+    {
+        $comboId = $this->request->getPost('combo_id');
+
+        if(!$comboId){
+            return redirect()->back()->with('error','Please select combo.');
+        }
+
+        $orderId = time();
+
+        // AUTO CREATE DATETIME
+        $createDate = date('Y-m-d H:i:s');
+
+        $orderData = [
+            'order_id' => $orderId,
+            'bookshop_id' => $this->request->getPost('bookshop_id'),
+            'combo_id' => $comboId,
+            'book_fair_name' => $this->request->getPost('book_fair_name'),
+            'create_date' => $createDate,
+            'preferred_transport' => $this->request->getPost('preferred_transport'),
+            'preferred_transport_name' => $this->request->getPost('preferred_transport_name'),
+            'remark' => $this->request->getPost('remark'),
+            'status' => 0
+        ];
+
+        try {
+
+            $this->PaperbackModel->createOrder($orderData,$comboId);
+
+            return redirect()->back()->with('success','Order Created Successfully');
+
+        } catch (\Throwable $e) {
+
+            return redirect()->back()->with('error',$e->getMessage());
+
+        }
+    }
+
+    // LIST ORDERS (status=0)
+    public function bookfairBookshopOrdersDashboard()
+    {
+        $data['title']  = 'Bookfair Orders Dashboard';
+        $data['orders'] = $this->PaperbackModel->getPendingOrders();
+
+        return view('printorders/bookfair/bookFairDashboard', $data);
+    }
+
+    // RETURN PAGE
+    public function bookfairBookshopreturnView($orderId)
+    {
+        $data = $this->PaperbackModel->getReturnOrder($orderId);
+
+        $data['title'] = 'Return Bookfair Order';
+
+        return view('printorders/bookfair/bookfairBookShopReturn', $data);
+    }
+
+    // SAVE RETURN
+    public function bookfairBookshopsaveReturn()
+    {
+        $orderId   = $this->request->getPost('order_id');
+        $returnQty = $this->request->getPost('return_qty');  // array keyed by book_id
+        $discount  = (float) $this->request->getPost('discount') ?? 0; // single order discount
+
+        $this->PaperbackModel->processReturn($orderId, $returnQty, $discount);
+
+        return redirect()->to('paperback/ordersdashboard')
+            ->with('success','Return Completed');
+    }
+    public function bookfairBookshopShippedOrders()
+    {
+        $data['title']  = 'Bookfair – Shipped Orders';
+        $data['orders'] = $this->PaperbackModel->getBookfairOrders(1);
+
+        return view('printorders/bookfair/bookfairBookshopShippedOrders', $data);
+    }
+
+    public function bookfairBookshopSoldOrders()
+    {
+        $data['title']  = 'Bookfair - Sold Orders';
+        $data['orders'] = $this->PaperbackModel->getBookfairOrders(2);
+
+        return view('printorders/bookfair/bookfairBookshopSoldOrders', $data);
+    }
+    public function bookfairBookshopOrderDetails($orderId)
+    {
+        $data['title'] = 'Bookfair BookShop Sold Order Details';
+
+        $data['order'] = $this->PaperbackModel->getBookfairOrderDetails($orderId);
+
+        if (empty($data['order'])) {
+            return redirect()->back()->with('error','Order not found');
+        }
+
+        return view('printorders/bookfair/bookfairBookshopOrderDetails',$data);
+    }
+    public function bookfairShippedOrderDetails($orderId)
+    {
+        $data['title'] = 'Bookfair BookShop Shipped Order Details';
+        $data['order'] = $this->PaperbackModel->getBookfairOrderDetails($orderId);
+
+        if (empty($data['order'])) {
+            return redirect()->back()->with('error','Order not found');
+        }
+
+        return view('printorders/bookfair/bookfairShippedOrderDetails',$data);
+    }
     public function bookfairsaleorreturnview()
     {
         $data['bookfair_sales'] = $this->PaperbackModel->getBookfairSalesDetails();
@@ -1137,6 +1265,78 @@ class Paperback extends BaseController
                 ->back()
                 ->with('error', 'Order shipping failed');
         }
+    }
+    
+    public function downloadbookfairexcel($order_id)
+    {
+        $result = $this->PaperbackModel->getBookFairdetails($order_id);
+
+        if (empty($result['bookfair_details'])) {
+            return redirect()->back()->with('error', 'No book data found');
+        }
+
+        $books = $result['bookfair_details'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $headers = [
+            'S.No',
+            'Book ID',
+            'Title',
+            'Author',
+            'Language',
+            'Send Qty',
+            'Book Price',
+            'Sending Date',
+            'Total Amount'
+        ];
+
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col.'1', $header);
+            $col++;
+        }
+
+        // Data
+        $rowNum = 2;
+        $i = 1;
+        $grandTotal = 0;
+
+        foreach ($books as $row) {
+            $total = $row['send_qty'] * $row['book_price'];
+            $grandTotal += $total;
+
+            $sheet->setCellValue('A'.$rowNum, $i++);
+            $sheet->setCellValue('B'.$rowNum, $row['book_id']);
+            $sheet->setCellValue('C'.$rowNum, $row['book_title']);
+            $sheet->setCellValue('D'.$rowNum, $row['author_name']);
+            $sheet->setCellValue('E'.$rowNum, $row['language_name']);
+            $sheet->setCellValue('F'.$rowNum, $row['send_qty']);
+            $sheet->setCellValue('G'.$rowNum, $row['book_price']);
+            $sheet->setCellValue(
+                'H'.$rowNum,
+                date('d-m-Y', strtotime($row['sending_date']))
+            );
+            $sheet->setCellValue('I'.$rowNum, $total);
+
+            $rowNum++;
+        }
+
+        // Grand total row
+        $sheet->setCellValue('H'.$rowNum, 'Grand Total');
+        $sheet->setCellValue('I'.$rowNum, $grandTotal);
+
+        $fileName = 'Bookfair_Books_'.$order_id.'.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="'.$fileName.'"');
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
     }
     
 }

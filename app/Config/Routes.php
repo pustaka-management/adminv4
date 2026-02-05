@@ -437,6 +437,18 @@ $routes->group('paperback', function($routes){
     $routes->get('bookfairsaleorreturnview','Paperback::bookfairsaleorreturnview');
     $routes->get('bookfairdetailsview/(:num)','Paperback::bookfairdetailsview/$1');
     $routes->get('ship/(:num)', 'Paperback::ship/$1');
+    $routes->get('downloadbookfairexcel/(:num)','Paperback::downloadbookfairexcel/$1');
+    $routes->get('addsaleorreturnorder', 'Paperback::addSaleOrReturnOrder');
+    $routes->post('savesaleorreturnorder', 'Paperback::saveSaleOrReturnOrder');
+    $routes->get('ordersdashboard', 'Paperback::bookfairBookshopOrdersDashboard');
+    $routes->get('return/(:any)', 'Paperback::bookfairBookshopreturnView/$1');
+    $routes->post('saveReturn', 'Paperback::bookfairBookshopsaveReturn');
+    $routes->get('bookfairbookshopshippedorders','Paperback::bookfairBookshopShippedOrders');
+    $routes->get('bookfairbookshopsoldorders','Paperback::bookfairBookshopSoldOrders');
+    $routes->get('bookfairbookshoporderdetails/(:any)','Paperback::bookfairBookshopOrderDetails/$1');
+    $routes->get('bookfairshippedorderdetails/(:any)','Paperback::bookfairShippedOrderDetails/$1');
+    $routes->post('getBookshopTransport', 'Paperback::getBookshopTransport');
+    
 
 });
 
@@ -655,6 +667,8 @@ $routes->group('orders', function($routes) {
   $routes->post('confirmBooks', 'UploadExcel\BulkOrder::confirmBooks');   
   $routes->post('saveOfflineOrder', 'UploadExcel\BulkOrder::saveOfflineOrder'); 
   $routes->post('saveBookshopOrder','UploadExcel\BulkOrder::saveBookshopOrder');
+  
+
 });
 
 // upload routes
