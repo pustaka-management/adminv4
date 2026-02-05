@@ -33,44 +33,46 @@ class User extends BaseController
     }
 
 
-    public function getUserDetails()
-    {
-        helper(['form']);
+    public function getUserDetails($user_id = null)
+{
+    helper(['form']);
 
-        $identifier = $this->request->getPost('identifier');
-        if (!$identifier) {
-            return redirect()->back()->with('error', 'Please provide a user identifier.');
-        }
+    // If called from POST search form
+    $identifier = $this->request->getPost('identifier');
 
-        $userModel = new UserModel();
-        $planModel = new PlanModel();
-
-        // Fetch user data
-        $data['display'] = $userModel->getUserDetails($identifier);
-
-        // SORT SUBSCRIPTIONS: Active first, latest end_date first
-        if (!empty($data['display']['subscriptions'])) {
-            usort($data['display']['subscriptions'], function($a, $b) {
-                $today = new \DateTime();
-                $statusA = ($a['end_subscribed'] < $today->format('Y-m-d') || count($a['books']) >= $a['total_books']) ? 1 : 0;
-                $statusB = ($b['end_subscribed'] < $today->format('Y-m-d') || count($b['books']) >= $b['total_books']) ? 1 : 0;
-
-                // Active first
-                if ($statusA !== $statusB) {
-                    return $statusA - $statusB;
-                }
-
-                // Same status → latest end_date first
-                return strcmp($b['end_subscribed'], $a['end_subscribed']);
-            });
-        }
-
-        $data['plans'] = $planModel->getUserplans();
-        $data['title'] = 'User Dashboard';
-        $data['subTitle'] = 'Overview of all users';
-
-        return view('User/userDetails', $data);
+    if ($user_id) {
+        // called via dashboard View button
+        $identifier = $user_id;
     }
+
+    if (!$identifier) {
+        return redirect()->back()->with('error', 'Please provide a user identifier.');
+    }
+
+    $userModel = new UserModel();
+    $planModel = new PlanModel();
+
+    // Fetch user data
+    $data['display'] = $userModel->getUserDetails($identifier);
+
+    // SORT SUBSCRIPTIONS: Active first, latest end_date first
+    if (!empty($data['display']['subscriptions'])) {
+        usort($data['display']['subscriptions'], function($a, $b) {
+            $today = new \DateTime();
+            $statusA = ($a['end_subscribed'] < $today->format('Y-m-d') || count($a['books']) >= $a['total_books']) ? 1 : 0;
+            $statusB = ($b['end_subscribed'] < $today->format('Y-m-d') || count($b['books']) >= $b['total_books']) ? 1 : 0;
+
+            if ($statusA !== $statusB) return $statusA - $statusB;
+            return strcmp($b['end_subscribed'], $a['end_subscribed']);
+        });
+    }
+
+    $data['plans'] = $planModel->getUserplans();
+    $data['title'] = 'User Dashboard';
+    $data['subTitle'] = 'Overview of all users';
+
+    return view('User/userDetails', $data);
+}
      public function clearUserDevices()
     {
         $userId = $this->request->getPost('user_id');
@@ -225,6 +227,7 @@ class User extends BaseController
             ]);
         }
     }
+
        public function deleteContactUs($id)
 {
     $userModel = new \App\Models\UserModel();

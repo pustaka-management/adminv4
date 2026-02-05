@@ -141,8 +141,8 @@ function formatIndianCurrency($number) {
                     'scribd'    => 'sales/ebookscribddetails',
                     'storytel'  => 'sales/ebookstoryteldetails',
                     'google'    => 'sales/ebookgoogledetails',
-                    'pratilipi' => 'dashboard/pratilipi',
-                    'kobo'      => 'dashboard/kobo',
+                    'pratilipi' => 'sales/ebookpratilipidetails',
+                    'kobo'      => 'sales/ebookkobodetails',
                 ];
                 ?>
 

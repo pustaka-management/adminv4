@@ -4,18 +4,19 @@ namespace App\Controllers;
 
 use App\Models\PustakapaperbackModel;
 use App\Models\PodModel;
-
-
+use App\Models\PaperbackModel;
 
 class Paperback extends BaseController
 {
     protected $PustakapaperbackModel;
     protected $PodModel;
+    protected $paperbackModel;
 
     public function __construct()
     {
         $this->PustakapaperbackModel = new PustakapaperbackModel();
         $this->podModel = new PodModel();
+        $this->paperbackModel = new PaperbackModel();
     }
 
     public function OrdersDashboard(){
@@ -1095,6 +1096,164 @@ class Paperback extends BaseController
         $data['subTitle'] = '';
         return view('printorders/flipkart/orderDetailsView', $data);
     }
+     // Show Add Order Form
+    public function addSaleOrReturnOrder()
+    {
+         $data['title'] = '';
+        $data['bookshops'] = $this->paperbackModel->getBookshops();
+        $data['combos']    = $this->paperbackModel->getCombos();
 
-    
+        return view('printorders/bookfair/saveSaleOrReturnOrder', $data);
+    }
+        public function getBookshopTransport()
+    {
+        $id = $this->request->getPost('bookshop_id');
+        return $this->response->setJSON(
+            $this->paperbackModel->getBookshopTransport($id)
+        );
+    }
+    public function saveSaleOrReturnOrder()
+    {
+        $comboId = $this->request->getPost('combo_id');
+
+        if(!$comboId){
+            return redirect()->back()->with('error','Please select combo.');
+        }
+
+        $orderId = time();
+
+        // AUTO CREATE DATETIME
+        $createDate = date('Y-m-d H:i:s');
+
+        $orderData = [
+            'order_id' => $orderId,
+            'bookshop_id' => $this->request->getPost('bookshop_id'),
+            'combo_id' => $comboId,
+            'book_fair_name' => $this->request->getPost('book_fair_name'),
+            'create_date' => $createDate,
+            'preferred_transport' => $this->request->getPost('preferred_transport'),
+            'preferred_transport_name' => $this->request->getPost('preferred_transport_name'),
+            'remark' => $this->request->getPost('remark'),
+            'status' => 0
+        ];
+
+        try {
+
+            $this->paperbackModel->createOrder($orderData,$comboId);
+
+            return redirect()->back()->with('success','Order Created Successfully');
+
+        } catch (\Throwable $e) {
+
+            return redirect()->back()->with('error',$e->getMessage());
+
+        }
+    }
+
+    // LIST ORDERS (status=0)
+    public function bookfairBookshopOrdersDashboard()
+        {
+            $data['title']  = 'Bookfair Orders Dashboard';
+            $data['orders'] = $this->paperbackModel->getPendingOrders();
+
+            return view('printorders/bookfair/bookFairDashboard', $data);
+        }
+
+    // RETURN PAGE
+    public function bookfairBookshopreturnView($orderId)
+        {
+            $data = $this->paperbackModel->getReturnOrder($orderId);
+
+            $data['title'] = 'Return Bookfair Order';
+
+            return view('printorders/bookfair/bookfairBookShopReturn', $data);
+        }
+
+    // SAVE RETURN
+    public function bookfairBookshopsaveReturn()
+        {
+            $orderId   = $this->request->getPost('order_id');
+            $returnQty = $this->request->getPost('return_qty');  // array keyed by book_id
+            $discount  = (float) $this->request->getPost('discount') ?? 0; // single order discount
+
+            $this->paperbackModel->processReturn($orderId, $returnQty, $discount);
+
+            return redirect()->to('paperback/ordersdashboard')
+                ->with('success','Return Completed');
+        }
+    // PENDING
+    public function bookfairBookshopPendingOrders()
+        {
+            $data['title'] = 'Pending Orders';
+            $data['orders'] = $this->paperbackModel->getBookfairOrders(0);
+
+            return view('printorders/bookfair/bookFairDashboard',$data);
+        }
+    public function bookfairBookshopShippedOrders()
+        {
+            $data['title']  = 'Bookfair – Shipped Orders';
+            $data['orders'] = $this->paperbackModel->getBookfairOrders(1);
+
+            return view('printorders/bookfair/bookfairBookshopShippedOrders', $data);
+        }
+
+    public function bookfairBookshopSoldOrders()
+        {
+            $data['title']  = '';
+            $data['orders'] = $this->paperbackModel->getBookfairOrders(2);
+
+            return view('printorders/bookfair/bookfairBookshopSoldOrders', $data);
+        }
+    public function bookfairBookshopOrderDetails($orderId)
+        {
+            $data['title'] = 'Bookfair BookShop Sold Order Details';
+
+            $data['order'] = $this->paperbackModel->getBookfairOrderDetails($orderId);
+
+            if (empty($data['order'])) {
+                return redirect()->back()->with('error','Order not found');
+            }
+
+            return view('printorders/bookfair/bookfairBookshopOrderDetails',$data);
+        }
+    public function bookfairShippedOrderDetails($orderId)
+        {
+            $data['title'] = 'Bookfair BookShop Shipped Order Details';
+            $data['order'] = $this->paperbackModel->getBookfairOrderDetails($orderId);
+
+            if (empty($data['order'])) {
+                return redirect()->back()->with('error','Order not found');
+            }
+
+            return view('printorders/bookfair/bookfairShippedOrderDetails',$data);
+        }
+    public function bookfairComboDetails()
+        {
+            $data['title'] = '';
+            $data['combos'] = $this->paperbackModel->getBookfairCombos();
+
+            return view('printorders/bookfair/comboDashboard', $data);
+        }
+    public function bookfairComboBooks($comboId)
+        {
+            $data['title'] = '';
+            $data['books'] = $this->paperbackModel->getBookfairComboBooks($comboId);
+
+            return view('printorders/bookfair/comboBooks', $data);
+        }
+    public function comboOrderDetails($comboId)
+        {
+            $data['title'] = '';
+
+            $data['orders'] = $this->paperbackModel->getComboOrders($comboId);
+
+            return view('printorders/bookfair/comboOrderDetails', $data);
+        }
+    public function comboBookOrders($bookId)
+        {
+            $data['title'] = '';
+            $data['orders'] = $this->paperbackModel->getComboBookOrders($bookId);
+
+            return view('printorders/bookfair/comboBookOrders', $data);
+        }
 }

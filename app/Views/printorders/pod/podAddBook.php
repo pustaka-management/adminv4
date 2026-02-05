@@ -226,10 +226,8 @@
         document.getElementById('bill_addr').value =
             address + '\nCity: ' + city + '\nContact: ' + contact + '\nMobile: ' + mobile;
 
-        document.getElementById('ship_address').value =
-            address + '\nCity: ' + city + '\nContact: ' + contact + '\nMobile: ' + mobile;
+        // Shipping address will be handled by separate logic
 
-        // ✅ FIXED braces issue
         if (publisher_id == 0) {
             var customName = document.getElementById('custom_publisher_name').value;
             if (!customName) {
@@ -240,14 +238,39 @@
         return true;
     }
 
-    document.getElementById('publisher_id')
-        .addEventListener('change', validateForm);
+    // ---------------------------
+    // Shipping address auto-fill logic
+    // ---------------------------
+    const shipTextarea = document.getElementById('ship_address');
+
+    document.getElementById('publisher_id').addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const address = selectedOption.getAttribute('data-address') || '';
+        const city = selectedOption.getAttribute('data-city') || '';
+        const contact = selectedOption.getAttribute('data-contact_person') || '';
+        const mobile = selectedOption.getAttribute('data-contact_mobile') || '';
+
+        // Only auto-fill shipping address if user hasn't typed
+        if (!shipTextarea.dataset.userEdited) {
+            shipTextarea.value =
+                address + '\nCity: ' + city + '\nContact: ' + contact + '\nMobile: ' + mobile;
+        }
+
+        // Billing address (optional) can also update here
+        document.getElementById('bill_addr').value =
+            address + '\nCity: ' + city + '\nContact: ' + contact + '\nMobile: ' + mobile;
+    });
+
+    // Track user edits
+    shipTextarea.addEventListener('input', function () {
+        this.dataset.userEdited = this.value.trim() ? "1" : "";
+    });
+
 
     /* ---------------------------
        ADD POD BOOK (AJAX)
     ----------------------------*/
     function add_publisher_book() {
-
         if (!validateForm()) return;
 
         $.ajax({
@@ -256,52 +279,34 @@
             dataType: "json",
             data: {
                 "<?= csrf_token() ?>": "<?= csrf_hash() ?>",
-
                 publisher_id: $('#publisher_id').val(),
                 custom_publisher_name:
                     ($('#publisher_id').val() == 0)
                         ? $('#custom_publisher_name').val()
                         : 'None',
-
                 publisher_reference: $('#publisher_reference').val(),
                 book_title: $('#book_title').val(),
                 total_num_pages: $('#num_pages').val(),
                 num_copies: $('#num_copies').val(),
-
-                book_size:
-                    ($('#book_size').val() == 'Custom')
-                        ? $('#custom_book_size').val()
-                        : $('#book_size').val(),
-
-                cover_paper:
-                    ($('#cover_paper').val() == 'Custom')
-                        ? $('#custom_cover_paper').val()
-                        : $('#cover_paper').val(),
-
+                book_size: ($('#book_size').val() == 'Custom') ? $('#custom_book_size').val() : $('#book_size').val(),
+                cover_paper: ($('#cover_paper').val() == 'Custom') ? $('#custom_cover_paper').val() : $('#cover_paper').val(),
                 cover_gsm: $('#cover_gsm').val(),
-
-                content_paper:
-                    ($('#content_paper').val() == 'Custom')
-                        ? $('#custom_content_paper').val()
-                        : $('#content_paper').val(),
-
+                content_paper: ($('#content_paper').val() == 'Custom') ? $('#custom_content_paper').val() : $('#content_paper').val(),
                 content_gsm: $('#content_gsm').val(),
                 content_colour: $('input[name="content_colour"]:checked').val(),
                 lamination_type: $('#lamination').val(),
                 binding_type: $('input[name="binding"]:checked').val(),
                 content_location: $('#content_location').val(),
-
                 num_pages_quote1: $('#num_pages_quote').val(),
                 cost_per_page1: $('#cost_per_page').val(),
                 num_pages_quote2: $('#num_pages_quote1').val() || 0,
                 cost_per_page2: $('#cost_per_page1').val() || 0,
-
                 fixed_charge_book: $('#fixed_charge').val() || 0,
                 transport_charges: $('#transport_charges').val() || 0,
                 design_charges: $('#design_charges').val() || 0,
                 delivery_date: $('#delivery_date').val(),
                 remarks: $('#remarks').val(),
-                ship_address: $('#ship_address').val()
+                ship_address: $('#ship_address').val() // <-- user's address or auto-filled
             },
             success: function (res) {
                 if (res.status == 1) {

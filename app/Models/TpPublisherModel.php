@@ -1252,8 +1252,6 @@ public function getAlltpBookDetails()
 
     return $query->getNumRows() > 0 ? $query->getResultArray() : [];
 }
-
-
 public function tppublisherSelectedBooks($selected_book_list)
 {
     $db = \Config\Database::connect();
@@ -1278,8 +1276,6 @@ public function tppublisherSelectedBooks($selected_book_list)
     ');
     $builder->join('tp_publisher_author_details', 'tp_publisher_author_details.author_id = tp_publisher_bookdetails.author_id');
     $builder->join('tp_publisher_book_stock', 'tp_publisher_book_stock.book_id = tp_publisher_bookdetails.book_id', 'left');
-
-    // join to calculate shipped qty with ship_status = 'O'
     $builder->join(
         '(SELECT book_id, SUM(quantity) AS total_qty
           FROM tp_publisher_order_details
@@ -1291,10 +1287,6 @@ public function tppublisherSelectedBooks($selected_book_list)
 
     $builder->whereIn('tp_publisher_bookdetails.sku_no', $selected_book_list);
 
-    // only show books with stock > 0
-    $builder->having('stock_in_hand >', 0);
-
-    // order by sku_no
     $builder->orderBy('tp_publisher_bookdetails.sku_no', 'ASC');
 
     $query = $builder->get();

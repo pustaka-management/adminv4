@@ -59,7 +59,7 @@
                                         <td><?= esc($p['name']); ?></td>
                                         <td><?= esc($p['phone']); ?></td>
                                         <td><?= esc($p['author_status'] ?: '-'); ?></td>
-                                        <td><?= esc($p['recommended_plan'] ?: '-'); ?></td>
+                                        <td><?= esc($p['plan_name'] ?: '-'); ?></td>
                                         <td><?= esc($p['title'] ?: '-'); ?></td>
                                         <td>Paid</span></td>
                                         <td><strong class="text-success"><?= indian_format($p['payment_amount'], 2); ?></strong></td>
@@ -109,7 +109,7 @@
                                         <td><?= esc($p['name']); ?></td>
                                         <td><?= esc($p['phone']); ?></td>
                                         <td><?= esc($p['author_status'] ?: '-'); ?></td>
-                                        <td><?= esc($p['recommended_plan'] ?: '-'); ?></td>
+                                        <td><?= esc($p['plan_name'] ?: '-'); ?></td>
                                         <td><?= esc($p['title'] ?: '-'); ?></td>
                                         <td>Partial</span></td>
                                         <td><strong class="text-primary"><?= indian_format($p['payment_amount'], 2); ?></strong></td>

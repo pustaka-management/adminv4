@@ -707,18 +707,9 @@ class ChannelExcel extends BaseController
         $writer->save('php://output');
         exit;
     }
-     public function google_audio_excel()
+    public function google_audio_excel()
 {
-    $book_ids = $this->request->getPost('book_ids');
-
-    if (!$book_ids) {
-        return redirect()->back()->with('error', 'No Book IDs provided');
-    }
-
-    $book_id_arr = array_map('trim', explode(',', $book_ids));
-
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
+    $db = \Config\Database::connect();
 
     $langcode = [
         1 => "TAM",
@@ -728,89 +719,89 @@ class ChannelExcel extends BaseController
         5 => "ENG"
     ];
 
-    $db = \Config\Database::connect();
+    $book_ids = $this->request->getPost('book_ids');
+
+    if (!$book_ids) {
+        return redirect()->back();
+    }
+
+    $book_id = explode(",", $book_ids);
+
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
     $i = 1;
 
-    foreach ($book_id_arr as $bk_id) {
-        $bk_result = $db->table('book_tbl')->where('book_id', $bk_id)->get()->getRowArray();
+    foreach ($book_id as $bk) {
+
+        $bk_result = $db->table('book_tbl')->where('book_id', $bk)->get()->getRowArray();
+
         if (!$bk_result) continue;
 
-        // Generate ISBN
-        $ebook_isbn = $bk_result['isbn_number'] != '' 
-            ? 'PKEY:' . str_replace('-', '', $bk_result['isbn_number'])
-            : 'PKEY:658' . str_pad($bk_result['language'], 2, '0', STR_PAD_LEFT)
-                       . str_pad($bk_result['author_name'], 3, '0', STR_PAD_LEFT)
-                       . str_pad($bk_result['book_id'], 5, '0', STR_PAD_LEFT);
+        // ISBN generate
+        if (!empty($bk_result['isbn_number'])) {
 
-        // Fetch author and genre safely
+            $ebook_isbn = str_replace('-', '', $bk_result['isbn_number']);
+
+        } else {
+
+            $lang_num = str_pad($bk_result['language'], 2, '0', STR_PAD_LEFT);
+            $auth_num = str_pad($bk_result['author_name'], 3, '0', STR_PAD_LEFT);
+            $bk_num   = str_pad($bk_result['book_id'], 5, '0', STR_PAD_LEFT);
+
+            if (strlen((string)$auth_num) < 4)
+                $ebook_isbn = '658' . $lang_num . $auth_num . $bk_num;
+            else
+                $ebook_isbn = '35' . $lang_num . $auth_num . $bk_num;
+        }
+
         $auth_result = $db->table('author_tbl')->where('author_id', $bk_result['author_name'])->get()->getRowArray();
         $gen_result  = $db->table('genre_details_tbl')->where('genre_id', $bk_result['genre_id'])->get()->getRowArray();
 
-        $short_description = !empty($bk_result['description']) 
-            ? $bk_result['description'] 
-            : ($auth_result['description'] ?? '');
+        $short_description = !empty($bk_result['description']) ? $bk_result['description'] : ($auth_result['description'] ?? '');
 
-        $related_identifier = 'PKEY:' . str_replace('PKEY:', '', $ebook_isbn) . ' [Digital, Is part of];';
-        $author_name = ($auth_result['author_name'] ?? '') . ' [Author]';
-        $bisac_code = ($gen_result['bisac_code'] ?? '') . ' [BISAC]';
+        $related_identifier = 'PKEY:' . $ebook_isbn . ' [Digital, Is part of];';
+        $ebook_isbn = 'PKEY:' . $ebook_isbn;
 
-        // Fill Excel columns
         $sheet->setCellValue('A'.$i, $ebook_isbn);
         $sheet->setCellValue('B'.$i, "Yes");
         $sheet->setCellValue('C'.$i, $bk_result['book_title']);
         $sheet->setCellValue('E'.$i, "Audiobook");
         $sheet->setCellValue('F'.$i, $related_identifier);
-        $sheet->setCellValue('G'.$i, $author_name);
+
+        $sheet->setCellValue('G'.$i, ($auth_result['author_name'] ?? '') . ' [Author]');
         $sheet->setCellValue('H'.$i, $auth_result['description'] ?? '');
         $sheet->setCellValue('I'.$i, $langcode[$bk_result['language']] ?? '');
-        $sheet->setCellValue('J'.$i, $bisac_code);
+        $sheet->setCellValue('J'.$i, ($gen_result['bisac_code'] ?? '').' [BISAC]');
         $sheet->setCellValue('L'.$i, $short_description);
+
         $sheet->setCellValue('Q'.$i, '10%');
         $sheet->setCellValue('R'.$i, 'WORLD');
         $sheet->setCellValue('U'.$i, 'Pustaka Digital Media');
         $sheet->setCellValue('V'.$i, 'http://www.pustaka.co.in');
-        $sheet->setCellValue('W'.$i, 'Yes');
-        $sheet->setCellValue('X'.$i, 'No');
+
         $sheet->setCellValue('Z'.$i, 'Yes');
         $sheet->setCellValue('AA'.$i, 'Yes');
         $sheet->setCellValue('AB'.$i, 'Yes');
-        $sheet->setCellValue('AC'.$i, 'No');
-        $sheet->setCellValue('AD'.$i, '0%');
+
         $sheet->setCellValue('AE'.$i, $bk_result['number_of_page']);
-        $sheet->setCellValue('AF'.$i, 5);
-        $sheet->setCellValue('AG'.$i, '10%');
-        $sheet->setCellValue('AH'.$i, 'No');
         $sheet->setCellValue('AI'.$i, $bk_result['cost']);
-        $sheet->setCellValue('AJ'.$i, 'IN');
         $sheet->setCellValue('AK'.$i, $bk_result['book_cost_international']);
-        $sheet->setCellValue('AL'.$i, 'US');
         $sheet->setCellValue('AM'.$i, $bk_result['book_cost_international']);
-        $sheet->setCellValue('AN'.$i, 'ECZ');
 
         $i++;
     }
 
-    // Clear output buffer
-if (ob_get_length()) ob_end_clean();
+    $writer = new Xls($spreadsheet);
 
-// Auto-size columns (works for A → AN or any range)
-$highestColumn = 'AN'; // change if your sheet has more columns
-$lastColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+    $filename = "googleaudiobooks.xls";
 
-for ($col = 1; $col <= $lastColumnIndex; $col++) {
-    $columnLetter = Coordinate::stringFromColumnIndex($col);
-    $sheet->getColumnDimension($columnLetter)->setAutoSize(true);
-}
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment; filename="'.$filename.'"');
+    header('Cache-Control: max-age=0');
 
-// Send Excel to browser
-header('Content-Type: application/vnd.ms-excel');
-header('Content-Disposition: attachment;filename="googleaudiobooks.xls"');
-header('Cache-Control: max-age=0');
-
-$writer = new Xls($spreadsheet);
-$writer->save('php://output');
-exit;
-
+    $writer->save("php://output");
+    exit;
 }
     public function overdrive_excel()
 {

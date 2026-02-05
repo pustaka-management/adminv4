@@ -1,9 +1,14 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
 
-<div class="container-fluid">
 
-    <a href="<?= site_url('scribd/books') ?>" class="btn btn-outline-secondary btn-sm mb-3">Back</a>
+<div class="container-fluid">
+    
+
+    <a href="<?= site_url('scribd/scribdbooks') ?>" class="btn btn-outline-secondary btn-sm mb-3">Back</a>
+    <?php if(empty($book)): ?>
+<div class="alert alert-danger">Book not found</div>
+<?php return; endif; ?>
 
     <!-- BOOK DETAILS -->
     <div class="card shadow-sm mb-4 p-4">
@@ -25,7 +30,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-striped mb-0">
+           <table class="zero-config table table-hover mt-4">
                 <thead class="table-light">
                     <tr>
                         <th>#</th>

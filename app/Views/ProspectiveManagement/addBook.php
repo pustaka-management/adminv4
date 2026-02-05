@@ -31,6 +31,29 @@
                         <input type="text" class="form-control" name="title" placeholder="Enter Book Title" required>
                     </div>
                 </div>
+                <!-- Row: Agreement Dates -->
+                <div class="row g-4 mb-4">
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Agreement Sent Date</label>
+                        <input type="date" name="agreement_send_date" class="form-control"
+                            value="<?= !empty($book['agreement_send_date']) ? date('Y-m-d', strtotime($book['agreement_send_date'])) : '' ?>">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Agreement Signed Date</label>
+                        <input type="date" name="agreement_signed_date" class="form-control"
+                            value="<?= !empty($book['agreement_signed_date']) ? date('Y-m-d', strtotime($book['agreement_signed_date'])) : '' ?>">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Target Date</label>
+                        <input type="date" name="target_date" class="form-control"
+                            value="<?= !empty($book['target_date']) ? date('Y-m-d', strtotime($book['target_date'])) : '' ?>">
+                    </div>
+
+                </div>
+
 
                 <!-- Row 2: Plan Name + Plan Amount -->
                 <div class="row g-3 mb-3">

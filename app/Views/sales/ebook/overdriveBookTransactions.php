@@ -67,7 +67,7 @@
             <h6 class="mb-3">Transaction Details</h6>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="zero-config table table-hover mt-4">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>

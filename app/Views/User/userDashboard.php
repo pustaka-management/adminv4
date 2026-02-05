@@ -330,13 +330,21 @@
                     <td><?php echo $contact_us[$i]['email'] ?></td>
                     <td><?php echo $contact_us[$i]['subject'] ?></td>
                     <td><?php echo $contact_us[$i]['message'] ?></td>
-                    <td>
-                        <a href="<?= base_url('user/deletecontactus/' . $contact_us[$i]['id']); ?>" 
-                           class="btn btn-danger-100 text-danger-600 radius-8 px-14 py-6 text-sm"
-                           onclick="return confirm('Are you sure you want to delete this contact?')">
-                            Delete
-                        </a>
-                    </td>
+                   <td class="text-center">
+                      <div class="d-flex justify-content-center gap-2">
+                          <a href="<?= base_url('user/getUserDetails/' . $contact_us[$i]['user_id']); ?>" 
+   class="btn btn-info-100 text-info-600 radius-8 px-14 py-6 text-sm">
+    View
+</a>
+
+                          <a href="<?= base_url('user/deletecontactus/' . $contact_us[$i]['id']); ?>" 
+                            class="btn btn-danger-100 text-danger-600 radius-8 px-14 py-6 text-sm"
+                            onclick="return confirm('Are you sure you want to delete this contact?')">
+                              Delete
+                          </a>
+                      </div>
+                  </td>
+
                 </tr>
             <?php } ?>
         </tbody>

@@ -319,7 +319,9 @@
             <!-- BookFair -->
             <div class="col-xxl-6 col-sm-6">
                 <div class="card p-3 shadow-2 radius-8 border input-form-light h-100 bg-gradient-end-5">
-                    <a href="#">
+
+                    <a href="<?= base_url('paperback/bookfairbookshoppendingorders') ?>" class="text-decoration-none text-dark">
+
                         <div class="card-body p-0">
 
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8 position-relative">

@@ -25,7 +25,8 @@
     </div>
 
     <!-- Total Authors -->
-    <div class="flex-grow-1 flex-shrink-0" style="flex:1 1 18%;">
+     <div class="flex-grow-1" style="flex:1 1 18%; cursor:pointer;"
+    onclick="window.location.href='<?= site_url('sales/scribdauthors') ?>'">
         <div class="card px-24 py-16 shadow-none radius-8 border h-100 bg-gradient-start-2">
             <div class="card-body p-0 d-flex align-items-center gap-3">
                 <div class="w-64-px h-64-px radius-16 bg-base-50 d-flex justify-content-center align-items-center">
@@ -40,9 +41,12 @@
             </div>
         </div>
     </div>
+    </a>
+
 
     <!-- Total Orders -->
-    <div class="flex-grow-1 flex-shrink-0" style="flex:1 1 18%;">
+    <div class="flex-grow-1 flex-shrink-0" style="flex:1 1 18%; cursor:pointer;"
+        onclick="window.location.href='<?= site_url('sales/scribdorders') ?>'">
         <div class="card px-24 py-16 shadow-none radius-8 border h-100 bg-gradient-start-5">
             <div class="card-body p-0 d-flex align-items-center gap-3">
                 <div class="w-64-px h-64-px radius-16 bg-base-50 d-flex justify-content-center align-items-center">
