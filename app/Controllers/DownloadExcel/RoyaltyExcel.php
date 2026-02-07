@@ -61,21 +61,31 @@ class RoyaltyExcel extends BaseController
                 $pub_name_year = substr(preg_replace('/[^A-Za-z0-9]/', '', $record['publisher_name']), 0, 6) . date('MY');
                 $pustaka_acc_no = "918020059111502";
 
-                $sheet->setCellValueExplicit('A' . $i, $pustaka_acc_no, DataType::TYPE_STRING);
-                $sheet->setCellValue('B' . $i, number_format($adjusted_after_tds, 2, '.', ''));
-                $sheet->setCellValue('C' . $i, $record['bank_acc_name']);
-                $sheet->setCellValueExplicit('D' . $i, $record['bank_acc_no'], DataType::TYPE_STRING);
-                $sheet->setCellValueExplicit('E' . $i, $record['ifsc_code'], DataType::TYPE_STRING);
-                $sheet->setCellValue('F' . $i, date('d-m-Y'));
-                $sheet->setCellValue('G' . $i, "N");
-                $sheet->setCellValueExplicit('H' . $i, $record['mobile'], DataType::TYPE_STRING);
-                $sheet->setCellValue('I' . $i, $pub_name_year);
+                /***New format sheet ***/
+                // $sheet->setCellValueExplicit('A' . $i, $pustaka_acc_no, DataType::TYPE_STRING);
+                // $sheet->setCellValue('B' . $i, number_format($adjusted_after_tds, 2, '.', ''));
+                // $sheet->setCellValue('C' . $i, $record['bank_acc_name']);
+                // $sheet->setCellValueExplicit('D' . $i, $record['bank_acc_no'], DataType::TYPE_STRING);
+                // $sheet->setCellValueExplicit('E' . $i, $record['ifsc_code'], DataType::TYPE_STRING);
+                // $sheet->setCellValue('F' . $i, date('d-m-Y'));
+                // $sheet->setCellValue('G' . $i, "N");
+                // $sheet->setCellValueExplicit('H' . $i, $record['mobile'], DataType::TYPE_STRING);
+                // $sheet->setCellValue('I' . $i, $pub_name_year);
                 
-               
-                // $sheet->setCellValue('F' . $i, $record['email_id']);
-                // $sheet->setCellValue('G' . $i, $publisher_royalty);
-                // $sheet->setCellValue('K' . $i, "10");
-                // $sheet->setCellValue('L' . $i, $pub_royalty);
+                  /***old format sheet ***/
+                $sheet->setCellValue('A' . $i, "N");
+                $sheet->setCellValue('B' . $i, number_format($adjusted_after_tds, 2, '.', ''));
+                $sheet->setCellValue('C' . $i, date('d-m-Y'));
+                $sheet->setCellValue('D' . $i, $record['bank_acc_name']);
+                $sheet->setCellValueExplicit('E' . $i, $record['bank_acc_no'], DataType::TYPE_STRING);
+                $sheet->setCellValue('F' . $i, $record['email_id']);
+                $sheet->setCellValue('G' . $i, $publisher_royalty);
+                $sheet->setCellValueExplicit('H' . $i, $pustaka_acc_no, DataType::TYPE_STRING);
+                $sheet->setCellValue('I' . $i, $pub_name_year);
+                $sheet->setCellValueExplicit('J' . $i, $record['ifsc_code'], DataType::TYPE_STRING);
+                $sheet->setCellValue('K' . $i, "10");
+                $sheet->setCellValue('L' . $i, $pub_royalty);
+                $sheet->setCellValueExplicit('M' . $i, $record['mobile'], DataType::TYPE_STRING);
                
                 // $sheet->setCellValue('N' . $i, number_format($record['ebooks_outstanding'], 2, '.', ''));
                 // $sheet->setCellValue('O' . $i, number_format($record['audiobooks_outstanding'], 2, '.', ''));
