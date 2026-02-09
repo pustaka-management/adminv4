@@ -1,6 +1,10 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
 
+<a href="<?= base_url('combobookfair/bookfaircombodetails') ?>" 
+        class="btn btn-outline-secondary btn-sm mb-3">Back
+    </a>
+
 <div class="container-fluid py-4">
 
     <h6 class="fw-bold mb-3">Combo Orders</h6>

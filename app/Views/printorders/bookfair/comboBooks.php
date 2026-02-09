@@ -3,8 +3,8 @@
 
 <div class="container-fluid py-4">
 
-    <h6 class="mb-3">Combo Book Details</h6>
-    <a href="<?= base_url('paperback/bookfaircombodetails') ?>" 
+    <h6 class="mb-3">Combo Book Details - <?= esc($books[0]['pack_name']) ?></h6>
+    <a href="<?= base_url('combobookfair/bookfaircombodetails') ?>" 
         class="btn btn-outline-secondary btn-sm mb-3">Back
     </a>
 
@@ -18,9 +18,10 @@
                         <th>Book ID</th>
                         <th>Title</th>
                         <th>Author</th>
+                        <th>Default quantity</th>
                         <th>Language</th>
                         <th>price</th>
-                        <th>Stock</th>
+                        <th>Stock In Hand</th>
                     </tr>
                     </thead>
 
@@ -31,13 +32,14 @@
                 <tr>
                     <td><?= $i++ ?></td>
                     <td>
-                        <a href="<?= base_url('paperback/combobookorders/'.$b['book_id']) ?>" 
+                        <a href="<?= base_url('combobookfair/combobookorders/'.$b['book_id']) ?>" 
                         class="fw-semibold text-decoration-none">
                         <?= esc($b['book_id']) ?>
                         </a>
                     </td>
                     <td><?= esc($b['book_title']) ?></td>
                     <td><?= esc($b['author_name']) ?></td>
+                    <td><?= esc($b['default_value']) ?></td>
                     <td><?= esc($b['language_name']) ?></td>
                     <td><?= esc($b['paper_back_inr']) ?></td>
                     <td><?= esc($b['stock']) ?></td>

@@ -51,7 +51,7 @@
                         <td class="d-flex gap-1 justify-content-center">
                             <a href="<?= base_url('prospectivemanagement/viewplandetails/'.$b['id']) ?>" 
                                class="btn btn-primary btn-sm">
-                                View
+                                Edit
                             </a>
                             <a href="<?= base_url('prospectivemanagement/completeplandetails/'.$b['id']) ?>" 
                                 class="btn btn-warning btn-sm"

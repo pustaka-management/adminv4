@@ -119,42 +119,53 @@ public function booksprocessing()
 
     $post = $this->request->getPost();
 
-    // Get existing plan_status if any
-    $plan_status = !empty($book['plan_status']) ? json_decode($book['plan_status'], true) : [];
-
-    // Get the template JSON for this book
+    // Get plan template
     $planRow = $db->table('publishing_plan_details')
-                  ->where('plan_name', $book['plan_name'])
-                  ->get()
-                  ->getRowArray();
+        ->where('plan_name', $book['plan_name'])
+        ->get()
+        ->getRowArray();
 
     if (!$planRow) {
         return redirect()->back()->with('error', 'Plan template not found');
     }
 
-    $planTemplate = json_decode($planRow['plan_template'], true);
+    // Base JSON = TEMPLATE (overwrite)
+    $plan_status = json_decode($planRow['plan_template'], true);
 
-    // Start with the template as base
-    $plan_status = $planTemplate;
+    /*
+     |------------------------------------------------
+     | Override values from POST (if given)
+     |------------------------------------------------
+     */
 
-    // Merge user inputs into template
-    $plan_status['ownership_support'] = $post['ownership_support'] ?? $plan_status['ownership_support'] ?? [];
-    $plan_status['distribution']      = $post['distribution'] ?? $plan_status['distribution'] ?? [];
-    $plan_status['complementary']     = $post['complementary'] ?? $plan_status['complementary'] ?? [];
+    if (isset($post['ownership_support'])) {
+        $plan_status['ownership_support'] = $post['ownership_support'];
+    }
 
-    // Add_on goes inside plan_detail
-    if(!isset($plan_status['plan_detail'])) {
+    if (isset($post['distribution'])) {
+        $plan_status['distribution'] = $post['distribution'];
+    }
+
+    if (isset($post['complementary'])) {
+        $plan_status['complementary'] = $post['complementary'];
+    }
+
+    // plan_detail exists?
+    if (!isset($plan_status['plan_detail'])) {
         $plan_status['plan_detail'] = [];
     }
+
+    // Add-on (always overwrite)
     $plan_status['plan_detail']['add_on'] = $post['add_on'] ?? '';
 
-    // Save JSON
+    // SAVE FULL JSON (overwrite old one)
     $builder->where('id', $bookId)->update([
-        'plan_status' => json_encode($plan_status)
+        'plan_status' => json_encode($plan_status, JSON_UNESCAPED_UNICODE)
     ]);
 
     return redirect()->back()->with('success', 'Plan details saved successfully');
 }
+
 
 
 public function completedbooks()

@@ -456,24 +456,32 @@ $routes->group('paperback', function($routes){
     $routes->post('flipkartmarkshipped', 'Paperback::flipkartmarkshipped');
     $routes->post('flipkartmarkcancel', 'Paperback::flipkartmarkcancel');
     $routes->post('flipkartmarkreturn', 'Paperback::flipkartmarkreturn');
+});
 
+$routes->group('combobookfair', function($routes) {
 
-    $routes->get('addsaleorreturnorder', 'Paperback::addSaleOrReturnOrder');
-    $routes->get('bookfairbookshoppendingorders', 'Paperback::bookfairBookshopPendingOrders');
-    $routes->post('getBookshopTransport', 'Paperback::getBookshopTransport');
-    $routes->post('savesaleorreturnorder', 'Paperback::saveSaleOrReturnOrder');
-    $routes->get('ordersdashboard', 'Paperback::bookfairBookshopOrdersDashboard');
-    $routes->get('return/(:any)', 'Paperback::bookfairBookshopreturnView/$1');
-    $routes->post('saveReturn', 'Paperback::bookfairBookshopsaveReturn');
-    $routes->get('bookfairbookshopshippedorders','Paperback::bookfairBookshopShippedOrders');
-    $routes->get('bookfairbookshopsoldorders','Paperback::bookfairBookshopSoldOrders');
-    $routes->get('bookfairbookshoporderdetails/(:any)','Paperback::bookfairBookshopOrderDetails/$1');
-    $routes->get('bookfairshippedorderdetails/(:any)','Paperback::bookfairShippedOrderDetails/$1');
-    $routes->get('bookfaircombodetails', 'Paperback::bookfairComboDetails');
-    $routes->get('bookfaircombobooks/(:num)', 'Paperback::bookfairComboBooks/$1');
-    $routes->get('comboorderdetails/(:num)', 'Paperback::comboOrderDetails/$1');
-    $routes->get('combobookorders/(:num)', 'Paperback::combobookOrders/$1');
+    $routes->get('addsaleorreturnorder', 'ComboBookfair::addSaleOrReturnOrder');
+    $routes->get('bookfairbookshoppendingorders', 'ComboBookfair::bookfairBookshopPendingOrders');
 
+    $routes->post('getBookshopTransport', 'ComboBookfair::getBookshopTransport');
+    $routes->post('savesaleorreturnorder', 'ComboBookfair::saveSaleOrReturnOrder');
+
+    $routes->get('ordersdashboard', 'ComboBookfair::bookfairBookshopOrdersDashboard');
+
+    $routes->get('return/(:any)', 'ComboBookfair::bookfairBookshopreturnView/$1');
+    $routes->post('saveReturn', 'ComboBookfair::bookfairBookshopsaveReturn');
+
+    $routes->get('bookfairbookshopshippedorders', 'ComboBookfair::bookfairBookshopShippedOrders');
+    $routes->get('bookfairbookshopsoldorders', 'ComboBookfair::bookfairBookshopSoldOrders');
+
+    $routes->get('bookfairbookshoporderdetails/(:any)', 'ComboBookfair::bookfairBookshopOrderDetails/$1');
+    $routes->get('bookfairshippedorderdetails/(:any)', 'ComboBookfair::bookfairShippedOrderDetails/$1');
+
+    $routes->get('bookfaircombodetails', 'ComboBookfair::bookfairComboDetails');
+    $routes->get('bookfaircombobooks/(:num)', 'ComboBookfair::bookfairComboBooks/$1');
+
+    $routes->get('comboorderdetails/(:num)', 'ComboBookfair::comboOrderDetails/$1');
+    $routes->get('combobookorders/(:num)', 'ComboBookfair::combobookOrders/$1');
 
 });
 

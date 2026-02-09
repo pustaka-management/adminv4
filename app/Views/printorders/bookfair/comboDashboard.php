@@ -1,84 +1,86 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
 
-<div class="container-fluid py-4">
+<a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" 
+   class="btn btn-outline-secondary btn-sm mb-3">
+    Back
+</a>
 
-    <!-- Header -->
-    <div class="mb-4 px-3">
-        <h6 class="fw-bold mb-0">Bookfair Combo Packs</h6>
+<div class="container-fluid py-3">
+
+    <div class="mb-3">
+        <h5 class="fw-bold">Bookfair Combo Packs</h5>
     </div>
 
-    <!-- Card Wrapper -->
-    <div class="row px-3">
-        <div class="col-12">
+    <div class="card shadow-sm radius-8">
+        <div class="card-body">
 
-            <div class="card shadow-sm rounded-3">
+            <div class="table-responsive">
 
-                <div class="card-body p-4">
+                <table class="table table-hover align-middle">
 
-                    <div class="table-responsive">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">#</th>
+                            <th>Pack Name</th>
+                            <th class="text-center">No of Titles</th>
+                            <th class="text-center">Default Qty</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
 
-                        <!-- TABLE START -->
-                        <table class="zero-config table table-hover align-middle">
+                    <tbody>
 
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">#</th>
-                                    <th class="text-start">Pack Name</th>
-                                    <th width="120">No Of Books</th>
-                                    <th width="150">Default Quantity</th>
-                                    <th width="120">Action</th>
-                                </tr>
-                            </thead>
+                    <?php if(!empty($combos)): ?>
+                        <?php $i=1; foreach($combos as $row): ?>
 
-                            <tbody>
+                        <tr>
 
-                            <?php if(!empty($combos)): ?>
-                            <?php $i=1; foreach($combos as $row): ?>
+                            <td><?= $i++ ?></td>
 
-                                <tr>
-                                    <td><?= $i++ ?></td>
+                            <td>
+                                <a href="<?= base_url('combobookfair/bookfaircombobooks/'.$row['combo_id']) ?>" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <?= esc($row['pack_name']) ?>
+                                </a>
+                            </td>
 
-                                    <td class="text-start align-middle">
-                                        <a href="<?= base_url('paperback/bookfaircombobooks/' . $row['combo_id']) ?>"
-                                        class="btn btn-secondary-600 btn-sm">
-                                            <?= esc($row['pack_name']) ?>
-                                        </a>
-                                    </td>
-                                    <td><?= esc($row['book_count']) ?></td>
+                            <td class="text-center">
+                                <span class="badge bg-info">
+                                    <?= esc($row['book_count']) ?>
+                                </span>
+                            </td>
 
-                                    <td>
-                                        <span class="badge bg-secondary px-3 py-2">
-                                            <?= esc($row['default_value']) ?>
-                                        </span>
-                                    </td>
-                                     <td class="text-start">
-                                        <a href="<?= base_url('paperback/comboorderdetails/'.$row['combo_id']) ?>"
-                                           class="fw-semibold text-decoration-none">
-                                            view
-                                        </a>
-                                    </td>
-                                </tr>
+                            <td class="text-center">
+                                <span class="badge bg-secondary px-3">
+                                    <?= esc($row['default_value'] ?? '-') ?>
+                                </span>
+                            </td>
 
-                            <?php endforeach; ?>
-                            <?php else: ?>
+                            <td class="text-center">
+                                <a href="<?= base_url('combobookfair/comboorderdetails/'.$row['combo_id']) ?>"
+                                   class="btn btn-success btn-sm">
+                                    Order Details
+                                </a>
+                            </td>
 
-                                <tr>
-                                    <td colspan="4" class="text-muted py-4">
-                                        No Combo Packs Found
-                                    </td>
-                                </tr>
+                        </tr>
 
-                            <?php endif; ?>
+                        <?php endforeach; ?>
 
-                            </tbody>
+                    <?php else: ?>
 
-                        </table>
-                        <!-- TABLE END -->
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                No Combo Packs Found
+                            </td>
+                        </tr>
 
-                    </div>
+                    <?php endif; ?>
 
-                </div>
+                    </tbody>
+
+                </table>
 
             </div>
 

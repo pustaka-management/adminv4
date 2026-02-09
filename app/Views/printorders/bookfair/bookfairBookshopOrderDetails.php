@@ -6,7 +6,7 @@ $d = $order['details'];  // order header
 $books = $order['list']; // books list
 ?>
 
-<a href="<?= base_url('paperback/bookfairbookshopsoldorders'); ?>" class="btn btn-outline-secondary btn-sm float-end mb-3">
+<a href="<?= base_url('combobookfair/bookfairbookshopsoldorders'); ?>" class="btn btn-outline-secondary btn-sm float-end mb-3">
     Back
 </a>
 
@@ -94,7 +94,7 @@ $books = $order['list']; // books list
                                 <td><?= esc($row['send_qty']) ?></td>
                                 <td><?= number_format($row['book_price'],2) ?></td>
                                 <td><?= esc($row['sale_qty']) ?></td>
-                                <td><?= esc($row['discount']) ?></td>
+                               <td><?= esc($row['discount'] ?? 0) ?> %</td>
                                 <td><?= number_format($row['total_amount'],2) ?></td>
                                 <td><?= !empty($row['sending_date']) ? date('d-m-Y', strtotime($row['sending_date'])) : '-' ?></td>
                             </tr>

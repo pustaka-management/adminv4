@@ -1,6 +1,8 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
-
+<a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" 
+        class="btn btn-outline-secondary btn-sm mb-3">Back
+    </a>
 <div class="container-fluid py-4">
 
     <div class="col-12 col-lg-12">
@@ -31,7 +33,7 @@
                 <?php endif; ?>
 
                 <form method="post"
-                      action="<?= base_url('paperback/savesaleorreturnorder') ?>"
+                      action="<?= base_url('combobookfair/savesaleorreturnorder') ?>"
                       class="needs-validation"
                       novalidate>
 
@@ -115,7 +117,7 @@
                     <!-- BUTTONS -->
                     <div class="text-end mt-4">
 
-                        <a href="<?= base_url('paperback/bookfairsaleorreturnview') ?>"
+                        <a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>"
                            class="btn btn-danger me-2">
                             Back
                         </a>
@@ -146,7 +148,7 @@ $('#bookshop_id').change(function () {
 
     if (id === '') return;
 
-    $.post("<?= base_url('paperback/getBookshopTransport') ?>", {
+    $.post("<?= base_url('combobookfair/getBookshopTransport') ?>", {
         bookshop_id: id,
         '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
     }, function (res) {

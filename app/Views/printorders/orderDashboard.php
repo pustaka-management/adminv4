@@ -320,7 +320,7 @@
             <div class="col-xxl-6 col-sm-6">
                 <div class="card p-3 shadow-2 radius-8 border input-form-light h-100 bg-gradient-end-5">
 
-                    <a href="<?= base_url('paperback/bookfairbookshoppendingorders') ?>" class="text-decoration-none text-dark">
+                    <a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" class="text-decoration-none text-dark">
 
                         <div class="card-body p-0">
 

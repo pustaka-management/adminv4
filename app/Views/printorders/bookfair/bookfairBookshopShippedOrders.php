@@ -1,5 +1,8 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
+<a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" 
+        class="btn btn-outline-secondary btn-sm mb-3">Back
+    </a>
 
 <table class="zero-config table table-hover align-middle">
     <thead>
@@ -22,7 +25,7 @@
                 <td><?= $i++ ?></td>
 
                 <td>
-                    <a href="<?= base_url('paperback/bookfairshippedorderdetails/'.$row['order_id']); ?>">
+                    <a href="<?= base_url('combobookfair/bookfairshippedorderdetails/'.$row['order_id']); ?>">
                         <?= esc($row['order_id']) ?>
                     </a>
                 </td>
@@ -41,12 +44,12 @@
 
                 <td>
                     <a class="btn btn-sm btn-primary"
-                       href="<?= base_url('paperback/bookfairshippedorderdetails/'.$row['order_id']); ?>">
+                       href="<?= base_url('combobookfair/bookfairshippedorderdetails/'.$row['order_id']); ?>">
                         View
                     </a>
 
                     <a class="btn btn-sm btn-primary"
-                       href="<?= base_url('paperback/return/'.$row['order_id']); ?>">
+                       href="<?= base_url('combobookfair/return/'.$row['order_id']); ?>">
                         Return
                     </a>
                 </td>
