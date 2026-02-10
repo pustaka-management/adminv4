@@ -219,6 +219,7 @@ $routes->group('tppublisher', function($routes) {
     $routes->group('user', function ($routes) {
     $routes->get('userdashboard', 'User::userDashboard');
     $routes->post('getuserdetails', 'User::getUserDetails');
+    $routes->get('getUserDetails/(:num)', 'User::getUserDetails/$1');
     $routes->post('clearuserdevices', 'User::clearUserDevices');
     $routes->post('addplanforuser', 'User::addPlanForUser');
     $routes->get('authorgiftbooks', 'User::authorGiftBooks');
@@ -260,6 +261,10 @@ $routes->group('sales', function($routes) {
     $routes->get('audiobooksales', 'Sales::audiobookSales');
     $routes->get('paperbacksales', 'Sales::paperbackSales');
     $routes->get('ebookamazondetails', 'Sales::EbookAmazondetails');
+    $routes->get('getamazonbooks', 'Sales::getAmazonBooks');
+    $routes->get('getamazonbookdetails/(:num)', 'Sales::getamazonbookdetails/$1');
+    $routes->get('amazonauthors', 'Sales::amazonAuthors');
+    $routes->get('amazonauthors/(:any)', 'Sales::amazonAuthorBooks/$1');
     $routes->get('ebookoverdrivedetails', 'Sales::EbookOverdrivedetails');
     $routes->get('overdrivebooks', 'Sales::overdriveBooks');
     $routes->get('overdriveauthors', 'Sales::overdriveAuthors');
@@ -269,11 +274,30 @@ $routes->group('sales', function($routes) {
     $routes->get('ebookscribddetails', 'Sales::EbookScribddetails');
     $routes->get('scribdbooks', 'Sales::scribdBooks');
     $routes->get('scribdbookdetails/(:num)', 'Sales::scribdBookDetails/$1');
+    $routes->get('scribdauthors', 'Sales::scribdAuthors');
+    $routes->get('scribdauthorbooks/(:num)', 'Sales::scribdAuthorBooks/$1');
+    // $routes->get('scribdorders', 'Sales::scribdOrders');
     $routes->get('ebookstoryteldetails', 'Sales::EbookStoryteldetails');
-   $routes->get('audibleaudiobookdetails', 'Sales::AudibleAudiobookDetails');
-   $routes->get('audiobookoverdrivedetails', 'Sales::AudiobookOverdriveDetails');
-   $routes->get('audiobookgoogledetails', 'Sales::audiobookGoogleDetails');
-   $routes->get('audiobookstoryteldetails', 'Sales::audiobookStorytelDetails');
+    $routes->get('storytelbooks', 'Sales::storytelBooks');
+    $routes->get('storytelbookdetails/(:num)', 'Sales::storytelBookDetails/$1');
+    $routes->get('storytelauthors', 'Sales::storytelAuthors');
+    $routes->get('storytelbooksbyauthor/(:num)', 'Sales::storytelBooksByAuthor/$1');
+    $routes->get('ebookgoogledetails', 'Sales::ebookGoogleDetails');
+    $routes->get('googletitles', 'Sales::googleTitles');
+    $routes->get('googletitledetails/(:num)', 'Sales::googleTitleDetails/$1');
+    $routes->get('googleauthors', 'Sales::googleAuthors');
+    $routes->get('googleauthorbooks/(:num)', 'Sales::googleAuthorBooks/$1');
+    $routes->get('ebookpratilipidetails', 'Sales::ebookPratilipiDetails');
+    $routes->get('pratilipititles', 'Sales::pratilipiTitles');
+    $routes->get('pratilipiauthordetails/(:num)', 'Sales::pratilipiAuthorDetails/$1');
+    $routes->get('pratilipiauthors', 'Sales::pratilipiauthors');
+    $routes->get('pratilipiauthorbooks/(:num)', 'Sales::pratilipiauthorbooks/$1');
+
+
+    $routes->get('audibleaudiobookdetails', 'Sales::AudibleAudiobookDetails');
+    $routes->get('audiobookoverdrivedetails', 'Sales::AudiobookOverdriveDetails');
+    $routes->get('audiobookgoogledetails', 'Sales::audiobookGoogleDetails');
+    $routes->get('audiobookstoryteldetails', 'Sales::audiobookStorytelDetails');
     $routes->get('youtubedetails', 'Sales::youtubeDetails');
     $routes->get('kukufmdetails', 'Sales::kukuFMDetails');
 
@@ -432,23 +456,32 @@ $routes->group('paperback', function($routes){
     $routes->post('flipkartmarkshipped', 'Paperback::flipkartmarkshipped');
     $routes->post('flipkartmarkcancel', 'Paperback::flipkartmarkcancel');
     $routes->post('flipkartmarkreturn', 'Paperback::flipkartmarkreturn');
+});
 
-    //bookfair sale or return
-    $routes->get('bookfairsaleorreturnview','Paperback::bookfairsaleorreturnview');
-    $routes->get('bookfairdetailsview/(:num)','Paperback::bookfairdetailsview/$1');
-    $routes->get('ship/(:num)', 'Paperback::ship/$1');
-    $routes->get('downloadbookfairexcel/(:num)','Paperback::downloadbookfairexcel/$1');
-    $routes->get('addsaleorreturnorder', 'Paperback::addSaleOrReturnOrder');
-    $routes->post('savesaleorreturnorder', 'Paperback::saveSaleOrReturnOrder');
-    $routes->get('ordersdashboard', 'Paperback::bookfairBookshopOrdersDashboard');
-    $routes->get('return/(:any)', 'Paperback::bookfairBookshopreturnView/$1');
-    $routes->post('saveReturn', 'Paperback::bookfairBookshopsaveReturn');
-    $routes->get('bookfairbookshopshippedorders','Paperback::bookfairBookshopShippedOrders');
-    $routes->get('bookfairbookshopsoldorders','Paperback::bookfairBookshopSoldOrders');
-    $routes->get('bookfairbookshoporderdetails/(:any)','Paperback::bookfairBookshopOrderDetails/$1');
-    $routes->get('bookfairshippedorderdetails/(:any)','Paperback::bookfairShippedOrderDetails/$1');
-    $routes->post('getBookshopTransport', 'Paperback::getBookshopTransport');
-    
+$routes->group('combobookfair', function($routes) {
+
+    $routes->get('addsaleorreturnorder', 'ComboBookfair::addSaleOrReturnOrder');
+    $routes->get('bookfairbookshoppendingorders', 'ComboBookfair::bookfairBookshopPendingOrders');
+
+    $routes->post('getBookshopTransport', 'ComboBookfair::getBookshopTransport');
+    $routes->post('savesaleorreturnorder', 'ComboBookfair::saveSaleOrReturnOrder');
+
+    $routes->get('ordersdashboard', 'ComboBookfair::bookfairBookshopOrdersDashboard');
+
+    $routes->get('return/(:any)', 'ComboBookfair::bookfairBookshopreturnView/$1');
+    $routes->post('saveReturn', 'ComboBookfair::bookfairBookshopsaveReturn');
+
+    $routes->get('bookfairbookshopshippedorders', 'ComboBookfair::bookfairBookshopShippedOrders');
+    $routes->get('bookfairbookshopsoldorders', 'ComboBookfair::bookfairBookshopSoldOrders');
+
+    $routes->get('bookfairbookshoporderdetails/(:any)', 'ComboBookfair::bookfairBookshopOrderDetails/$1');
+    $routes->get('bookfairshippedorderdetails/(:any)', 'ComboBookfair::bookfairShippedOrderDetails/$1');
+
+    $routes->get('bookfaircombodetails', 'ComboBookfair::bookfairComboDetails');
+    $routes->get('bookfaircombobooks/(:num)', 'ComboBookfair::bookfairComboBooks/$1');
+
+    $routes->get('comboorderdetails/(:num)', 'ComboBookfair::comboOrderDetails/$1');
+    $routes->get('combobookorders/(:num)', 'ComboBookfair::combobookOrders/$1');
 
 });
 
@@ -667,8 +700,6 @@ $routes->group('orders', function($routes) {
   $routes->post('confirmBooks', 'UploadExcel\BulkOrder::confirmBooks');   
   $routes->post('saveOfflineOrder', 'UploadExcel\BulkOrder::saveOfflineOrder'); 
   $routes->post('saveBookshopOrder','UploadExcel\BulkOrder::saveBookshopOrder');
-  
-
 });
 
 // upload routes
@@ -717,7 +748,6 @@ $routes->group('author', function($routes) {
     $routes->match(['get', 'post'], 'addauthorcopyrightdetails/(:num)', 'Author::addauthorcopyrightdetails/$1');
     $routes->post('saveauthorcopyrightdetails','Author::saveauthorcopyrightdetails');
     $routes->post('addauthornamelanguagepost','Author::addauthornamelanguagepost');
-
     //activate//
     $routes->get('activateauthordetails','Author::activateauthordetails');
     $routes->get('activateauthordetails/(:num)','Author::activateauthordetails/$1');
@@ -738,11 +768,6 @@ $routes->group('planauthor', function($routes) {
     $routes->get('addauthorform', 'PlanAuthor::addAuthorForm');
     $routes->post('saveauthor', 'PlanAuthor::saveAuthor');
     $routes->get('planauthor/edit/(:num)', 'PlanAuthor::editAuthor/$1');
-});
-
-//masterpage
-$routes->group('masterpage', function($routes) {
-    $routes->get('dashboard', 'MasterPage::dashboard');
 });
 
 //prospectivemanagement
@@ -781,6 +806,20 @@ $routes->group('prospectivemanagement', function($routes) {
     $routes->post('updatebook/(:num)/(:num)', 'ProspectiveManagement::updateBook/$1/$2');
     $routes->get('viewbook/(:num)/(:num)', 'ProspectiveManagement::viewBook/$1/$2');
     $routes->get('hold', 'ProspectiveManagement::hold');
+    $routes->get('booksprocessing', 'ProspectiveManagement::booksprocessing');
+    $routes->get('viewplandetails/(:num)', 'ProspectiveManagement::viewPlanDetails/$1');
+    $routes->post('savePlan/(:num)', 'ProspectiveManagement::savePlanStatus/$1');
+    $routes->get('completedbookdetails/(:num)', 'ProspectiveManagement::completedbookdetails/$1');
+    $routes->get('completeplandetails/(:num)', 'ProspectiveManagement::completePlanDetails/$1');
 
+
+
+
+
+$routes->post('savePlanInfo', 'ProspectiveManagement::savePlanInfo');
+
+
+    $routes->get('completedbooks', 'ProspectiveManagement::completedbooks');
+    
 
 });

@@ -1,42 +1,46 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
-
+<a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" 
+        class="btn btn-outline-secondary btn-sm mb-3">Back
+    </a>
 <div class="container-fluid py-4">
-    <div class="col-12 col-lg-14">
 
-        <!-- Header -->
-        <div class="bg-gradient-primary rounded-2 p-12 mb-3 shadow-sm">
-            <h4 class="fw-bold mb-1 text-center">
+    <div class="col-12 col-lg-12">
+
+        <!-- HEADER -->
+        <div class="bg-gradient-primary rounded-2 p-3 mb-4 shadow-sm text-white text-center">
+            <h4 class="fw-bold mb-1">
                 <i class="fa fa-book me-2"></i>New Bookfair Order
             </h4>
-            <p class="mb-0 text-center">Create Sale / Return Order</p>
+            <p class="mb-0">Create Sale / Return Order</p>
         </div>
-        <br>
-        <!-- Form Card -->
+
+        <!-- FORM CARD -->
         <div class="card shadow-lg border-0">
             <div class="card-body px-5 py-4">
 
-                <!-- Success -->
-                <?php if (session()->getFlashdata('success')): ?>
+                <!-- FLASH MESSAGES -->
+                <?php if (session()->getFlashdata('success')) : ?>
                     <div class="alert alert-success">
                         <?= session()->getFlashdata('success') ?>
                     </div>
                 <?php endif; ?>
 
-                <?php if (session()->getFlashdata('error')): ?>
+                <?php if (session()->getFlashdata('error')) : ?>
                     <div class="alert alert-danger">
                         <?= session()->getFlashdata('error') ?>
                     </div>
                 <?php endif; ?>
-                
+
                 <form method="post"
-                      action="<?= base_url('paperback/savesaleorreturnorder') ?>"
+                      action="<?= base_url('combobookfair/savesaleorreturnorder') ?>"
                       class="needs-validation"
                       novalidate>
 
                     <?= csrf_field() ?>
-                    <br>
+
                     <div class="row g-4">
+
                         <!-- BOOKSHOP -->
                         <div class="col-md-6">
                             <label class="fw-semibold mb-1">Bookshop *</label>
@@ -109,26 +113,33 @@
                                   class="form-control"
                                   rows="3"></textarea>
                     </div>
-                    <br>
+
                     <!-- BUTTONS -->
                     <div class="text-end mt-4">
-                        <a href="<?= base_url('paperback/bookfairsaleorreturnview') ?>"
+
+                        <a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>"
                            class="btn btn-danger me-2">
                             Back
                         </a>
+
                         <button type="submit"
                                 class="btn btn-primary">
                             Save Order
                         </button>
+
                     </div>
-                    <br>
+
                 </form>
+
             </div>
         </div>
 
     </div>
+
 </div>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <script>
 
 $('#bookshop_id').change(function () {
@@ -137,7 +148,7 @@ $('#bookshop_id').change(function () {
 
     if (id === '') return;
 
-    $.post("<?= base_url('paperback/getBookshopTransport') ?>", {
+    $.post("<?= base_url('combobookfair/getBookshopTransport') ?>", {
         bookshop_id: id,
         '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
     }, function (res) {
@@ -174,6 +185,5 @@ $('#bookshop_id').change(function () {
 })();
 
 </script>
-
 
 <?= $this->endSection(); ?>

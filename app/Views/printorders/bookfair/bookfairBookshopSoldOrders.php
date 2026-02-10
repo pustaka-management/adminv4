@@ -1,9 +1,12 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
+<a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" 
+        class="btn btn-outline-secondary btn-sm mb-3">Back
+    </a>
 
-<h5 class="text-center mb-3"><?= esc($title) ?></h5>
+<h5 class="text-center mb-3">Bookfair Sold Orders</h5>
 
-<table class="table table-bordered">
+<table class="zero-config table table-hover align-middle">
     <thead>
         <tr>
             <th>#</th>
@@ -14,6 +17,7 @@
             <th>Qty / Titles</th>
             <th>Total Qty</th>
             <th>Sending Date</th>
+            <th>Discount</th>
             <th>Action</th>
         </tr>
     </thead>
@@ -24,7 +28,7 @@
                 <td><?= $i++ ?></td>
 
                 <td>
-                    <a href="<?= base_url('paperback/bookfairbookshoporderdetails/'.$row['order_id']); ?>">
+                    <a href="<?= base_url('combobookfair/bookfairbookshoporderdetails/'.$row['order_id']); ?>">
                         <?= esc($row['order_id']) ?>
                     </a>
                 </td>
@@ -40,10 +44,11 @@
                         ? date('d-m-Y', strtotime($row['sending_date']))
                         : '-' ?>
                 </td>
+                <td><?= esc($row['discount'] ?? 0) ?></td>
 
                 <td>
                     <a class="btn btn-sm btn-primary"
-                       href="<?= base_url('paperback/bookfairbookshoporderdetails/'.$row['order_id']); ?>">
+                       href="<?= base_url('combobookfair/bookfairbookshoporderdetails/'.$row['order_id']); ?>">
                         View
                     </a>
                 </td>

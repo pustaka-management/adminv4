@@ -6,8 +6,8 @@ $d = $order['details'];  // order header
 $books = $order['list']; // books list
 ?>
 
-<a href="<?= base_url('paperback/bookfairorders'); ?>" class="btn btn-outline-secondary btn-sm float-end mb-3">
-    ← Back
+<a href="<?= base_url('combobookfair/bookfairbookshopsoldorders'); ?>" class="btn btn-outline-secondary btn-sm float-end mb-3">
+    Back
 </a>
 
 <div id="content" class="main-content">
@@ -62,7 +62,7 @@ $books = $order['list']; // books list
         <div class="card shadow-sm mt-3">
             <div class="card-body">
                 <h6 class="text-center mb-3">Book List</h6>
-                <table class="table table-bordered table-sm">
+                <table class="zero-config table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
@@ -94,7 +94,7 @@ $books = $order['list']; // books list
                                 <td><?= esc($row['send_qty']) ?></td>
                                 <td><?= number_format($row['book_price'],2) ?></td>
                                 <td><?= esc($row['sale_qty']) ?></td>
-                                <td><?= esc($row['discount']) ?></td>
+                               <td><?= esc($row['discount'] ?? 0) ?> %</td>
                                 <td><?= number_format($row['total_amount'],2) ?></td>
                                 <td><?= !empty($row['sending_date']) ? date('d-m-Y', strtotime($row['sending_date'])) : '-' ?></td>
                             </tr>
