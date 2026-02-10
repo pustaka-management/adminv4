@@ -773,3 +773,11 @@ $routes->group('prospectivemanagement', function($routes) {
 
 
 });
+
+
+$routes->group('combobookfair', function($routes) {
+    $routes->get('createcombo', 'ComboBookfair::uploadView');
+    $routes->post('upload', 'combobookfair::uploadProcess');
+    $routes->post('updateAcceptBooks', 'combobookfair::updateAcceptBooks'); 
+    $routes->post('combopackupload', 'combobookfair::combopackupload');
+});
