@@ -27,9 +27,11 @@
                     <th>S.No</th>
                     <th>Created Date</th>
                     <th>Book Id</th>
+                    <th>Download</th>
                     <th>Title</th>
                     <th>Author Name</th>
                     <th>Copies</th>
+                   
                     <th>Action</th>
                 </tr>
             </thead>
@@ -45,10 +47,58 @@
                            value="<?= $print_book['id']; ?>">
 
                     <td><?= $print_book['book_id']; ?></td>
+                    <td>
+                        <?php if ($print_book['rework_flag'] == 1): ?>
+
+                            Rework In Processing
+
+                        <?php elseif ($print_book['rework_flag'] == 0 || $print_book['rework_flag'] === NULL): ?>
+
+                            <div class="row ">
+                                <div class="col-1">
+                                    <a href="<?= 'https://pustaka-indesign.s3.ap-south-1.amazonaws.com/' . $print_book['book_id'] . '/' . $print_book['url_name'] . '-cover.pdf' ?>"
+                                    class="bs-tooltip" title="Cover">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="feather feather-book">
+                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+
+                                <div class="col-1">
+                                    <a href="<?= 'https://pustaka-indesign.s3.ap-south-1.amazonaws.com/' . $print_book['book_id'] . '/' . $print_book['url_name'] . '-content.pdf' ?>"
+                                    class="bs-tooltip" title="Content">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="feather feather-download">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </a>
+                                </div>
+
+                                <div class="col-1">
+                                    <a href="<?= 'https://pustaka-indesign.s3.ap-south-1.amazonaws.com/' . $print_book['book_id'] . '/' . $print_book['url_name'] . '-content-single.pdf' ?>"
+                                    class="bs-tooltip" title="Single Content">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="feather feather-file-minus">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+
+                        <?php endif; ?>
+                    </td>
                     <td><?= $print_book['book_title']; ?></td>
                     <td><?= $print_book['author_name']; ?></td>
                     <td><?= $print_book['quantity']; ?></td>
-
                     <td>
                         <button class="btn btn-warning" 
                                 onclick="mark_complete(<?= $print_book['id']; ?>)">

@@ -19,10 +19,10 @@ class AmazonTransactions extends BaseController
         ini_set('max_execution_time', 300); // 5 minutes
         ini_set('memory_limit', '512M');
 
-        $file_name = "Amazon Sep 2025-IT.xlsx";
+        $file_name = "Amazon Dec 2025-IN.xlsx";
 
       
-        $inputFileName = WRITEPATH . 'uploads' .DIRECTORY_SEPARATOR . 'transactions' . DIRECTORY_SEPARATOR . 'amazon_reports' . DIRECTORY_SEPARATOR . 'sep-2025' . DIRECTORY_SEPARATOR . $file_name;
+        $inputFileName = WRITEPATH . 'uploads' .DIRECTORY_SEPARATOR . 'transactions' . DIRECTORY_SEPARATOR . 'amazon_reports' . DIRECTORY_SEPARATOR . 'dec-2025' . DIRECTORY_SEPARATOR . $file_name;
 
         if (!file_exists($inputFileName)) {
             return $this->response->setJSON(['error' => "File not found: $inputFileName"]);

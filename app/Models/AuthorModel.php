@@ -1912,35 +1912,61 @@ class AuthorModel extends Model
 
         return $data;
     }
-    public function authorRoyaltySettlementDetails($author_id)
-    {
-        $db = \Config\Database::connect();
 
-        $sql = "
-            SELECT 
-                fy,
-                settlement_date,
-                settlement_amount,
-                tds_amount,
-                payment_type,
-                bank_transaction_details,
-                month,
-                year
-            FROM royalty_settlement
-            WHERE copy_right_owner_id = ?
-            ORDER BY settlement_date DESC
-        ";
+        public function authorRoyaltySettlementDetails($author_id)
+        {
+            $db = \Config\Database::connect();
 
-        $query = $db->query($sql, [$author_id]);
-        $result = $query->getResultArray();
+            // 1. Get copyright owners for author
+            $cp_sql = "
+                SELECT 
+                    GROUP_CONCAT(DISTINCT copyright_owner) AS copyright_owner
+                FROM copyright_mapping
+                WHERE author_id = ?
+            ";
 
-        $settlement_list = [];
-        foreach ($result as $row) {
-            $settlement_list[$row['fy']][] = $row;
+            $cp_query  = $db->query($cp_sql, [$author_id]);
+            $cp_result = $cp_query->getRow();
+
+            if (empty($cp_result->copyright_owner)) {
+                return [];
+            }
+
+            // 2. Convert comma separated owners to array
+            $copyrightOwners = explode(',', $cp_result->copyright_owner);
+
+            // 3. Prepare IN clause placeholders
+            $placeholders = implode(',', array_fill(0, count($copyrightOwners), '?'));
+
+            // 4. Settlement query
+            $sql = "
+                SELECT 
+                    fy,
+                    settlement_date,
+                    settlement_amount,
+                    tds_amount,
+                    payment_type,
+                    bank_transaction_details,
+                    month,
+                    year
+                FROM royalty_settlement
+                WHERE copy_right_owner_id IN ($placeholders)
+                ORDER BY settlement_date DESC
+            ";
+
+            $query  = $db->query($sql, $copyrightOwners);
+            $result = $query->getResultArray();
+
+            // 5. Group by financial year
+            $settlement_list = [];
+            foreach ($result as $row) {
+                $settlement_list[$row['fy']][] = $row;
+            }
+
+            return $settlement_list;
         }
 
-        return $settlement_list; 
-    }
+
     function authorSettlementList($author_id)
     {
         $db = \Config\Database::connect();

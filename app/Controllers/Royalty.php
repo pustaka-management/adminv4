@@ -39,12 +39,21 @@ class Royalty extends BaseController
     {
         $data['title'] = '';
         $data['subTitle'] = 'Breakup Royalty Summary';
-        $data['ebook_details'] = $this->royaltyModel->getebookbreakupDetails($copyright_owner);
-        $data['audiobook_details'] = $this->royaltyModel->getaudiobreakupDetails($copyright_owner);
-        $data['paperback_details'] = $this->royaltyModel->getpaperbackDetails($copyright_owner);
+
+		$builder = $this->db->table('site_config'); // Query builder from $this->db
+		$builder->where('category', 'prevmonth');
+		$query = $builder->get();
+		$site_config_data = $query->getRowArray();
+
+		$prev_month_end=$site_config_data['value'];
+		
+        $data['ebook_details'] = $this->royaltyModel->getebookbreakupDetails($copyright_owner,$prev_month_end);
+        $data['audiobook_details'] = $this->royaltyModel->getaudiobreakupDetails($copyright_owner,$prev_month_end);
+        $data['paperback_details'] = $this->royaltyModel->getpaperbackDetails($copyright_owner,$prev_month_end);
         $data['author_id'] = $copyright_owner;
         $data['details']= $this->royaltyModel->publisherDetails($copyright_owner);
 		$data['summary'] = $this->royaltyModel->getRoyaltyConsolidatedDataByCopyrightOwner($copyright_owner);
+		$data['settlements']= $this->royaltyModel->RoyaltySettlementDetails($copyright_owner);
 
         return view('royalty/royaltybreakupview', $data);
         

@@ -50,7 +50,8 @@ $routes->match(['get', 'post'], 'book/amazonPaperback_excel_download', 'Download
 
 
 // Bookfair sales details
-$routes->get('bookfair/uploaditemwisesale', 'BookFairUpload::uploadItemwiseSale');
+$routes->get('bookfair/uploaditemwisesale', 'BookFairUpload::uploadItemwiseSaleReport');
+$routes->get('bookfair/allocatedBooks', 'BookFairUpload::bookfair_allocated_books');
 
 // stock
 $routes->group('stock', function($routes) {
@@ -249,7 +250,7 @@ $routes->get('royalty/download_bank_excel', 'DownloadExcel\RoyaltyExcel::Downloa
 
 $routes->group('bookId', function ($routes) {
     $routes->get('processBookExcel', 'DownloadExcel\BookIdExcel::processBookExcel');
-    $routes->post('uploadExcel', 'DownloadExcel\BookIdExcel::uploadExcel'); // opti
+    $routes->get('processTamilBookExcel', 'DownloadExcel\BookIdExcel::processTamilBookExcel'); // opti
 });
 
 
@@ -710,6 +711,8 @@ $routes->group('upload', function($routes) {
     $routes->get('overdriveaudiobooks', 'UploadExcel\Overdrive::uploadAudiobooks');
     $routes->get('amazonebooks', 'UploadExcel\Amazon::uploadEBooks');
     $routes->get('amazonpaperbacks', 'UploadExcel\Amazon::uploadPaperbacks');
+    $routes->get('googlebooks', 'UploadExcel\Google::Uploadbooks');
+    $routes->get('audible', 'UploadExcel\Audible::Uploadbooks');
 });
 
 //author
@@ -822,4 +825,12 @@ $routes->post('savePlanInfo', 'ProspectiveManagement::savePlanInfo');
     $routes->get('completedbooks', 'ProspectiveManagement::completedbooks');
     
 
+});
+
+
+$routes->group('combobookfair', function($routes) {
+    $routes->get('createcombo', 'ComboBookfair::uploadView');
+    $routes->post('upload', 'combobookfair::uploadProcess');
+    $routes->post('updateAcceptBooks', 'combobookfair::updateAcceptBooks'); 
+    $routes->post('combopackupload', 'combobookfair::combopackupload');
 });

@@ -30,78 +30,78 @@ class ComboBookfairModel extends Model
 
     // ================= COMBO DROPDOWN =================
     public function getCombos()
-{
-    return $this->db->table('bookfair_combo_pack')
-        ->select('combo_id, pack_name')
-        ->orderBy('created_date','DESC')
-        ->get()
-        ->getResultArray();
-}
+    {
+        return $this->db->table('bookfair_combo_pack')
+            ->select('combo_id, pack_name')
+            ->orderBy('created_date','DESC')
+            ->get()
+            ->getResultArray();
+    }
 
 
     // ================= TOTAL QTY =================
     public function getComboTotalQty($comboId)
-{
-    $row = $this->db->table('bookfair_combo_pack_details')
-        ->selectSum('default_value')
-        ->where('combo_id', $comboId)
-        ->get()
-        ->getRowArray();
-
-    return $row['default_value'] ?? 0;
-}
-
-    // ================= CREATE ORDER =================
-    public function createOrder($orderData, $comboId)
-{
-    $db = $this->db;
-    $db->transBegin();
-
-    // MAIN ORDER
-    $db->table('bookfair_sale_or_return_orders')->insert($orderData);
-
-    // FETCH COMBO BOOKS (DETAILS TABLE)
-    $comboBooks = $db->table('bookfair_combo_pack_details')
-        ->where('combo_id', $comboId)
-        ->get()
-        ->getResultArray();
-
-    if (!$comboBooks) {
-        throw new \Exception('Combo books not found');
-    }
-
-    foreach ($comboBooks as $row) {
-
-        $bookId = $row['book_id'];
-        $qty    = $row['default_value'];
-
-        $book = $db->table('book_tbl')
-            ->where('book_id', $bookId)
+    {
+        $row = $this->db->table('bookfair_combo_pack_details')
+            ->selectSum('default_value')
+            ->where('combo_id', $comboId)
             ->get()
             ->getRowArray();
 
-        if (!$book) continue;
-
-        $db->table('bookfair_sale_or_return_order_details')->insert([
-            'order_id'    => $orderData['order_id'],
-            'bookshop_id' => $orderData['bookshop_id'],
-            'create_date' => $orderData['create_date'],
-            'book_id'     => $bookId,
-            'send_qty'    => $qty,
-            'book_price'  => $book['paper_back_inr'],
-            'discount'    => 0,
-            'status'      => 0
-        ]);
+        return $row['default_value'] ?? 0;
     }
 
-    if ($db->transStatus() === false) {
-        $db->transRollback();
-        throw new \Exception('Transaction failed');
-    }
+    // ================= CREATE ORDER =================
+    public function createOrder($orderData, $comboId)
+    {
+        $db = $this->db;
+        $db->transBegin();
 
-    $db->transCommit();
-    return true;
-}
+        // MAIN ORDER
+        $db->table('bookfair_sale_or_return_orders')->insert($orderData);
+
+        // FETCH COMBO BOOKS (DETAILS TABLE)
+        $comboBooks = $db->table('bookfair_combo_pack_details')
+            ->where('combo_id', $comboId)
+            ->get()
+            ->getResultArray();
+
+        if (!$comboBooks) {
+            throw new \Exception('Combo books not found');
+        }
+
+        foreach ($comboBooks as $row) {
+
+            $bookId = $row['book_id'];
+            $qty    = $row['default_value'];
+
+            $book = $db->table('book_tbl')
+                ->where('book_id', $bookId)
+                ->get()
+                ->getRowArray();
+
+            if (!$book) continue;
+
+            $db->table('bookfair_sale_or_return_order_details')->insert([
+                'order_id'    => $orderData['order_id'],
+                'bookshop_id' => $orderData['bookshop_id'],
+                'create_date' => $orderData['create_date'],
+                'book_id'     => $bookId,
+                'send_qty'    => $qty,
+                'book_price'  => $book['paper_back_inr'],
+                'discount'    => 0,
+                'status'      => 0
+            ]);
+        }
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+            throw new \Exception('Transaction failed');
+        }
+
+        $db->transCommit();
+        return true;
+    }
 
     // ================= RETURN =================
     public function getReturnOrder($orderId)
@@ -126,70 +126,70 @@ class ComboBookfairModel extends Model
     }
 
     public function processReturn($orderId, $returnQtyArr, $discountPercent)
-{
-    $db = $this->db;
-    $db->transBegin();
+    {
+        $db = $this->db;
+        $db->transBegin();
 
-    $details = $db->table('bookfair_sale_or_return_order_details')
-        ->where('order_id', $orderId)
-        ->get()
-        ->getResultArray();
+        $details = $db->table('bookfair_sale_or_return_order_details')
+            ->where('order_id', $orderId)
+            ->get()
+            ->getResultArray();
 
-    if (!$details) {
-        throw new \Exception('No order details found');
-    }
-
-    foreach ($details as $row) {
-
-        $bookId  = $row['book_id'];
-        $price  = $row['book_price'];
-
-        $saleQty   = $row['sale_qty'] ?? $row['send_qty'];
-        $returnQty = $returnQtyArr[$bookId] ?? 0;
-
-        if ($returnQty > $saleQty) {
-            $returnQty = $saleQty;
+        if (!$details) {
+            throw new \Exception('No order details found');
         }
 
-        $finalSaleQty = $saleQty - $returnQty;
+        foreach ($details as $row) {
 
-      
-        $salesAmount = $finalSaleQty * $price;
+            $bookId  = $row['book_id'];
+            $price  = $row['book_price'];
 
-       
-        $discountAmount = ($discountPercent > 0)
-            ? round(($salesAmount * $discountPercent) / 100, 2)
-            : 0;
+            $saleQty   = $row['sale_qty'] ?? $row['send_qty'];
+            $returnQty = $returnQtyArr[$bookId] ?? 0;
 
-        $finalAmount = max(0, $salesAmount - $discountAmount);
+            if ($returnQty > $saleQty) {
+                $returnQty = $saleQty;
+            }
 
-        $db->table('bookfair_sale_or_return_order_details')
+            $finalSaleQty = $saleQty - $returnQty;
+
+        
+            $salesAmount = $finalSaleQty * $price;
+
+        
+            $discountAmount = ($discountPercent > 0)
+                ? round(($salesAmount * $discountPercent) / 100, 2)
+                : 0;
+
+            $finalAmount = max(0, $salesAmount - $discountAmount);
+
+            $db->table('bookfair_sale_or_return_order_details')
+                ->where('order_id', $orderId)
+                ->where('book_id', $bookId)
+                ->update([
+                    'sale_qty'     => $finalSaleQty,
+                    'return_qty'   => ($row['return_qty'] ?? 0) + $returnQty,
+
+                
+                    'discount'     => $discountPercent, 
+                    'total_amount' => $finalAmount,
+
+                    'status'       => 2
+                ]);
+        }
+
+        $db->table('bookfair_sale_or_return_orders')
             ->where('order_id', $orderId)
-            ->where('book_id', $bookId)
-            ->update([
-                'sale_qty'     => $finalSaleQty,
-                'return_qty'   => ($row['return_qty'] ?? 0) + $returnQty,
+            ->update(['status' => 2]);
 
-            
-                'discount'     => $discountPercent, 
-                'total_amount' => $finalAmount,
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+            throw new \Exception('Return failed');
+        }
 
-                'status'       => 2
-            ]);
+        $db->transCommit();
+        return true;
     }
-
-    $db->table('bookfair_sale_or_return_orders')
-        ->where('order_id', $orderId)
-        ->update(['status' => 2]);
-
-    if ($db->transStatus() === false) {
-        $db->transRollback();
-        throw new \Exception('Return failed');
-    }
-
-    $db->transCommit();
-    return true;
-}
 
 
     // ================= LISTS =================
@@ -294,46 +294,102 @@ class ComboBookfairModel extends Model
 
 
     public function getComboOrders($comboId)
-{
-    return $this->db->table('bookfair_sale_or_return_orders o')
-        ->select('
-            o.order_id,
-            o.combo_id,
-            o.book_fair_name,
-            o.sending_date,
-            o.total_qty,
-            o.status,
+    {
+        return $this->db->table('bookfair_sale_or_return_orders o')
+            ->select('
+                o.order_id,
+                o.combo_id,
+                o.book_fair_name,
+                o.sending_date,
+                o.total_qty,
+                o.status,
 
-            bs.bookshop_name,
-            c.pack_name AS combo_name
-        ')
-        ->join('pod_bookshop bs', 'bs.bookshop_id = o.bookshop_id', 'left')
-        ->join('bookfair_combo_pack c', 'c.combo_id = o.combo_id', 'left')
-        ->where('o.combo_id', $comboId)
-        ->orderBy('o.order_id', 'DESC')
-        ->get()
-        ->getResultArray();
-}
+                bs.bookshop_name,
+                c.pack_name AS combo_name
+            ')
+            ->join('pod_bookshop bs', 'bs.bookshop_id = o.bookshop_id', 'left')
+            ->join('bookfair_combo_pack c', 'c.combo_id = o.combo_id', 'left')
+            ->where('o.combo_id', $comboId)
+            ->orderBy('o.order_id', 'DESC')
+            ->get()
+            ->getResultArray();
+    }
 
 
    public function getComboBookOrders($bookId)
-{
-    return $this->db->table('bookfair_sale_or_return_order_details d')
-        ->select('
-            d.*,
-            b.book_title,
-            a.author_name,
-            bs.bookshop_name,
-            o.book_fair_name
-        ')
-        ->join('book_tbl b', 'b.book_id = d.book_id', 'left')
-        ->join('author_tbl a', 'a.author_id = b.author_name', 'left')
-        ->join('pod_bookshop bs', 'bs.bookshop_id = d.bookshop_id', 'left')
-        ->join('bookfair_sale_or_return_orders o', 'o.order_id = d.order_id', 'left')
-        ->where('d.book_id', $bookId)
-        ->get()
-        ->getResultArray();
+    {
+        return $this->db->table('bookfair_sale_or_return_order_details d')
+            ->select('
+                d.*,
+                b.book_title,
+                a.author_name,
+                bs.bookshop_name,
+                o.book_fair_name
+            ')
+            ->join('book_tbl b', 'b.book_id = d.book_id', 'left')
+            ->join('author_tbl a', 'a.author_id = b.author_name', 'left')
+            ->join('pod_bookshop bs', 'bs.bookshop_id = d.bookshop_id', 'left')
+            ->join('bookfair_sale_or_return_orders o', 'o.order_id = d.order_id', 'left')
+            ->where('d.book_id', $bookId)
+            ->get()
+            ->getResultArray();
+    }
+    function combopackupload($books, $comboName)
+    {
+        if (empty($books)) {
+            return [
+                'status' => 0,
+                'message' => 'No books provided'
+            ];
+        }
+
+        $total_quantity = 0;
+        $no_of_title    = count($books);
+
+        foreach ($books as $b) {
+            if (empty($b['book_id']) || empty($b['quantity'])) {
+                log_message('error', 'Missing data in combopackupload');
+                continue;
+            }
+
+            $total_quantity += (int) $b['quantity'];
+        }
+
+        // 🔹 Insert into bookfair_combo_pack (ONLY ONCE)
+        $comboPackData = [
+            'pack_name'       =>  $comboName, // change if dynamic
+            'no_of_title'     => $no_of_title,
+            'total_quantity'  => $total_quantity,
+            'created_date'    => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->table('bookfair_combo_pack')->insert($comboPackData);
+
+        // ✅ Get last inserted combo ID
+        $combo_id = $this->db->insertID();
+
+        // 🔹 Insert combo pack details
+        foreach ($books as $b) {
+
+            if (empty($b['book_id']) || empty($b['quantity'])) {
+                continue;
+            }
+
+            $detailData = [
+                'combo_id'      => $combo_id,
+                'book_id'       => $b['book_id'],
+                'default_value' => $b['quantity'],
+                'created_date'  => date('Y-m-d H:i:s')
+            ];
+
+            $this->db->table('bookfair_combo_pack_details')->insert($detailData);
+        }
+
+        return [
+            'status'   => 1,
+            'combo_id' => $combo_id,
+            'message'  => 'Combo Pack created successfully'
+        ];
+    }
 }
 
-
-}

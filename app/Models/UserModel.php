@@ -1101,23 +1101,34 @@ public function checkOrCreateUser($email)
     // Step 1: Get the correct subscription records (your original working query)
     $cancel_sql = "
         SELECT *
-        FROM (
-            SELECT 
-                r.*,
-                ROW_NUMBER() OVER (PARTITION BY r.user_id, r.plan_id ORDER BY r.created_at ASC) AS rn
-            FROM razorpay_subscription r
-            WHERE 
-                (r.user_id, r.plan_id) IN (
-                    SELECT user_id, plan_id
-                    FROM razorpay_subscription
-                    WHERE cancel_flag = 0
-                    GROUP BY user_id, plan_id
-                    HAVING COUNT(DISTINCT razorpay_subscription_id) > 1
-                )
-                OR (r.razorpay_status = 'CANCEL' AND r.cancel_flag = 0)
-        ) t
-        WHERE t.rn = 1
-        ORDER BY t.user_id, t.plan_id
+		FROM (
+			SELECT 
+				r.*,
+				ROW_NUMBER() OVER (
+					PARTITION BY r.user_id, r.plan_id 
+					ORDER BY r.created_at ASC
+				) AS rn
+			FROM razorpay_subscription r
+			WHERE 
+				(
+					(r.user_id, r.plan_id) IN (
+						SELECT user_id, plan_id
+						FROM razorpay_subscription
+						WHERE cancel_flag = 0
+						GROUP BY user_id, plan_id
+						HAVING COUNT(DISTINCT razorpay_subscription_id) > 1
+					)
+				)
+				OR (
+					r.cancel_flag = 0
+					AND (
+						r.razorpay_status = 'CANCEL'
+						OR r.razorpay_status = 'subscription.cancelled'
+					)
+				)
+		) t
+		WHERE t.rn = 1
+		ORDER BY t.created_at
     ";
 
     $cancel_query = $db->query($cancel_sql);

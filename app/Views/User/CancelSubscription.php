@@ -12,6 +12,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Request Date</th>
                 <th>User ID</th>
                 <th>User Name</th>
                 <th>Plan Id</th>
@@ -25,6 +26,7 @@
                 <?php $i = 1; foreach ($cancel as $sub): ?>
                     <tr>
                         <td><?= $i++; ?></td>
+                        <td><?= esc(date('d-m-Y', strtotime($sub['created_at']))); ?></td>
                         <td><?= esc($sub['user_id']); ?></td>
                         <td><?= esc($sub['username']); ?></td>
                         <td><?= esc($sub['razorpay_plan_id']); ?></td>

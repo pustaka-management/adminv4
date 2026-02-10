@@ -561,43 +561,64 @@ public function getLanguageWiseBookCount()
     public function completedBooksSubmit($book_id)
 {
     $db = \Config\Database::connect();
-    $builder = $db->table('book_tbl'); 
 
-    $row = $builder->where('book_id', $book_id)
-                   ->get()
-                   ->getRowArray(); 
-
-    return $row;
+    return $db->table('book_tbl')
+        ->where('book_id',$book_id)
+        ->get()
+        ->getRowArray();
 }
-    public function indesignMarkCompleted($book_id, $pages, $price, $royalty, $copyright_owner, $isbn, $paper_back_desc, $paper_back_author_desc)
-    {
-        $db = \Config\Database::connect();
 
-        // Update indesign_processing table
-        $builder1 = $db->table('indesign_processing');
-        $builder1->where('book_id', $book_id)
-                 ->update([
-                     'completed_flag' => 1,
-                     'completed_date' => date('Y-m-d H:i:s')
-                 ]);
+public function indesignMarkCompleted(
+        $book_id,$pages,$price,$royalty,$copyright_owner,$isbn,
+        $paper_back_desc,$paper_back_author_desc,
+        $rate_per_page,$rate_remarks)
+{
+    $db = \Config\Database::connect();
 
-        // Update book_tbl table
-        $builder2 = $db->table('book_tbl');
-        $builder2->where('book_id', $book_id)
-                 ->update([
-                     'paper_back_readiness_flag' => 1,
-                     'paper_back_pages' => $pages,
-                     'paper_back_inr' => $price,
-                     'paper_back_royalty' => $royalty,
-                     'paper_back_copyright_owner' => $copyright_owner,
-                     'paper_back_isbn' => $isbn,
-                     'paper_back_desc' => $paper_back_desc,
-                     'paper_back_author_desc' => $paper_back_author_desc,
-                     'paperback_activate_at' => date('Y-m-d H:i:s')
-                 ]);
+    // Update indesign_processing
+    $db->table('indesign_processing')
+        ->where('book_id',$book_id)
+        ->update([
+            'completed_flag'=>1,
+            'completed_date'=>date('Y-m-d H:i:s')
+        ]);
 
-        return ($db->affectedRows() > 0) ? 1 : 0;
-    }
+    // Get old remarks
+    $old = $db->table('book_tbl')
+              ->select('rate_remarks')
+              ->where('book_id',$book_id)
+              ->get()
+              ->getRowArray();
+
+    $oldRemarks = $old['rate_remarks'] ?? '';
+
+    // New remark with date
+    $newRemark = date('d-m-Y').' : '.$rate_remarks;
+
+    // Append old + new
+    $finalRemarks = $oldRemarks
+        ? $oldRemarks."\n".$newRemark
+        : $newRemark;
+
+    // Update book_tbl
+    $db->table('book_tbl')
+        ->where('book_id',$book_id)
+        ->update([
+            'paper_back_readiness_flag'=>1,
+            'paper_back_pages'=>$pages,
+            'paper_back_inr'=>$price,
+            'paper_back_royalty'=>$royalty,
+            'paper_back_copyright_owner'=>$copyright_owner,
+            'paper_back_isbn'=>$isbn,
+            'paper_back_desc'=>$paper_back_desc,
+            'paper_back_author_desc'=>$paper_back_author_desc,
+            'rate_per_page'=>$rate_per_page,
+            'rate_remarks'=>$finalRemarks,
+            'paperback_activate_at'=>date('Y-m-d H:i:s')
+        ]);
+
+    return ($db->affectedRows()>0)?1:0;
+}
      public function paperbackReworkBook()
     {
         $db = \Config\Database::connect();

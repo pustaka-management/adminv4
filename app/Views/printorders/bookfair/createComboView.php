@@ -4,9 +4,9 @@
 <div class="container my-5" style="max-width: 900px;">
     <!-- Page Header -->
     <div class="text-center mb-4">
-        <h3 class="fw-bold">Bulk Stock Upload</h3>
+        <h4 class="fw-bold">Create Combo Pack</h4>
         <p class="text-muted mb-0">
-            Update book stock using manual entry or Excel upload
+            Create Combo Pack using manual entry or Excel upload
         </p>
     </div>
 
@@ -42,9 +42,21 @@
     <!-- Main Card -->
     <div class="card shadow-sm border-0">
         <div class="card-body p-4">
-            <form action="<?= base_url('stock/upload'); ?>" method="post" enctype="multipart/form-data">
+            <form action="<?= base_url('combobookfair/upload'); ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field(); ?>
 
+                 <div class="mb-3" style="">
+        <label class="form-label fw-semibold">
+            Combo Pack Name <span class="text-danger">*</span>
+        </label>
+        <input
+            type="text"
+            name="combo_pack_name"
+            class="form-control"
+            placeholder="Enter combo pack name"
+            required
+        >
+    </div>
                 <!-- Upload Method -->
                 <div class="mb-4">
                     <label class="fw-semibold mb-2 d-block">Choose Upload Method</label>
