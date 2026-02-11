@@ -1,7 +1,11 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
 
-<div class="container my-5" style="max-width: 900px;">
+<div class="container my-8" style="max-width: 1200px;">
+    <a href="<?= base_url('combobookfair/bookfairbookshoppendingorders') ?>" 
+   class="btn btn-outline-secondary btn-sm mb-3">
+    Back
+</a>
     <!-- Page Header -->
     <div class="text-center mb-4">
         <h4 class="fw-bold">Create Combo Pack</h4>

@@ -336,56 +336,57 @@ class ComboBookfair extends BaseController
         ]);
     }
 
-    public function updateAcceptBooks()
-    {
-        $selected = $this->request->getPost('selected');
-        $titles = $this->request->getPost('book_title');
-        $quantities = $this->request->getPost('quantity');
-        $discounts = $this->request->getPost('discount');
+   public function updateAcceptBooks()
+{
+    $selected = $this->request->getPost('selected');
+    $titles = $this->request->getPost('book_title');
+    $quantities = $this->request->getPost('quantity');
+    $combo_pack_name = $this->request->getPost('combo_pack_name');
 
-        // Get currently stored data from session
-        $matched = session()->get('matched_books') ?? [];
-        $mismatched = session()->get('mismatched_books') ?? [];
+    // Get session data
+    $matched = session()->get('matched_books') ?? [];
+    $mismatched = session()->get('mismatched_books') ?? [];
 
-        if (!empty($selected)) {
-            foreach ($selected as $bookId) {
-                // Find that mismatched book
-                foreach ($mismatched as $key => $book) {
-                    if ($book['book_id'] == $bookId) {
-                        // Move this to matched
-                        $matched[] = [
-                            'book_id'  => $book['book_id'],
-                            'title'    => $titles[$bookId] ?? $book['db_title'],
-                            'quantity' => $quantities[$bookId] ?? $book['quantity'],
-                        ];
+    if (!empty($selected)) {
+        foreach ($selected as $bookId) {
+            foreach ($mismatched as $key => $book) {
+                if ($book['book_id'] == $bookId) {
 
-                        // Remove from mismatched
-                        unset($mismatched[$key]);
-                        break;
-                    }
+                    $matched[] = [
+                        'book_id'  => $book['book_id'],
+                        'title'    => $titles[$bookId] ?? $book['db_title'],
+                        'quantity' => $quantities[$bookId] ?? $book['quantity'],
+                    ];
+
+                    unset($mismatched[$key]);
+                    break;
                 }
             }
         }
-
-        // Save updated data in session
-
-        session()->set('mismatched_books', $mismatched);
-
-        $totalTitles = count($matched);
-     
-        // Reload the same view
-       
-        return view('printorders/bookfair/ComboSummaryView', [
-            'matched' => $matched,
-            'mismatched' => $mismatched,
-            'totalTitles'=> $totalTitles,
-            'title' => '',
-            'subTitle' => '',
-        ]);
     }
+
+    // 🔥 IMPORTANT: save BOTH to session
+    session()->set('matched_books', array_values($matched));
+    session()->set('mismatched_books', array_values($mismatched));
+
+    $totalTitles = count($matched);
+
+    return view('printorders/bookfair/ComboSummaryView', [
+        'matched' => $matched,
+        'mismatched' => $mismatched,
+        'totalTitles'=> $totalTitles,
+        'combo_pack_name'=>$combo_pack_name,
+        'title' => '',
+        'subTitle' => '',
+    ]);
+}
+
 
     public function combopackupload()
     {
+
+    // echo "<pre>";
+    // print_r($_POST);
         $acceptBooks = session()->get('matched_books'); 
         $comboName   = $this->request->getPost('combo_pack_name');
 
@@ -452,7 +453,6 @@ class ComboBookfair extends BaseController
             'Language',
             'Send Qty',
             'Book Price',
-            'Sending Date',
             'Total Amount'
         ];
 
@@ -478,18 +478,18 @@ class ComboBookfair extends BaseController
             $sheet->setCellValue('E'.$rowNum, $row['language_name']);
             $sheet->setCellValue('F'.$rowNum, $row['send_qty']);
             $sheet->setCellValue('G'.$rowNum, $row['book_price']);
-            $sheet->setCellValue(
-                'H'.$rowNum,
-                date('d-m-Y', strtotime($row['sending_date']))
-            );
-            $sheet->setCellValue('I'.$rowNum, $total);
+            // $sheet->setCellValue(
+            //     'H'.$rowNum,
+            //     date('d-m-Y', strtotime($row['sending_date']))
+            // );
+            $sheet->setCellValue('H'.$rowNum, $total);
 
             $rowNum++;
         }
 
         // Grand total row
-        $sheet->setCellValue('H'.$rowNum, 'Grand Total');
-        $sheet->setCellValue('I'.$rowNum, $grandTotal);
+        $sheet->setCellValue('G'.$rowNum, 'Grand Total');
+        $sheet->setCellValue('H'.$rowNum, $grandTotal);
 
         $fileName = 'Bookfair_Books_'.$order_id.'.xlsx';
         $writer = new Xlsx($spreadsheet);

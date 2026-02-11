@@ -1,7 +1,7 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
 
-<a href="<?= base_url('combobookfair/bookshoporderbooksstatus'); ?>" 
+<a href="<?= base_url('combobookfair/bookfairbookshopshippedorders'); ?>" 
    class="btn btn-outline-secondary btn-sm float-end mb-3">
      Back
 </a>
