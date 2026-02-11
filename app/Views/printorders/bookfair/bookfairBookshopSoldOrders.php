@@ -14,7 +14,6 @@
             <th>Bookshop</th>
             <th>Pack Name</th>
             <th>No Of Titles</th>
-            <th>Qty / Titles</th>
             <th>Total Qty</th>
             <th>Sending Date</th>
             <th>Discount</th>
@@ -35,9 +34,8 @@
 
                 <td><?= esc($row['bookshop_name']) ?></td>
                 <td><?= esc($row['pack_name'] ?? '-') ?></td>
-                <td><?= esc($row['no_of_titles'] ?? 0) ?></td>
-                <td><?= (int)$row['qty_per_title'] ?></td>
-                <td><?= esc($row['total_qty'] ?? 0) ?></td>
+                <td><?= esc($row['no_of_title'] ?? 0) ?></td>
+                <td><?= esc($row['total_quantity'] ?? 0) ?></td>
 
                 <td>
                     <?= !empty($row['sending_date'])

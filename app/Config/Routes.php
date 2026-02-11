@@ -484,6 +484,10 @@ $routes->group('combobookfair', function($routes) {
     $routes->get('comboorderdetails/(:num)', 'ComboBookfair::comboOrderDetails/$1');
     $routes->get('combobookorders/(:num)', 'ComboBookfair::combobookOrders/$1');
 
+    $routes->get('bookfairdetailsview/(:num)', 'ComboBookfair::bookfairDetailsView/$1');
+    $routes->get('ship/(:num)', 'ComboBookfair::ship/$1');
+    $routes->get('downloadbookfairexcel/(:num)','ComboBookfair::downloadbookfairexcel/$1');
+
 });
 
 //book//

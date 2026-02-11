@@ -191,45 +191,34 @@ class ComboBookfairModel extends Model
         return true;
     }
 
-
     // ================= LISTS =================
     
     public function getBookfairOrders($status)
     {
-        $sql = "SELECT 
-                    bookfair_sale_or_return_orders.order_id,
-                    bookfair_sale_or_return_orders.sending_date,
-                    pod_bookshop.bookshop_name,
-                    bookfair_combo_pack.pack_name,
-                    COUNT(bookfair_combo_pack_details.book_id) AS no_of_titles,
-                    bookfair_combo_pack.combo_id,
-                    bookfair_combo_pack.total_quantity AS total_qty,
-                    bookfair_sale_or_return_order_details.discount
-                FROM 
-                    bookfair_sale_or_return_orders
-                JOIN
-                    pod_bookshop 
-                    ON pod_bookshop.bookshop_id = bookfair_sale_or_return_orders.bookshop_id
-                JOIN
-                    bookfair_combo_pack 
-                    ON bookfair_combo_pack.combo_id = bookfair_sale_or_return_orders.combo_id
-                JOIN 
-                    bookfair_combo_pack_details 
-                    ON bookfair_combo_pack_details.combo_id = bookfair_sale_or_return_orders.combo_id
-                JOIN
-                    bookfair_sale_or_return_order_details 
-                    ON bookfair_sale_or_return_order_details.order_id = bookfair_sale_or_return_orders.order_id
-                WHERE 
-                    bookfair_sale_or_return_orders.status = $status
-                GROUP BY 
-                    bookfair_sale_or_return_orders.order_id
-                ORDER BY 
-                    bookfair_sale_or_return_orders.order_id DESC";
+        $sql = "
+            SELECT 
+                o.order_id,
+                o.sending_date,
+                s.bookshop_name,
+                c.pack_name,
+                c.no_of_title,
+                c.total_quantity,
+                MAX(d.discount) AS discount
+            FROM bookfair_sale_or_return_orders o
+            LEFT JOIN pod_bookshop s 
+                ON s.bookshop_id = o.bookshop_id
+            LEFT JOIN bookfair_combo_pack c 
+                ON c.combo_id = o.combo_id
+            LEFT JOIN bookfair_sale_or_return_order_details d 
+                ON d.order_id = o.order_id
+            WHERE o.status = ?
+            GROUP BY o.order_id
+            ORDER BY o.order_id DESC
+        ";
 
-        $query = $this->db->query($sql);
-
-        return $query->getResultArray();
+        return $this->db->query($sql, [$status])->getResultArray();
     }
+
 
     public function getBookfairOrderDetails($orderId)
     {
@@ -256,17 +245,20 @@ class ComboBookfairModel extends Model
     // ================= COMBO =================
     public function getBookfairCombos()
     {
-        return $this->db->table('bookfair_combo_pack c')
-            ->select('
+        $sql = "
+            SELECT 
                 c.combo_id,
                 c.pack_name,
-                COUNT(d.book_id) as book_count,
-                SUM(d.default_value) as total_quantity
-            ')
-            ->join('bookfair_combo_pack_details d','d.combo_id=c.combo_id','left')
-            ->groupBy('c.combo_id')
-            ->get()
-            ->getResultArray();
+                c.total_quantity,
+                COUNT(d.book_id) AS book_count
+            FROM bookfair_combo_pack c
+            LEFT JOIN bookfair_combo_pack_details d 
+                ON d.combo_id = c.combo_id
+            GROUP BY c.combo_id
+            ORDER BY c.combo_id DESC
+        ";
+
+        return $this->db->query($sql)->getResultArray();
     }
 
     public function getBookfairComboBooks($comboId)
@@ -365,10 +357,10 @@ class ComboBookfairModel extends Model
 
         $this->db->table('bookfair_combo_pack')->insert($comboPackData);
 
-        // ✅ Get last inserted combo ID
+        // Get last inserted combo ID
         $combo_id = $this->db->insertID();
 
-        // 🔹 Insert combo pack details
+        // Insert combo pack details
         foreach ($books as $b) {
 
             if (empty($b['book_id']) || empty($b['quantity'])) {
@@ -391,5 +383,151 @@ class ComboBookfairModel extends Model
             'message'  => 'Combo Pack created successfully'
         ];
     }
+    public function getBookfairSalesDetails()
+    {
+        $db = \Config\Database::connect(); 
+        
+        $sql ="SELECT 
+                    bookfair_sale_or_return_orders.order_id,
+                    bookfair_sale_or_return_orders.create_date,
+                    pod_bookshop.bookshop_name,
+                    bookfair_combo_pack.pack_name,
+                    COUNT(bookfair_sale_or_return_order_details.book_id) AS no_of_titles,
+                    SUM(bookfair_sale_or_return_order_details.send_qty) AS send_qty,
+                    bookfair_sale_or_return_order_details.discount
+                FROM
+                    bookfair_sale_or_return_orders
+                JOIN
+                    pod_bookshop 
+                    ON pod_bookshop.bookshop_id = bookfair_sale_or_return_orders.bookshop_id
+                JOIN
+                    bookfair_sale_or_return_order_details 
+                    ON bookfair_sale_or_return_orders.order_id = bookfair_sale_or_return_order_details.order_id
+                JOIN
+                    bookfair_combo_pack 
+                    ON bookfair_combo_pack.combo_id = bookfair_sale_or_return_orders.combo_id
+                WHERE 
+                    bookfair_sale_or_return_orders.status = 0
+                GROUP BY 
+                    bookfair_sale_or_return_orders.order_id,
+                    bookfair_sale_or_return_orders.sending_date,
+                    pod_bookshop.bookshop_name,
+                    bookfair_combo_pack.pack_name,
+                    bookfair_sale_or_return_order_details.discount
+                ORDER BY 
+                    bookfair_sale_or_return_orders.order_id DESC";
+
+        $query = $db->query($sql);
+        $data['bookfair_list'] = $query->getResultArray();
+        return $data;
+    }
+    public function getBookFairdetails($order_id)
+    {
+        $db = \Config\Database::connect(); 
+
+        // Bookfair basic details
+        $sql = "SELECT 
+                    bookfair_sale_or_return_orders.book_fair_name,
+                    bookfair_sale_or_return_orders.preferred_transport_name,
+                    pod_bookshop.contact_person_name,
+                    pod_bookshop.mobile,
+                    pod_bookshop.address
+                FROM 
+                    bookfair_sale_or_return_orders
+                JOIN 
+                    pod_bookshop 
+                    ON pod_bookshop.bookshop_id = bookfair_sale_or_return_orders.bookshop_id
+                WHERE
+                     bookfair_sale_or_return_orders.order_id = ?";
+
+        $query = $db->query($sql, [$order_id]);
+        $data['bookfair'] = $query->getResultArray();
+
+        // Combo details
+        $sql1 = "SELECT 
+                    bookfair_combo_pack.pack_name,
+                    bookfair_sale_or_return_orders.create_date,
+                    bookfair_sale_or_return_orders.preferred_transport_name,
+                    bookfair_sale_or_return_orders.remark
+                FROM 
+                    bookfair_sale_or_return_orders
+                JOIN
+                    bookfair_combo_pack 
+                    ON bookfair_combo_pack.combo_id = bookfair_sale_or_return_orders.combo_id
+                WHERE 
+                     bookfair_sale_or_return_orders.order_id = ?";
+
+        $query1 = $db->query($sql1, [$order_id]);
+        $data['bookfair_combo'] = $query1->getResultArray();
+
+        $sql2="SELECT  
+                    bookfair_sale_or_return_order_details.id,
+                    bookfair_sale_or_return_orders.order_id,
+                    bookfair_sale_or_return_order_details.book_id,
+                    book_tbl.book_title,
+                    author_tbl.author_name,
+                    language_tbl.language_name,
+                    bookfair_sale_or_return_order_details.send_qty,
+                    bookfair_sale_or_return_order_details.book_price,
+                    bookfair_sale_or_return_order_details.create_date
+                FROM
+                    bookfair_sale_or_return_order_details
+                JOIN
+                    bookfair_sale_or_return_orders
+                    ON bookfair_sale_or_return_orders.order_id = bookfair_sale_or_return_order_details.order_id
+                JOIN
+                    book_tbl
+                    ON book_tbl.book_id = bookfair_sale_or_return_order_details.book_id
+                JOIN
+                    author_tbl
+                    ON author_tbl.author_id = book_tbl.author_name
+                JOIN
+                    language_tbl
+                    ON language_tbl.language_id = book_tbl.language
+                WHERE
+                    bookfair_sale_or_return_orders.order_id = ?";
+
+        $query2 = $db->query($sql2, [$order_id]);
+        $data['bookfair_details'] = $query2->getResultArray();
+
+        return $data;
+    }
+    public function shipBookfairOrder($order_id)
+    {
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $order = $db->table('bookfair_sale_or_return_orders')
+                    ->select('create_date')
+                    ->where('order_id', $order_id)
+                    ->get()
+                    ->getRowArray();
+
+        if (!$order) {
+            return false;
+        }
+
+        $createDate = $order['create_date'];
+
+        $db->table('bookfair_sale_or_return_order_details')
+            ->where('order_id', $order_id)
+            ->update([
+                'status'       => 1,
+                'sending_date' => $createDate
+            ]);
+
+        
+        $db->table('bookfair_sale_or_return_orders')
+            ->where('order_id', $order_id)
+            ->update([
+                'status'       => 1,
+                'sending_date' => $createDate
+            ]);
+
+        $db->transComplete();
+
+        return $db->transStatus();
+    }
+        
 }
 

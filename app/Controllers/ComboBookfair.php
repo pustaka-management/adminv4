@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\ComboBookfairModel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use CodeIgniter\HTTP\ResponseInterface;
 use DateTime;
 
@@ -104,8 +105,12 @@ class ComboBookfair extends BaseController
     // ================= PENDING =================
     public function bookfairBookshopPendingOrders()
     {
-        $data['title']  = 'Bookfair Bookshop Sale or Return Orders';
+        $data['title']  = '';
         $data['orders'] = $this->combobookfairmodel->getBookfairOrders(0);
+        $data['bookfair_sales'] = $this->combobookfairmodel->getBookfairSalesDetails();
+
+        // echo "<pre>";
+        // print_r($data['bookfair_sales']);
 
         return view('printorders/bookfair/bookFairDashboard', $data);
     }
@@ -381,24 +386,13 @@ class ComboBookfair extends BaseController
 
     public function combopackupload()
     {
-       
-        $acceptBooks = session()->get('accept_books');
-        $comboName = $this->request->getPost('combo_pack_name');
+        $acceptBooks = session()->get('matched_books'); 
+        $comboName   = $this->request->getPost('combo_pack_name');
 
-        
-        // echo "<pre>";
-        //         print_r(session()->get());
-        // print_r($acceptBooks);
-        //       echo '<pre>';
+        $result = $this->combobookfairmodel->combopackupload($acceptBooks, $comboName);
 
-        $result = $this->ComboBookfairModel->combopackupload($acceptBooks, $comboName);
+        session()->setFlashdata('success', 'Combo created successfully!');
 
-        // // Set success flash message
-        session()->setFlashdata('success', 
-            ' successfully!! '
-        );
-
-        // CLEAR SESSION AFTER FINAL SAVE
         session()->remove([
             'matched_books',
             'mismatched_books',
@@ -406,10 +400,106 @@ class ComboBookfair extends BaseController
             'accept_books'
         ]);
 
-
-        // Redirect back to upload form
         return redirect()->to(base_url('combobookfair/createcombo'));
+    }
 
+    public function bookfairdetailsview($order_id)
+    {
+        $data['order_id'] = $order_id;
+        $data['bookfair_details'] = $this->combobookfairmodel->getBookFairdetails($order_id);
+        $data['title'] = '';
+        $data['subTitle'] = '';
+
+        return view('printorders/bookfair/bookfairDetailsView', $data);
+
+    }
+    public function ship($order_id)
+    {
+        $model = new ComboBookfairModel();
+
+        $result = $model->shipBookfairOrder($order_id);
+
+        if ($result) {
+            return redirect()
+                ->to(base_url('combobookfair/bookfairbookshoppendingorders'))
+                ->with('success', 'Order shipped successfully');
+        } else {
+            return redirect()
+                ->back()
+                ->with('error', 'Order shipping failed');
+        }
+    }
+    
+    public function downloadbookfairexcel($order_id)
+    {
+        $result = $this->combobookfairmodel->getBookFairdetails($order_id);
+
+        if (empty($result['bookfair_details'])) {
+            return redirect()->back()->with('error', 'No book data found');
+        }
+
+        $books = $result['bookfair_details'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $headers = [
+            'S.No',
+            'Book ID',
+            'Title',
+            'Author',
+            'Language',
+            'Send Qty',
+            'Book Price',
+            'Sending Date',
+            'Total Amount'
+        ];
+
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col.'1', $header);
+            $col++;
+        }
+
+        // Data
+        $rowNum = 2;
+        $i = 1;
+        $grandTotal = 0;
+
+        foreach ($books as $row) {
+            $total = $row['send_qty'] * $row['book_price'];
+            $grandTotal += $total;
+
+            $sheet->setCellValue('A'.$rowNum, $i++);
+            $sheet->setCellValue('B'.$rowNum, $row['book_id']);
+            $sheet->setCellValue('C'.$rowNum, $row['book_title']);
+            $sheet->setCellValue('D'.$rowNum, $row['author_name']);
+            $sheet->setCellValue('E'.$rowNum, $row['language_name']);
+            $sheet->setCellValue('F'.$rowNum, $row['send_qty']);
+            $sheet->setCellValue('G'.$rowNum, $row['book_price']);
+            $sheet->setCellValue(
+                'H'.$rowNum,
+                date('d-m-Y', strtotime($row['sending_date']))
+            );
+            $sheet->setCellValue('I'.$rowNum, $total);
+
+            $rowNum++;
+        }
+
+        // Grand total row
+        $sheet->setCellValue('H'.$rowNum, 'Grand Total');
+        $sheet->setCellValue('I'.$rowNum, $grandTotal);
+
+        $fileName = 'Bookfair_Books_'.$order_id.'.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="'.$fileName.'"');
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
     }
 }
 
