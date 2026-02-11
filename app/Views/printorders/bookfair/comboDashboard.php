@@ -24,7 +24,7 @@
                             <th width="50">#</th>
                             <th>Pack Name</th>
                             <th class="text-center">No of Titles</th>
-                            <th class="text-center">Default Qty</th>
+                            <th class="text-center">Total Qty</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -53,7 +53,7 @@
 
                             <td class="text-center">
                                 <span class="badge bg-secondary px-3">
-                                    <?= esc($row['default_value'] ?? '-') ?>
+                                    <?= esc($row['total_quantity'] ?? '-') ?>
                                 </span>
                             </td>
 

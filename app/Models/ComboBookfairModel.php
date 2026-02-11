@@ -197,37 +197,29 @@ class ComboBookfairModel extends Model
     // ================= LISTS =================
     public function getBookfairOrders($status)
 {
-    return $this->db->table('bookfair_sale_or_return_orders o')
-        ->select('
+    $sql = "
+        SELECT 
             o.order_id,
             o.sending_date,
             s.bookshop_name,
             c.pack_name,
+            c.no_of_title,
+            c.total_quantity,
+            MAX(d.discount) AS discount
+        FROM bookfair_sale_or_return_orders o
+        LEFT JOIN pod_bookshop s 
+            ON s.bookshop_id = o.bookshop_id
+        LEFT JOIN bookfair_combo_pack c 
+            ON c.combo_id = o.combo_id
+        LEFT JOIN bookfair_sale_or_return_order_details d 
+            ON d.order_id = o.order_id
+        WHERE o.status = ?
+        GROUP BY o.order_id
+        ORDER BY o.order_id DESC
+    ";
 
-            COUNT(DISTINCT cd.book_id) as no_of_titles,
-            SUM(cd.default_value) as total_qty,
-            ROUND(
-                SUM(cd.default_value) / NULLIF(COUNT(DISTINCT cd.book_id),0),
-            2) as qty_per_title,
-
-            MAX(d.discount) as discount   -- ✅ HERE
-        ')
-        ->join('pod_bookshop s','s.bookshop_id=o.bookshop_id','left')
-        ->join('bookfair_combo_pack c','c.combo_id=o.combo_id','left')
-        ->join('bookfair_combo_pack_details cd','cd.combo_id=o.combo_id','left')
-        ->join(
-            'bookfair_sale_or_return_order_details d',
-            'd.order_id = o.order_id',
-            'left'
-        )
-        ->where('o.status', $status)
-        ->groupBy('o.order_id')
-        ->orderBy('o.order_id','DESC')
-        ->get()
-        ->getResultArray();
+    return $this->db->query($sql, [$status])->getResultArray();
 }
-
-
 
     public function getBookfairOrderDetails($orderId)
     {
@@ -252,21 +244,23 @@ class ComboBookfairModel extends Model
     }
 
     // ================= COMBO =================
-    public function getBookfairCombos()
+  public function getBookfairCombos()
 {
-    return $this->db->table('bookfair_combo_pack c')
-        ->select('
+    $sql = "
+        SELECT 
             c.combo_id,
             c.pack_name,
-            COUNT(d.book_id) as book_count,
-            SUM(d.default_value) as total_quantity
-        ')
-        ->join('bookfair_combo_pack_details d','d.combo_id=c.combo_id','left')
-        ->groupBy('c.combo_id')
-        ->get()
-        ->getResultArray();
-}
+            c.total_quantity,
+            COUNT(d.book_id) AS book_count
+        FROM bookfair_combo_pack c
+        LEFT JOIN bookfair_combo_pack_details d 
+            ON d.combo_id = c.combo_id
+        GROUP BY c.combo_id
+        ORDER BY c.combo_id DESC
+    ";
 
+    return $this->db->query($sql)->getResultArray();
+}
     public function getBookfairComboBooks($comboId)
 {
     return $this->db->table('bookfair_combo_pack_details d')
@@ -289,8 +283,6 @@ class ComboBookfairModel extends Model
         ->get()
         ->getResultArray();
 }
-
-
     public function getComboOrders($comboId)
 {
     return $this->db->table('bookfair_sale_or_return_orders o')

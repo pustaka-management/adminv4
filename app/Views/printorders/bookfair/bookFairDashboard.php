@@ -99,7 +99,6 @@
                         <th>Bookshop</th>
                         <th>Pack Name</th>
                         <th>No Of Titles</th>
-                        <th>Qty / Title</th>
                         <th>Total Qty</th>
                         <th>Action</th>
                     </tr>
@@ -116,9 +115,8 @@
                                 </td>
                                 <td><?= esc($row['bookshop_name']) ?></td>
                                 <td><?= esc($row['pack_name'] ?? '-') ?></td>
-                                <td><?= esc($row['no_of_titles']) ?></td>
-                                <td><?= (int)$row['qty_per_title'] ?></td>
-                                <td><?= esc($row['total_qty']) ?></td>
+                                <td><?= esc($row['no_of_title']) ?></td>
+                                <td><?= esc($row['total_quantity']) ?></td>
                                 <td>
                                     <a class="btn btn-sm btn-primary"
                                     href="<?= base_url('combobookfair/bookfairshippedorderdetails/'.$row['order_id']); ?>">
