@@ -93,7 +93,92 @@
                 </div>
             <?php endif; ?>
         </div>
-    <br><br>
+
+        <div class="col-xxl-12">
+    <div class="card p-0 overflow-hidden position-relative radius-12 h-100">
+
+        <div class="card-header py-16 px-24 bg-base border-bottom">
+            <h6 class="text-lg mb-0">Settlement Details by Financial Year</h6>
+        </div>
+
+        <div class="card-body p-24 pt-10">
+            <div class="d-flex align-items-start">
+
+                <!-- ========== VERTICAL FY TABS ========== -->
+                <ul class="nav button-tab nav-pills mb-16 me-24 flex-column"
+                    id="fy-tab"
+                    role="tablist">
+
+                    <?php $i = 0; foreach ($settlements as $fy => $rows): ?>
+                        <li class="nav-item" role="presentation">
+                            <button
+                                class="nav-link fw-semibold text-primary-light radius-4 px-16 py-10 <?= $i === 0 ? 'active' : '' ?>"
+                                id="fy-tab-<?= md5($fy) ?>"
+                                data-bs-toggle="pill"
+                                data-bs-target="#fy-content-<?= md5($fy) ?>"
+                                type="button"
+                                role="tab"
+                                aria-selected="<?= $i === 0 ? 'true' : 'false' ?>">
+                                <?= esc($fy) ?>
+                            </button>
+                        </li>
+                    <?php $i++; endforeach; ?>
+
+                </ul>
+
+                <!-- ========== TAB CONTENT ========== -->
+                <div class="tab-content flex-grow-1" id="fy-tabContent">
+
+                    <?php $i = 0; foreach ($settlements as $fy => $rows): ?>
+                        <div
+                            class="tab-pane fade <?= $i === 0 ? 'show active' : '' ?>"
+                            id="fy-content-<?= md5($fy) ?>"
+                            role="tabpanel">
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>TDS</th>
+                                            <th>Mode</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    <?php if (!empty($rows)): ?>
+                                        <?php foreach ($rows as $row): ?>
+                                            <tr>
+                                                <td><?= date('d M Y', strtotime($row['settlement_date'])) ?></td>
+                                                <td>Rs. <?= indian_format($row['settlement_amount'], 2) ?></td>
+                                                <td>Rs. <?= indian_format($row['tds_amount'], 2) ?></td>
+                                                <td><?= esc($row['payment_type'] ?: '0') ?></td>
+                                                <td><?= esc($row['bank_transaction_details'] ?: '0') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center">No records found</td>
+                                        </tr>
+                                    <?php endif; ?>
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    <?php $i++; endforeach; ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br><br>
+
     <div class="card">
         <div class="card-header text-center">
             <h6>(Ebook Royalty)</h6>
@@ -241,6 +326,5 @@
         </div>
     </div>
 </div>
-
 
 <?= $this->endSection(); ?>

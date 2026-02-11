@@ -5,18 +5,22 @@ namespace App\Controllers;
 use App\Models\PustakapaperbackModel;
 use App\Models\PodModel;
 use App\Models\PaperbackModel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+
 
 class Paperback extends BaseController
 {
     protected $PustakapaperbackModel;
     protected $PodModel;
-    protected $paperbackModel;
+    protected $PaperbackModel;
 
     public function __construct()
     {
         $this->PustakapaperbackModel = new PustakapaperbackModel();
         $this->podModel = new PodModel();
-        $this->paperbackModel = new PaperbackModel();
+        $this->PaperbackModel = new PaperbackModel();
     }
 
     public function OrdersDashboard(){
@@ -192,6 +196,8 @@ class Paperback extends BaseController
         $customer_name   = $this->request->getPost('customer_name');
         $address         = $this->request->getPost('address');
         $mobile_no       = $this->request->getPost('mobile_no');
+        $email           = $this->request->getPost('email');
+        $remarks         = $this->request->getPost('remarks');
         $city            = $this->request->getPost('city');
 
         $book_ids  = [];
@@ -219,6 +225,9 @@ class Paperback extends BaseController
         $data['address']         = $address;
         $data['mobile_no']       = $mobile_no;
         $data['city']            = $city;
+        $data['email']   = $email;
+        $data['remarks'] = $remarks;
+
         $data['title'] = '';
         $data['subTitle'] = '';
 
@@ -1096,5 +1105,5 @@ class Paperback extends BaseController
         $data['subTitle'] = '';
         return view('printorders/flipkart/orderDetailsView', $data);
     }
-     
+    
 }

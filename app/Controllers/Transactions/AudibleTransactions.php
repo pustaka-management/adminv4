@@ -8,8 +8,9 @@ class AudibleTransactions extends BaseController
 {
     public function uploadTransactions()
     {
-        $file_name = "Audible_Q1_2025.xlsx";
+        $file_name = "Q3_2025.xlsx";
         $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'transactions' . DIRECTORY_SEPARATOR . 'audible_reports' . DIRECTORY_SEPARATOR . $file_name;
+        $transaction_date     = '2025-09-30';
 
         if (!file_exists($inputFileName)) {
             return $this->response->setJSON([
@@ -48,7 +49,7 @@ class AudibleTransactions extends BaseController
                 $total_qty            = (int) $this->parseAmount($row['P'] ?? 0);
                 $total_net_sales      = $this->parseAmount($row['Q'] ?? 0);
                 $total_royalty        = $this->parseAmount($row['R'] ?? 0);
-                $transaction_date     = '2025-03-31';
+             
 
                 $audible_book = $db->table('audible_books')
                                    ->where('product_id', $parent_product_id)
@@ -110,7 +111,7 @@ class AudibleTransactions extends BaseController
                 ];
 
                  // Uncomment below line to insert into DB
-                // $builder->insert($insert_data);
+                $builder->insert($insert_data);
 
                 $sum += $total_net_sales;
                 $all_data[] = $insert_data;

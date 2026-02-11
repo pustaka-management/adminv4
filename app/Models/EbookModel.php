@@ -978,58 +978,83 @@ public function getBookDetails($book_id)
     return $result;
 }
 
-    public function activateBook($book_id, $send_mail_flag)
-    {
-        if ($send_mail_flag) {
-            $this->send_activate_book_mail($book_id);
-        }
-
-        $current_date = date("Y-m-d H:i:s");
-        $db = \Config\Database::connect();
-
-        $sql = "UPDATE book_tbl SET status = 1, activated_at = ? WHERE book_id = ?";
-        $db->query($sql, [$current_date, $book_id]);
-
-        return $db->affectedRows() > 0;
+   public function activateBook($book_id, $send_mail_flag)
+{
+    if ($send_mail_flag) {
+        $this->send_activate_book_mail($book_id);
     }
 
-    public function send_activate_book_mail($book_id)
+    $current_date = date("Y-m-d H:i:s");
+    $db = \Config\Database::connect();
+
+    $sql = "UPDATE book_tbl 
+            SET status = 1, activated_at = ? 
+            WHERE book_id = ?";
+
+    $db->query($sql, [$current_date, $book_id]);
+
+    return $db->affectedRows() > 0;
+}
+
+public function send_activate_book_mail($book_id)
 {
     $db = \Config\Database::connect();
 
-    // Book Details
-    $book_query = $db->query("SELECT * FROM book_tbl WHERE book_id = ?", [$book_id]);
-    $book_details = $book_query->getRowArray();
-    if (!$book_details) return [];
+    /* ------------------ Book Details ------------------ */
+    $book_details = $db->query(
+        "SELECT * FROM book_tbl WHERE book_id = ?",
+        [$book_id]
+    )->getRowArray();
 
-    // Language
-    $lang_query = $db->query("SELECT * FROM language_tbl WHERE language_id = ?", [$book_details['language']]);
-    $lang_details = $lang_query->getRowArray();
-    $book_details['language'] = $lang_details['language_name'] ?? '-';
+    if (!$book_details) {
+        log_message('error', 'Book not found. book_id: ' . $book_id);
+        return false;
+    }
 
-    // Genre
-    $genre_query = $db->query("SELECT * FROM genre_details_tbl WHERE genre_id = ?", [$book_details['genre_id']]);
-    $genre_details = $genre_query->getRowArray();
-    $book_details['genre_id'] = $genre_details['genre_name'] ?? '-';
+    /* ------------------ Language ------------------ */
+    $lang = $db->query(
+        "SELECT language_name FROM language_tbl WHERE language_id = ?",
+        [$book_details['language']]
+    )->getRowArray();
 
-    // Author
-    $author_query = $db->query("SELECT * FROM author_tbl WHERE author_id = ?", [$book_details['author_name']]);
-    $author_details = $author_query->getRowArray();
+    $book_details['language'] = $lang['language_name'] ?? '-';
 
-    // User (Copyright Owner)
-    $user_query = $db->query("SELECT * FROM users_tbl WHERE user_id = ?", [$book_details['copyright_owner']]);
-    $user_details = $user_query->getRowArray();
+    /* ------------------ Genre ------------------ */
+    $genre = $db->query(
+        "SELECT genre_name FROM genre_details_tbl WHERE genre_id = ?",
+        [$book_details['genre_id']]
+    )->getRowArray();
 
-    // Return all details as array (if needed for mail template)
-    return [
-        'book_details'   => $book_details,
-        'author_details' => $author_details,
-        'user_details'   => $user_details
-    ];
+    $book_details['genre_id'] = $genre['genre_name'] ?? '-';
 
-        $book_url = config('App')->pustaka_url . "/home/ebook/" . strtolower($book_details['language']) . "/" . $book_details['url_name'];
-        $subject = $book_details['book_title'] . " - Published in Pustaka";
-        $message ="<html lang=\"en\">
+    /* ------------------ Author ------------------ */
+    $author_details = $db->query(
+        "SELECT * FROM author_tbl WHERE author_id = ?",
+        [$book_details['author_name']]
+    )->getRowArray();
+
+    /* ------------------ User ------------------ */
+    $user_details = $db->query(
+        "SELECT * FROM users_tbl WHERE user_id = ?",
+        [$book_details['copyright_owner']]
+    )->getRowArray();
+
+    if (empty($user_details['email'])) {
+        log_message('error', 'User email missing. book_id: ' . $book_id);
+        return false;
+    }
+
+    /* ------------------ Mail Data ------------------ */
+    $book_url = config('App')->pustaka_url
+        . "/home/ebook/"
+        . strtolower($book_details['language'])
+        . "/"
+        . $book_details['url_name'];
+
+    $subject = $book_details['book_title'] . " - Published in Pustaka";
+
+    /* ------------------ Mail Content ------------------ */
+   $message ="<html lang=\"en\">
 				  <head>
 	  			  <meta charset=\"utf-8\"/>
 	  			  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />
@@ -1277,15 +1302,24 @@ public function getBookDetails($book_id)
 			  </tr>
 			</tbody>
 		  </table>";
-        $email = \Config\Services::email();
-        $email->setFrom('admin@pustaka.co.in', 'Pustaka Admin');
-        $email->setTo($user_details['email']);
-        $email->setCC('admin@pustaka.co.in');
-        $email->setSubject($subject);
-        $email->setMessage($message);
-        $email->send();
+    /* ------------------ Send Mail ------------------ */
+    $email = \Config\Services::email();
 
+    $email->setFrom('admin@pustaka.co.in', 'Pustaka Admin');
+    $email->setTo($user_details['email']);
+    $email->setCC('admin@pustaka.co.in');
+    $email->setSubject($subject);
+    $email->setMessage($message);
+    $email->setMailType('html');
+
+    if (!$email->send()) {
+        log_message('error', $email->printDebugger(['headers']));
+        return false;
+    }
+
+    return true;
 }
+
     public function addBook()
     {
         $request = service('request');

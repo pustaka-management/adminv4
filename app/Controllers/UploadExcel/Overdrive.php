@@ -23,7 +23,7 @@ class Overdrive extends BaseController
     ini_set('max_execution_time', 600);
     ini_set('memory_limit', '1024M');
 
-    $file_name = "ebook_InventoryReport.xlsx";
+    $file_name = "overdrive-ebooks.xlsx";
     $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'ExcelUpload' . DIRECTORY_SEPARATOR . 'OverdriveReport' . DIRECTORY_SEPARATOR . $file_name;
 
     try {
@@ -233,7 +233,7 @@ class Overdrive extends BaseController
     ini_set('max_execution_time', 600);
     ini_set('memory_limit', '1024M');
 
-    $fileName = "audiobook_InventoryReport.xlsx";
+    $fileName = "overdrive-audiobooks.xlsx";
     $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'ExcelUpload' . DIRECTORY_SEPARATOR . 'OverdriveReport' . DIRECTORY_SEPARATOR . $fileName;
 
     try {

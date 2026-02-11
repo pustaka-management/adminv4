@@ -73,7 +73,13 @@
             </div>
         </div>
         <br><br>
-        <table class="table table-bordered mb-4">
+        
+        <div class="d-flex justify-content-end mb-3">
+            <input type="text" id="tableSearch"
+                class="form-control w-25"
+                placeholder="Search...">
+        </div>
+        <table class="table table-bordered mb-4" id="booksTable">
             <thead>
                 <h6 class="text-center">List of Books</h6><br>
                 <tr>
@@ -105,10 +111,11 @@
                             <td><?= esc($books_details['book_id']) ?></td>
                             <td>
                                 <?= esc($books_details['book_title']) ?><br>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                                    stroke-linecap="round" stroke-linejoin="round" 
-                                    class="feather feather-copy" 
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="feather feather-copy"
                                     onclick="copyToClipboard(this, '<?= addslashes($books_details['book_title']) ?>')">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -116,10 +123,11 @@
                             </td>
                             <td>
                                 <?= esc($formatted_isbn) ?><br>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
-                                    stroke-linecap="round" stroke-linejoin="round" 
-                                    class="feather feather-copy" style="color:#000;" 
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="feather feather-copy"
                                     onclick="copyToClipboard(this, '<?= $formatted_isbn ?>')">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -130,7 +138,8 @@
                             <td class="table-success"><?= esc($books_details['stock_in_hand']) ?></td>
                             <td class="table-warning">
                                 Ledger: <?= esc($books_details['qty']) ?><br>
-                                Fair / Store: <?= ($books_details['bookfair']+$books_details['bookfair2']+$books_details['bookfair3']+$books_details['bookfair4']+$books_details['bookfair5']) ?><br>
+                                Fair / Store:
+                                <?= ($books_details['bookfair']+$books_details['bookfair2']+$books_details['bookfair3']+$books_details['bookfair4']+$books_details['bookfair5']) ?><br>
                                 <?php if ($books_details['lost_qty'] < 0): ?>
                                     <span style="color:green;">Excess: <?= abs($books_details['lost_qty']) ?></span>
                                 <?php elseif ($books_details['lost_qty'] > 0): ?>
@@ -151,12 +160,18 @@
                         </tr>
                     <?php endforeach; ?>
                     <tr>
-                        <td colspan="10" style="text-align:right; font-weight:bold; color:blue;">Total amount</td>
-                        <td style="font-weight:bold; color:blue;"><?= number_format($totalValue, 2) ?></td>
+                        <td colspan="10" style="text-align:right;font-weight:bold;color:blue;">
+                            Total amount
+                        </td>
+                        <td style="font-weight:bold;color:blue;">
+                            <?= number_format($totalValue, 2) ?>
+                        </td>
                     </tr>
                 <?php else: ?>
                     <tr>
-                        <td colspan="12" class="text-center text-danger">⚠ No books found for this order.</td>
+                        <td colspan="12" class="text-center text-danger">
+                            ⚠ No books found for this order.
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -172,6 +187,16 @@
             icon.style.color = "#000";
         }, 1000);
     }
+    document.getElementById("tableSearch").addEventListener("keyup", function () {
+    let value = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#booksTable tbody tr");
+
+    rows.forEach(function (row) {
+        row.style.display = row.textContent.toLowerCase().includes(value)
+            ? ""
+            : "none";
+    });
+});
 </script>
 
 <?= $this->endSection(); ?>

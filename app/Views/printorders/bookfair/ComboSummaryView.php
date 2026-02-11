@@ -61,11 +61,11 @@ $(document).on("change", ".book-item .form-check-input", function() {
     <div class="col-xxl-12">     
         <div class="d-flex justify-content-between align-items-center mb-4">
          <div class="d-flex align-items-center justify-content-center">
-            <h5 class="fw-bold mb-0 text-center">Bulk Stock Excel Compare</h5>
+            <h5 class="fw-bold mb-0 text-center">Combo Pack Summary View :  <?= esc($combo_pack_name) ?></h5> 
         </div>
 
 
-            <a href="<?= base_url('stock/bulkupload'); ?>" class="btn btn-outline-secondary btn-sm d-flex align-items-center shadow-sm">
+            <a href="<?= base_url('combobookfair/createcombo'); ?>" class="btn btn-outline-secondary btn-sm d-flex align-items-center shadow-sm">
                 <iconify-icon icon="mdi:arrow-left" class="me-1 fs-5"></iconify-icon> Back
             </a>
         </div>
@@ -96,9 +96,9 @@ $(document).on("change", ".book-item .form-check-input", function() {
 
 
             <?php if (!empty($mismatched)): ?>
-            <h5 class="px-4 mt-3 text-danger"> Mismatched Books</h5>
+            <h6 class=" mt-3 text-danger"> Mismatched Books</h6>
 
-            <form id="mismatchForm" action="<?= base_url('stock/updateAcceptBooks') ?>" method="post">
+            <form id="mismatchForm" action="<?= base_url('combobookfair/updateAcceptBooks') ?>" method="post">
                 <table class="table table-striped mb-0">
                     <thead class="bg-base">
                         <tr>
@@ -202,20 +202,17 @@ $(document).on("change", ".book-item .form-check-input", function() {
 
         </div>
 
+
         <!-- Button is always visible -->
         <?php if (!empty($matched)): ?>
-        <form action="<?= base_url('stock/BulkstockUpload') ?>" method="post" class="px-4 pb-4">
+        <form action="<?= base_url('combobookfair/combopackupload') ?>" method="post" class="px-4 pb-4">
+                <input type="hidden" name="combo_pack_name" value="<?= esc($combo_pack_name) ?>">
+
+
             <button type="submit" class="btn btn-primary mt-3">
-                Add Bulk Stock
+                Create Combo Pack
             </button>
         </form>
-
-        
-         <!-- <form action="<?= base_url('stock/BulkbookshopReturn') ?>" method="post" class="px-4 pb-4">
-            <button type="submit" class="btn btn-primary mt-3">
-                Return bookshop Stock
-            </button>
-        </form> -->
         <?php endif; ?>
         </div>
 

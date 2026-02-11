@@ -12,7 +12,7 @@ class OverdriveTransactions extends BaseController
 {
     public function uploadTransactions()
     {
-        $file_name = "Overdrive_SalesDetail_Sep2025.xlsx";
+        $file_name = "Overdrive_SalesDetail_Dec2025.xlsx";
         $exchange_rate = 70;
         $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'transactions' . DIRECTORY_SEPARATOR .'overdrive_reports' . DIRECTORY_SEPARATOR . $file_name;
 
@@ -178,7 +178,7 @@ class OverdriveTransactions extends BaseController
                 $processed_data[] = $insert_data;
 
                 // Uncomment below to actually insert into DB
-                // $db->table('overdrive_transactions')->insert($insert_data);
+                $db->table('overdrive_transactions')->insert($insert_data);
             }
 
             return $this->response->setJSON([

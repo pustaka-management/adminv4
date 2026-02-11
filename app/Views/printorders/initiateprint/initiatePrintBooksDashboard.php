@@ -51,7 +51,7 @@
 				<div class="form-form-wrap">
 					<div class="form-container">
 						<div class="form-content">
-							<form class="text-left" action="<?php echo base_url().'paperback/initiateprintbookslist'?>" method="POST">
+							<form class="text-left" action="<?php echo base_url().'paperback/initiateprintbookslist'?>" target="_blank" method="POST">
 								<div class="form">
 									<div id="email-field" class="field-wrapper input">
 										<label for="email">Selected Books:</label>

@@ -240,7 +240,7 @@ class User extends BaseController
                      ->with('message', 'Contact deleted successfully.');
 }
 
-   function sendEbookGiftEmail($recipientEmail, $recipientName, $authorName, $bookTitle)
+function sendEbookGiftEmail($recipientEmail, $recipientName, $authorName, $bookTitle)
 {
     $email = \Config\Services::email();
 

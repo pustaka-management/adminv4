@@ -11,6 +11,8 @@
         <input type="hidden" name="customer_name" value="<?php echo $customer_name; ?>">
         <input type="hidden" name="address" value="<?php echo $address; ?>">
         <input type="hidden" name="mobile_no" value="<?php echo $mobile_no; ?>">
+        <input type="hidden" name="email" value="<?php echo $email; ?>">
+        <input type="hidden" name="remarks" value="<?php echo $remarks; ?>">
         <input type="hidden" name="city" value="<?php echo $city; ?>">
 
         <table class="table table-hover mt-4"> 

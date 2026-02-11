@@ -102,7 +102,7 @@ class RoyaltyModel extends Model
         return $result;
     }
 
-    function getebookbreakupDetails($copyright_owner)
+    function getebookbreakupDetails($copyright_owner,$prev_month_end)
     {
         $sql = "WITH channel_transaction AS (
                     SELECT 'Amazon' AS channel, SUM(final_royalty_value) AS transaction_amount
@@ -151,8 +151,8 @@ class RoyaltyModel extends Model
                     FROM author_transaction
                     WHERE copyright_owner = ?
                     AND pay_status = 'O'
-                    AND order_type = 1
-                    AND order_date <= '2025-09-30'
+                    AND order_type IN (1,2,3)
+                    AND order_date <= ?
                 ),
 
                 royalty_consolidation AS (
@@ -188,7 +188,7 @@ class RoyaltyModel extends Model
         $query = $this->db->query($sql, [
             $copyright_owner, $copyright_owner, $copyright_owner,
             $copyright_owner, $copyright_owner, $copyright_owner,
-            $copyright_owner, $copyright_owner, $copyright_owner
+            $copyright_owner, $copyright_owner, $prev_month_end, $copyright_owner
         ]);
 
         $result = $query->getResultArray();
@@ -202,8 +202,9 @@ class RoyaltyModel extends Model
         return $final;
     }
 
-    public function getaudiobreakupDetails($copyright_owner)
+    public function getaudiobreakupDetails($copyright_owner,$prev_month_end)
     {
+        
         $sql = "WITH channel_transaction AS (
                 SELECT 'Audible' AS channel, SUM(final_royalty_value) AS transaction_amount
                 FROM audible_transactions
@@ -251,8 +252,8 @@ class RoyaltyModel extends Model
                 FROM author_transaction
                 WHERE copyright_owner = ?
                 AND pay_status = 'O'
-                AND order_type IN (3,4,5,6)
-                AND order_date <= '2025-09-30'
+                AND order_type IN (3,4,5,6,8)
+                AND order_date <= ?
             ),
 
             royalty_consolidation_data AS (
@@ -296,7 +297,7 @@ class RoyaltyModel extends Model
         $query = $this->db->query($sql, [
             $copyright_owner, $copyright_owner, $copyright_owner,
             $copyright_owner, $copyright_owner, $copyright_owner,
-            $copyright_owner, $copyright_owner,$copyright_owner
+            $copyright_owner, $copyright_owner,$prev_month_end,$copyright_owner
         ]);
 
         $result = $query->getResultArray();
@@ -309,7 +310,7 @@ class RoyaltyModel extends Model
 
         return $final;
     }
-    public function getpaperbackDetails($copyrightOwner)
+    public function getpaperbackDetails($copyrightOwner,$prev_month_end)
     {
         $sql="SELECT 
                     r.channel,
@@ -326,7 +327,7 @@ class RoyaltyModel extends Model
                             copyright_owner = ?
                             AND pay_status = 'O'
                             AND order_type IN (9,10,11,12,13,14,15)
-                            AND order_date <= '2025-09-30'
+                            AND order_date <= ?
                     ) t
                 WHERE 
                     r.copyright_owner = ?
@@ -336,7 +337,7 @@ class RoyaltyModel extends Model
                     r.channel
                 ORDER BY 
                     r.channel";
-        $query = $this->db->query($sql, [$copyrightOwner, $copyrightOwner]);
+        $query = $this->db->query($sql, [$copyrightOwner,$prev_month_end,$copyrightOwner]);
         $result = $query->getResultArray();
         $final = [];
         foreach ($result as $row) {
@@ -1194,6 +1195,33 @@ public function getTopayQuarterData()
         'total_topay_sum' => $total_topay_sum
     ];
 }
+        public function RoyaltySettlementDetails($author_id)
+        {
+            $db = \Config\Database::connect();
+            $sql = "
+                SELECT 
+                    fy,
+                    settlement_date,
+                    settlement_amount,
+                    tds_amount,
+                    payment_type,
+                    bank_transaction_details,
+                    month,
+                    year
+                FROM royalty_settlement
+                WHERE copy_right_owner_id = ?
+                ORDER BY settlement_date DESC
+            ";
 
+            $query = $db->query($sql, [$author_id]);
+            $result = $query->getResultArray();
+
+            $settlement_list = [];
+            foreach ($result as $row) {
+                $settlement_list[$row['fy']][] = $row;
+            }
+
+            return $settlement_list; 
+        }
 
 }

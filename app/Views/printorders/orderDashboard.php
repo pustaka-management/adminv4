@@ -8,6 +8,10 @@
             class="btn btn-sm btn-warning radius-8">
             Create Bulk Order
         </a>
+       
+<a href="<?= base_url('paperback/ordersdashboard') ?>" class="btn btn-primary btn-sm">
+ View order
+</a>
     </div>
     <form method="GET">
         <select name="fy" onchange="this.form.submit()" class="form-select" style="width:200px;">

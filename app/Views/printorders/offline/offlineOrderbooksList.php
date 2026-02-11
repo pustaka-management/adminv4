@@ -180,6 +180,12 @@
                                             <label>Mobile No</label>
                                             <input type="text" id="mobile_no" name="mobile_no" class="form-control" required>
                                         </div>
+
+                                        <div class="col">
+                                            <label>Email</label>
+                                            <input type="email" id="email" name="email" class="form-control" required>
+                                        </div>
+                                        
                                     </div>
 
                                     <br>
@@ -189,6 +195,13 @@
                                             <label>Address</label>
                                             <textarea id="address" name="address" rows="5" class="form-control"
                                                       placeholder="Enter Your Address Here"></textarea>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    <div class="row mt-3">
+                                        <div class="col-10">
+                                            <label>Remarks</label>
+                                            <textarea id="remarks" name="remarks" rows="3" class="form-control"></textarea>
                                         </div>
                                     </div>
 

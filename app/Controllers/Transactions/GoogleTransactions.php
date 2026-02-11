@@ -12,189 +12,219 @@ class GoogleTransactions extends BaseController
   
 public function uploadTransactions()
 {
-    $file_name = "GoogleEarningsReport_Sep2025.xlsx";
+    $file_name = "GoogleEarningsReport_Dec2025.xlsx";
     $currency_exchange = 70;
-    $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR .'transactions' . DIRECTORY_SEPARATOR . 'google_reports' . DIRECTORY_SEPARATOR . $file_name;
+
+    $inputFileName = WRITEPATH . 'uploads'
+        . DIRECTORY_SEPARATOR . 'transactions'
+        . DIRECTORY_SEPARATOR . 'google_reports'
+        . DIRECTORY_SEPARATOR . $file_name;
 
     if (!file_exists($inputFileName)) {
         return $this->response->setJSON([
-            'status' => 'error',
+            'status'  => 'error',
             'message' => "File not found: $inputFileName"
         ]);
     }
 
     try {
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName);
-        $worksheet = $spreadsheet->getActiveSheet();
-        $rows = $worksheet->toArray(null, true, true, true);
-        $arr_data = array_slice($rows, 1); // Skip header
+        $worksheet   = $spreadsheet->getActiveSheet();
+        $rows        = $worksheet->toArray(null, true, true, true);
+        $arr_data    = array_slice($rows, 1); // skip header
 
         $db = \Config\Database::connect();
 
-        // Load book references
+        /* -------------------- BOOK MASTER -------------------- */
         $book_query = $db->query("
             SELECT 
-                book_tbl.book_id AS bk_id,
-                author_tbl.author_type AS auth_type,
-                author_tbl.user_id AS auth_user_id,
-                book_tbl.royalty AS royalty_percentage,
-                book_tbl.type_of_book AS type_of_bk,
-                book_tbl.copyright_owner
-            FROM book_tbl
-            JOIN author_tbl ON book_tbl.author_name = author_tbl.author_id
+                b.book_id,
+                a.author_type,
+                a.user_id,
+                b.royalty,
+                b.type_of_book,
+                b.copyright_owner
+            FROM book_tbl b
+            JOIN author_tbl a ON b.author_name = a.author_id
         ");
 
         $book_det_ref = [];
-        foreach ($book_query->getResult() as $row) {
-            $book_det_ref[$row->bk_id] = [
-                $row->auth_type,
-                $row->auth_user_id,
-                $row->royalty_percentage,
-                $row->type_of_bk,
-                $row->copyright_owner
+        foreach ($book_query->getResult() as $r) {
+            $book_det_ref[$r->book_id] = [
+                $r->author_type,
+                $r->user_id,
+                $r->royalty,
+                $r->type_of_book,
+                $r->copyright_owner
             ];
         }
 
-        // Load google book identifiers
-        $google_query = $db->query("SELECT identifier, book_id, author_id, language_id FROM google_books");
+        /* -------------------- GOOGLE IDENTIFIERS -------------------- */
+        $google_query = $db->query("
+            SELECT identifier, book_id, author_id, language_id 
+            FROM google_books
+        ");
+
         $google_book_det = [];
-        foreach ($google_query->getResult() as $row) {
-            $key = strtoupper(trim($row->identifier));
-            $google_book_det[$key] = [
-                $row->book_id,
-                $row->author_id,
-                $row->language_id
+        foreach ($google_query->getResult() as $r) {
+            $google_book_det[strtoupper(trim($r->identifier))] = [
+                $r->book_id,
+                $r->author_id,
+                $r->language_id
             ];
         }
 
-        $all_data = [];
+        $all_data     = [];
         $skipped_rows = [];
 
         foreach ($arr_data as $index => $row) {
-            $unique_id = $row['C'] ?? '';
-            $row_debug_info = ['row' => $index + 2, 'unique_id' => $unique_id]; // for logging
 
+            $unique_id = $row['C'] ?? '';
+            $debug     = ['row' => $index + 2, 'unique_id' => $unique_id];
+
+            /* -------------------- DATE VALIDATION -------------------- */
             $ear_date = $row['A'] ?? null;
             $trn_date = $row['B'] ?? null;
 
-            if (empty($ear_date) || empty($trn_date)) {
-                $skipped_rows[] = $row_debug_info + ['reason' => 'Missing earnings or transaction date'];
+            if (!$ear_date || !$trn_date) {
+                $skipped_rows[] = $debug + ['reason' => 'Missing date'];
                 continue;
             }
 
-            // Date handling
-            $earnings_date = $this->parseDate($ear_date);
+            $earnings_date   = $this->parseDate($ear_date);
             $transaction_date = $this->parseDate($trn_date);
 
             if (!$earnings_date || !$transaction_date) {
-                $skipped_rows[] = $row_debug_info + ['reason' => 'Invalid date format'];
+                $skipped_rows[] = $debug + ['reason' => 'Invalid date format'];
                 continue;
             }
 
-            $primary_isbn = (string) ($row['H'] ?? '');
-            $search_key = strtoupper((strpos($primary_isbn, "978") === 0) ? "ISBN:" . $primary_isbn : $primary_isbn);
+            /* -------------------- ISBN / PKEY MATCH -------------------- */
+            $primary_isbn = trim((string) ($row['H'] ?? ''));
+            $search_key   = strtoupper(
+                (strpos($primary_isbn, '978') === 0)
+                    ? 'ISBN:' . $primary_isbn
+                    : $primary_isbn
+            );
 
-            $google_info = $google_book_det[$search_key] ?? [null, null, null];
-        [$book_id, $author_id, $language_id] = $google_info;
+            [$book_id, $author_id, $language_id] = $google_book_det[$search_key] ?? [null, null, null];
 
-        //  Fallback: extract from PKEY if lookup failed
-        if (!$book_id && str_starts_with($search_key, 'PKEY:')) {
-            $pkey_num = preg_replace('/[^0-9]/', '', $search_key); // remove prefix letters
-            $book_id_from_pkey = (int) substr($pkey_num, -5); // last 5 digits
-            $book_id = $book_id_from_pkey;
+            /* ---------- PKEY FALLBACK ---------- */
+            if (!$book_id && str_starts_with($search_key, 'PKEY:')) {
 
-            // Fetch author_id and language_id from book reference or a query
-            if (isset($book_det_ref[$book_id])) {
-                // You already have author details in $book_det_ref
-                [$author_type, $user_id, $royalty_percentage, $type_of_book_ref, $copyright_owner]
-                    = $book_det_ref[$book_id];
+                $pkey_num = preg_replace('/[^0-9]/', '', $search_key);
 
-                // Optionally fetch author_id, language_id from google_books table if not known
-                $ginfo = $db->query("SELECT author_name as author_id, language as language_id FROM book_tbl WHERE book_id = ?", [$book_id])->getRow();
-                if ($ginfo) {
-                    $author_id = $ginfo->author_id;
-                    $language_id = $ginfo->language_id;
-                } else {
-                    $author_id = null;
-                    $language_id = null;
+                // Try ISBN inside PKEY
+                if (str_starts_with($pkey_num, '978')) {
+                    $isbn_key = 'ISBN:' . $pkey_num;
+                    [$book_id, $author_id, $language_id]
+                        = $google_book_det[$isbn_key] ?? [null, null, null];
                 }
-            } else {
-                $skipped_rows[] = $row_debug_info + ['reason' => "Book ID {$book_id} from PKEY not found in book_tbl"];
+
+                // Last 5 digits as book_id
+                if (!$book_id) {
+                    $book_id = (int) substr($pkey_num, -5);
+                }
+
+                if (isset($book_det_ref[$book_id])) {
+                    $extra = $db->query(
+                        "SELECT author_name AS author_id, language AS language_id 
+                         FROM book_tbl WHERE book_id = ?",
+                        [$book_id]
+                    )->getRow();
+
+                    if ($extra) {
+                        $author_id   = $author_id   ?? $extra->author_id;
+                        $language_id = $language_id ?? $extra->language_id;
+                    }
+                } else {
+                    $skipped_rows[] = $debug + [
+                        'reason' => "Book ID {$book_id} from PKEY not found"
+                    ];
+                    continue;
+                }
+            }
+
+            if (!$book_id || !isset($book_det_ref[$book_id])) {
+                $skipped_rows[] = $debug + ['reason' => 'Book not matched'];
                 continue;
             }
-        }
 
-        //  Double-check to ensure we have a valid reference
-        if (!$book_id || !isset($book_det_ref[$book_id])) {
-            $skipped_rows[] = $row_debug_info + ['reason' => 'Book ID not matched (even after PKEY check)'];
-            continue;
-        }
-
-
-            [$author_type, $user_id, $royalty_percentage, $type_of_book_ref, $copyright_owner] = $book_det_ref[$book_id];
+            /* -------------------- ROYALTY CALC -------------------- */
+            [
+                $author_type,
+                $user_id,
+                $royalty_percentage,
+                $type_of_book_ref,
+                $copyright_owner
+            ] = $book_det_ref[$book_id];
 
             $earnings_amount = (float) ($row['U'] ?? 0);
-            $currency_conversion_rate = !empty($row['V']) ? (float) $row['V'] : 1;
-            $inr_value = $earnings_amount * $currency_exchange;
-            $final_royalty_value = ($author_type == 1) ? $inr_value * ($royalty_percentage / 100) : $inr_value;
+            $conversion_rate = (float) ($row['V'] ?? 1);
 
+            $inr_value = $earnings_amount * $currency_exchange;
+            $final_royalty_value = ($author_type == 1)
+                ? $inr_value * ($royalty_percentage / 100)
+                : $inr_value;
+
+            /* -------------------- INSERT DATA -------------------- */
             $insert_data = [
-                'earnings_date' => $earnings_date,
-                'transaction_date' => $transaction_date,
-                'unique_id' => $unique_id,
-                'product' => $row['D'] ?? '',
-                'type' => $row['E'] ?? '',
-                'preorder' => $row['F'] ?? '',
-                'qty' => $row['G'] ?? '',
-                'primary_isbn' => $primary_isbn,
-                'imprint_name' => $row['I'] ?? '',
-                'title' => $row['J'] ?? '',
-                'author' => $row['K'] ?? '',
+                'earnings_date'                => $earnings_date,
+                'transaction_date'             => $transaction_date,
+                'unique_id'                    => $unique_id,
+                'product'                      => $row['D'] ?? '',
+                'type'                         => $row['E'] ?? '',
+                'preorder'                     => $row['F'] ?? '',
+                'qty'                          => $row['G'] ?? '',
+                'primary_isbn'                 => $primary_isbn,
+                'imprint_name'                 => $row['I'] ?? '',
+                'title'                        => $row['J'] ?? '',
+                'author'                       => $row['K'] ?? '',
                 'original_list_price_currency' => $row['L'] ?? '',
-                'original_list_price' => (float) ($row['M'] ?? 0),
-                'list_price_currency' => $row['N'] ?? '',
-                'list_price_tax_inclusive' => (float) ($row['O'] ?? 0),
-                'list_price_tax_exclusive' => (float) ($row['P'] ?? 0),
-                'country_of_sale' => $row['Q'] ?? '',
+                'original_list_price'          => (float) ($row['M'] ?? 0),
+                'list_price_currency'          => $row['N'] ?? '',
+                'list_price_tax_inclusive'     => (float) ($row['O'] ?? 0),
+                'list_price_tax_exclusive'     => (float) ($row['P'] ?? 0),
+                'country_of_sale'              => $row['Q'] ?? '',
                 'publisher_revenue_percentage' => (float) ($row['R'] ?? 0),
-                'publisher_revenue' => (float) ($row['S'] ?? 0),
-                'earnings_currency' => $row['T'] ?? '',
-                'earnings_amount' => $earnings_amount,
-                'currency_conversion_rate' => $currency_conversion_rate,
-                'line_of_business' => $row['W'] ?? '',
-                'book_id' => $book_id,
-                'author_id' => $author_id,
-                'language_id' => $language_id,
-                'currency_exchange' => $currency_exchange,
-                'inr_value' => $inr_value,
-                'final_royalty_value' => $final_royalty_value,
-                'user_id' => $user_id,
-                'copyright_owner' => $copyright_owner,
-                'type_of_book' => $type_of_book_ref,
-                'status' => 'O'
+                'publisher_revenue'            => (float) ($row['S'] ?? 0),
+                'earnings_currency'            => $row['T'] ?? '',
+                'earnings_amount'              => $earnings_amount,
+                'currency_conversion_rate'     => $conversion_rate,
+                'line_of_business'             => $row['W'] ?? '',
+                'book_id'                      => $book_id,
+                'author_id'                    => $author_id,
+                'language_id'                  => $language_id,
+                'currency_exchange'            => $currency_exchange,
+                'inr_value'                    => $inr_value,
+                'final_royalty_value'          => $final_royalty_value,
+                'user_id'                      => $user_id,
+                'copyright_owner'              => $copyright_owner,
+                'type_of_book'                 => $type_of_book_ref,
+                'status'                       => 'O'
             ];
 
-            // Insert into DB
             // $db->table('google_transactions')->insert($insert_data);
-
             $all_data[] = $insert_data;
         }
 
         return $this->response->setJSON([
-            'status' => 'success',
-            'message' => 'Transactions uploaded successfully',
-            'count' => count($all_data),
-            'data' => $all_data,
-            'skipped' => count($skipped_rows),
+            'status'          => 'success',
+            'message'         => 'Transactions processed successfully',
+            'count'           => count($all_data),
+            'data'            => $all_data,
+            'skipped'         => count($skipped_rows),
             'skipped_details' => $skipped_rows
         ]);
+
     } catch (\Throwable $e) {
         return $this->response->setStatusCode(500)->setJSON([
-            'status' => 'error',
+            'status'  => 'error',
             'message' => $e->getMessage()
         ]);
     }
 }
+
 
 /**
  * Parse various Excel/Google date formats to Y-m-d

@@ -48,7 +48,8 @@ foreach ($details['list'] as $books_details) {
                             <?php } ?>
                         </p>
                         <p><strong>Book Fair / Store:</strong> 
-                            <?= ($details['books']['bookfair']+$details['books']['bookfair2']+$details['books']['bookfair3']+$details['books']['bookfair4']+$details['books']['bookfair5']) ?>
+                            <?= ($details['books']['bookfair']+$details['books']['bookfair2']+$details['books']['bookfair3']+$details['books']['bookfair4']+$details['books']['bookfair5']+
+                            $details['books']['bookfair6']+$details['books']['bookfair7']+$details['books']['bookfair8']+$details['books']['bookfair9']) ?>
                         </p>
                         <p><strong>Lost Qty:</strong> <?= $details['books']['lost_qty'] ?></p>
                         <p><strong>Excess Qty:</strong> <?= $details['books']['excess_qty'] ?></p>

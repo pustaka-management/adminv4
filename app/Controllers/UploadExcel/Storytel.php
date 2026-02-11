@@ -21,7 +21,7 @@ class Storytel extends BaseController
         ini_set('max_execution_time', 600); // 10 minutes
         ini_set('memory_limit', '1024M');
         $db = db_connect();
-        $file_name = "StoryTel_My Catalog.xlsx";
+        $file_name = "storytel-jan23.xlsx";
         $inputFileName = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'ExcelUpload' . DIRECTORY_SEPARATOR. 'storytelReport' . DIRECTORY_SEPARATOR . $file_name;
 
         try {

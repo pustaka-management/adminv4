@@ -569,9 +569,9 @@ public function getLanguageWiseBookCount()
 }
 
 public function indesignMarkCompleted(
-$book_id,$pages,$price,$royalty,$copyright_owner,$isbn,
-$paper_back_desc,$paper_back_author_desc,
-$rate_per_page,$rate_remarks)
+        $book_id,$pages,$price,$royalty,$copyright_owner,$isbn,
+        $paper_back_desc,$paper_back_author_desc,
+        $rate_per_page,$rate_remarks)
 {
     $db = \Config\Database::connect();
 
@@ -1017,8 +1017,5 @@ public function getFlipkartUnpublishedBooksByLanguage($langId)
 
         return $result;
     }
-
-
-
 
 }

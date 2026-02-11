@@ -112,6 +112,99 @@ class BookIdExcel extends BaseController
         }
     }
 
+   
+public function processTamilBookExcel()
+{
+    $fileName = "library-list.xlsx";
+    $filePath = WRITEPATH . "uploads/" . $fileName;
+
+    try {
+        // ------------------------------------------------
+        // READ EXCEL
+        // ------------------------------------------------
+        $spreadsheet = IOFactory::load($filePath);
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, true);
+
+        // ------------------------------------------------
+        // LOAD BOOK + AUTHOR DATA ONCE
+        // ------------------------------------------------
+        $allBooks = $this->db->query("
+            SELECT 
+                b.book_id,
+                b.regional_book_title,
+                a.author_name
+            FROM book_tbl b
+            JOIN author_tbl a ON b.author_name = a.author_id
+        ")->getResultArray();
+
+        $finalList = [];
+
+        // Skip header
+        for ($i = 2; $i <= count($rows); $i++) {
+
+            $excelTitle  = trim($rows[$i]['A']); // Tamil title
+            $qty         = (int)$rows[$i]['B'];
+            $discount    = (float)$rows[$i]['C'];
+            $excelAuthor = trim($rows[$i]['D']); // Author name
+
+            $matchedBooks = [];
+
+            // ------------------------------------------------
+            // MATCH BY TAMIL TITLE (LIKE)
+            // ------------------------------------------------
+            foreach ($allBooks as $b) {
+                if (
+                    !empty($b['regional_book_title']) &&
+                    mb_strpos($b['regional_book_title'], $excelTitle) !== false
+                ) {
+                    $matchedBooks[] = $b;
+                }
+            }
+
+            $book_id = null;
+
+            // ------------------------------------------------
+            // IF MULTIPLE → CHECK AUTHOR
+            // ------------------------------------------------
+            if (count($matchedBooks) > 1) {
+                foreach ($matchedBooks as $b) {
+                    if (
+                        !empty($b['author_name']) &&
+                        trim($b['author_name']) === $excelAuthor
+                    ) {
+                        $book_id = $b['book_id'];
+                        break;
+                    }
+                }
+            }
+            // ------------------------------------------------
+            // IF SINGLE MATCH
+            // ------------------------------------------------
+            elseif (count($matchedBooks) === 1) {
+                $book_id = $matchedBooks[0]['book_id'];
+            }
+
+            // ------------------------------------------------
+            // ADD RESULT
+            // ------------------------------------------------
+            $finalList[] = [
+                'book_id'  => $book_id,
+                'title'    => $excelTitle,
+                'author'   => $excelAuthor,
+                'qty'      => $qty,
+                'discount' => $discount
+            ];
+        }
+
+        return $this->downloadBookResult($finalList);
+
+    } catch (\Exception $e) {
+        return $this->response->setBody('Error: ' . $e->getMessage());
+    }
+}
+
+
     // --------------------------------------------------------
     // DOWNLOAD OUTPUT EXCEL
     // --------------------------------------------------------
@@ -137,7 +230,7 @@ class BookIdExcel extends BaseController
         }
 
         // Download
-        $fileName = "book_output.xlsx";
+        $fileName = "bookIdExcel.xlsx";
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment; filename=\"$fileName\"");

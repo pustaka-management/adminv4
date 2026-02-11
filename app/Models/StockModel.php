@@ -461,59 +461,72 @@ class StockModel extends Model
         return $this->db->table('paperback_other_distribution')->insert($data);
     }
 
-    public function getMismatchStockDetails()
-    {
-        $db = \Config\Database::connect();
+   public function getMismatchStockDetails()
+{
+    $db = \Config\Database::connect();
 
-        // mismatch stock details
-        $sql = "SELECT 
-                    author_tbl.author_id,
-                    author_tbl.author_name,
-                    book_tbl.book_id,
-                    book_tbl.book_title,
-                    paperback_stock.quantity,
-                    paperback_stock.stock_in_hand
-                FROM 
-                    paperback_stock
-                JOIN
-                    book_tbl ON book_tbl.book_id = paperback_stock.book_id
-                JOIN
-                    author_tbl ON author_tbl.author_id = book_tbl.author_name
-                WHERE
-                    quantity != stock_in_hand";
+    // 1️⃣ Fetch full stock data (needed for dynamic bookfair calculation)
+    $sql = "SELECT 
+                author_tbl.author_id,
+                author_tbl.author_name,
+                book_tbl.book_id,
+                book_tbl.book_title,
+                paperback_stock.*
+            FROM paperback_stock
+            JOIN book_tbl 
+                ON book_tbl.book_id = paperback_stock.book_id
+            JOIN author_tbl 
+                ON author_tbl.author_id = book_tbl.author_name";
 
-        $query = $this->db->query($sql);
-        $data['details'] = $query->getResultArray();
-        $sql2 = "SELECT 
-                    COUNT(CASE WHEN quantity != stock_in_hand THEN book_id END) AS mismatched_count,
-                    SUM(CASE WHEN quantity != stock_in_hand THEN quantity END) AS total_quantity,
-                    SUM(stock_in_hand) AS total_stock
-                FROM paperback_stock";
-        $query2 = $this->db->query($sql2);
-        $data['mismatch_count'] = $query2->getRow()->mismatched_count;
-        $data['total_quantity'] = $query2->getRow()->total_quantity;
-        $data['total_stock'] = $query2->getRow()->total_stock;
+    $query = $db->query($sql);
+    $rows  = $query->getResultArray();
 
-         $mismatch_validate_sql = "SELECT 
-                    author_tbl.author_id,
-                    author_tbl.author_name,
-                    book_tbl.book_id,
-                    book_tbl.book_title,
-                    paperback_stock.quantity,
-                    paperback_stock.stock_in_hand
-                FROM 
-                    paperback_stock
-                JOIN
-                    book_tbl ON book_tbl.book_id = paperback_stock.book_id
-                JOIN
-                    author_tbl ON author_tbl.author_id = book_tbl.author_name
-                WHERE
-                   mismatch_flag = 1";
+    $data = [
+        'details'          => [],
+        'mismatch_count'   => 0,
+        'total_quantity'   => 0,
+        'total_stock'      => 0,
+        'validate'         => []
+    ];
 
-        $mismatch_validate_query = $this->db->query($mismatch_validate_sql);
-        $data['validate'] = $mismatch_validate_query->getResultArray();
-        return $data;
+    // 2️⃣ Loop & validate stock dynamically
+    foreach ($rows as $row) {
+
+        $bookfairTotal = 0;
+
+        // auto-detect bookfair columns (bookfair, bookfair2, bookfair10...)
+        foreach ($row as $column => $value) {
+            if (strpos($column, 'bookfair') === 0) {
+                $bookfairTotal += (int)$value;
+            }
+        }
+
+        $calculatedQty = (int)$row['stock_in_hand'] + $bookfairTotal;
+
+        // collect totals
+        $data['total_quantity'] += (int)$row['quantity'];
+        $data['total_stock']    += (int)$row['stock_in_hand'];
+
+        // mismatch logic
+        if ((int)$row['quantity'] !== $calculatedQty) {
+
+            $row['calculated_quantity'] = $calculatedQty;
+            $row['bookfair_total']      = $bookfairTotal;
+            $row['difference']          = (int)$row['quantity'] - $calculatedQty;
+
+            $data['details'][] = $row;
+            $data['mismatch_count']++;
+        }
+
+        // mismatch_flag validation list
+        if (!empty($row['mismatch_flag']) && (int)$row['mismatch_flag'] === 1) {
+            $data['validate'][] = $row;
+        }
     }
+
+    return $data;
+}
+
 
     public function getBookfairNames($book_id)
     {
@@ -846,12 +859,22 @@ class StockModel extends Model
         $data = [];
 
         // Not Started
-        $sql = "SELECT paperback_other_distribution.*,book_tbl.book_title,author_tbl.author_name
-                FROM paperback_other_distribution,book_tbl,author_tbl
-                WHERE author_tbl.author_id = book_tbl.author_name
-                AND paperback_other_distribution.book_id = book_tbl.book_id
-                AND paperback_other_distribution.status = 0
-                ORDER BY paperback_other_distribution.order_date ASC";
+        $sql = "SELECT 
+                    pod.*,
+                    bt.book_title,
+                    at.author_name,
+                    bt.url_name,
+                    ip.re_completed_flag,
+                    ip.rework_flag
+                FROM paperback_other_distribution AS pod
+                JOIN book_tbl AS bt 
+                    ON pod.book_id = bt.book_id
+                JOIN author_tbl AS at 
+                    ON at.author_id = bt.author_name
+                LEFT JOIN indesign_processing AS ip 
+                    ON pod.book_id = ip.book_id
+                WHERE pod.status = 0
+                ORDER BY pod.order_date ASC";
         $query = $db->query($sql);
         $data['book_not_start'] = $query->getResultArray();
 
