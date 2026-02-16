@@ -1,9 +1,10 @@
 <?= $this->extend('layout/layout1'); ?>
 <?= $this->section('content'); ?>
 
-<!-- Header with Gradient -->
-<div class="trail-bg h-100 text-center d-flex flex-column p-16 radius-8">
-    <div class="d-flex justify-content-between align-items-center">
+<a href="<?= base_url('combobookfair/bookfairbookshopshippedorders'); ?>" 
+   class="btn btn-outline-secondary btn-sm float-end mb-3">
+     Back
+</a>
 
         <!-- Left Section -->
         <div class="d-flex align-items-center">

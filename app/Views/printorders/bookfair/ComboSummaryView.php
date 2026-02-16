@@ -99,6 +99,8 @@ $(document).on("change", ".book-item .form-check-input", function() {
             <h6 class=" mt-3 text-danger"> Mismatched Books</h6>
 
             <form id="mismatchForm" action="<?= base_url('combobookfair/updateAcceptBooks') ?>" method="post">
+                  <input type="hidden" name="combo_pack_name" value="<?= esc($combo_pack_name) ?>">
+
                 <table class="table table-striped mb-0">
                     <thead class="bg-base">
                         <tr>
