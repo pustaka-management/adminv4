@@ -127,7 +127,7 @@ class ComboBookfair extends BaseController
     // ================= SOLD =================
     public function bookfairBookshopSoldOrders()
     {
-        $data['title']  = '';
+        $data['title']  = 'Bookfair – Sold Orders';
         $data['orders'] = $this->combobookfairmodel->getBookfairOrders(2);
 
         return view('printorders/bookfair/bookfairBookshopSoldOrders', $data);
@@ -156,6 +156,16 @@ class ComboBookfair extends BaseController
         }
 
         return view('printorders/bookfair/bookfairShippedOrderDetails', $data);
+    }
+        public function exportSingleShippedOrder($orderId)
+    {
+        return $this->combobookfairmodel->exportSingleShippedOrderExcel($orderId);
+    }
+        public function exportBookshopOrderExcel($orderId)
+    {
+        $model = new \App\Models\Combobookfairmodel();
+
+        return $model->exportSoldOrderExcel($orderId);
     }
 
     // ================= COMBO =================
@@ -210,9 +220,7 @@ class ComboBookfair extends BaseController
         $combo_pack_name =  $this->request->getPost('combo_pack_name');
         $rows = [];
 
-        /* =======================
-        * 1. READ INPUT DATA
-        * ======================= */
+        /*  READ INPUT DATA */
         if ($uploadType === 'excel') {
 
             $file = $this->request->getFile('excel_file');
@@ -264,9 +272,7 @@ class ComboBookfair extends BaseController
             return redirect()->back()->with('error', 'Invalid upload type.');
         }
 
-        /* =======================
-        * 2. COMMON PROCESSING
-        * ======================= */
+        /* 2. COMMON PROCESSING */
         $matched = [];
         $mismatched = [];
 
@@ -452,7 +458,7 @@ class ComboBookfair extends BaseController
             'Language',
             'Send Qty',
             'Book Price',
-            'Sending Date',
+            'Create Date',
             'Total Amount'
         ];
 
@@ -480,7 +486,7 @@ class ComboBookfair extends BaseController
             $sheet->setCellValue('G'.$rowNum, $row['book_price']);
             $sheet->setCellValue(
                 'H'.$rowNum,
-                date('d-m-Y', strtotime($row['sending_date']))
+                date('d-m-Y', strtotime($row['create_date']))
             );
             $sheet->setCellValue('I'.$rowNum, $total);
 
@@ -501,5 +507,6 @@ class ComboBookfair extends BaseController
         $writer->save('php://output');
         exit;
     }
+    
 }
 

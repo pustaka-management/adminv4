@@ -473,6 +473,10 @@ $routes->group('combobookfair', function($routes) {
     $routes->post('saveReturn', 'ComboBookfair::bookfairBookshopsaveReturn');
 
     $routes->get('bookfairbookshopshippedorders', 'ComboBookfair::bookfairBookshopShippedOrders');
+    $routes->get('exportSingleShippedOrder/(:num)', 'Combobookfair::exportSingleShippedOrder/$1');
+    $routes->get('exportBookshopOrderExcel/(:num)', 'Combobookfair::exportBookshopOrderExcel/$1');
+
+
     $routes->get('bookfairbookshopsoldorders', 'ComboBookfair::bookfairBookshopSoldOrders');
 
     $routes->get('bookfairbookshoporderdetails/(:any)', 'ComboBookfair::bookfairBookshopOrderDetails/$1');
@@ -482,7 +486,7 @@ $routes->group('combobookfair', function($routes) {
     $routes->get('bookfaircombobooks/(:num)', 'ComboBookfair::bookfairComboBooks/$1');
 
     $routes->get('comboorderdetails/(:num)', 'ComboBookfair::comboOrderDetails/$1');
-    $routes->get('combobookorders/(:num)', 'ComboBookfair::combobookOrders/$1');
+    $routes->get('combobookorders/(:any)', 'ComboBookfair::combobookorders/$1');
 
     $routes->get('bookfairdetailsview/(:num)', 'ComboBookfair::bookfairDetailsView/$1');
     $routes->get('ship/(:num)', 'ComboBookfair::ship/$1');
