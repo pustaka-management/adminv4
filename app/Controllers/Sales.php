@@ -120,76 +120,23 @@ class Sales extends BaseController
         return view('sales/bookshop/bookshopSalesDetails',$data);
     }
 
-    public function ebookAmazonDetails()
+   public function EbookAmazondetails()
     {
-        $model = new \App\Models\EbookSalesModel();
-        $data['title'] = '';
+        $model = new EbookSalesModel();
 
-        $data['counts'] = $model->getAmazonBookAndAuthorCounts();
-        $data['orders'] = $model->getAmazonOrderCounts();
-        $data['amounts'] = $model->getAmazonAmountSummary();
-        $data['topBooks'] = $model->getAmazonTopBooks();
-        $data['yearSales'] = $model->getAmazonSalesByYear();
-        $data['langSales'] = $model->getAmazonSalesByLanguage();
-        $data['genreSales'] = $model->getAmazonSalesByGenre();
+        $data['summary'] = $model->getAmazonEbookSummary();
+
+        // Top 10 selling and returned books
+        $books = $model->getTopSellingAndReturnedBooks(10);
+        $data['top_selling_books']  = $books['top_selling_books'];
+        $data['top_returned_books'] = $books['top_returned_books'];
+
+        $data['title']    = 'Amazon E-Book';
+        $data['subTitle'] = 'Sales Summary';
 
         return view('sales/ebook/ebookAmazonDetails', $data);
     }
-     public function getAmazonBooks()
-    {
-        $model = new EbookSalesModel();
 
-        $data = [
-            'title' => 'Amazon – Books List',
-            'books' => $model->getAmazonBooks(),
-        ];
-
-        return view('sales/ebook/Amazonbookslist', $data);
-    }
-
-    public function getAmazonBookDetails($book_id)
-    {
-        $model = new EbookSalesModel();
-
-        $data = [
-            'title'        => 'Amazon – Book Details',
-            'book'         => $model->getAmazonBookDetails($book_id),
-            'transactions' => $model->getAmazonTransactions($book_id),
-        ];
-
-        if (!$data['book']) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Book not found');
-        }
-
-        return view('sales/ebook/AmazonBookDetails', $data);
-    }
-       public function amazonAuthors()
-{
-    $model = new EbookSalesModel();
-
-    $data = [
-        'title'   => 'Amazon Authors',
-        'authors' => $model->getAmazonAuthors()
-    ];
-
-    return view('sales/ebook/AmazonAuthors', $data);
-}
-
-public function amazonAuthorBooks($author)
-{
-    $model = new EbookSalesModel();
-
-    $authorName = urldecode($author);
-
-    $data = [
-        'title'  => 'Amazon Books - ' . $authorName,
-        'author' => $authorName,
-        'books'  => $model->getAmazonBooksByAuthor($authorName)
-    ];
-
-    return view('sales/ebook/AmazonAuthorBooks', $data);
-}
-       
     public function EbookOverdriveDetails()
     {
         $model = new EbookSalesModel();
@@ -200,8 +147,8 @@ public function amazonAuthorBooks($author)
             'summary'          => $model->getOverdriveEbookSummary(),
             'topBooks'         => $model->getTopSellingOverdriveBooks(10),
             'languageSales'    => $model->getOverdriveLanguageWiseSales(),
-            'yearWiseSales'    => $model->getOverdriveYearWiseSales(),     
-            'genreWiseSales'   => $model->getOverdriveGenreWiseSales(),    
+            'yearWiseSales'    => $model->getOverdriveYearWiseSales(),     // ⭐ NEW
+            'genreWiseSales'   => $model->getOverdriveGenreWiseSales(),    // ⭐ NEW
         ];
 
         return view('sales/ebook/ebookOverdriveDetails', $data);
@@ -244,56 +191,59 @@ public function amazonAuthorBooks($author)
         return view('sales/ebook/overdriveauthors', $data);
     }
     public function overdriveAuthorBooks($authorId)
-    {
-        $model = new EbookSalesModel();
+{
+    $model = new EbookSalesModel();
 
-        $data = [
-            'title'    => 'OverDrive Author Books',
-            'books'    => $model->getOverdriveBooksByAuthor($authorId),
-            'authorId' => $authorId
-        ];
+    $data = [
+        'title'    => 'OverDrive Author Books',
+        'books'    => $model->getOverdriveBooksByAuthor($authorId),
+        'authorId' => $authorId
+    ];
 
-        return view('sales/ebook/overdriveAuthorBooks', $data);
-    }
-    public function overdriveOrders()
-    {
-        $model = new EbookSalesModel();
+    return view('sales/ebook/overdriveAuthorBooks', $data);
+}
+public function overdriveOrders()
+{
+    $model = new EbookSalesModel();
 
-        $data = [
-            'title'  => 'OverDrive Orders',
-            'orders' => $model->getOverdriveOrders()
-        ];
+    $data = [
+        'title'  => 'OverDrive Orders',
+        'orders' => $model->getOverdriveOrders()
+    ];
 
-        return view('sales/ebook/overdriveorders', $data);
-    }
+    return view('sales/ebook/overdriveorders', $data);
+}
+
+
+
     public function EbookScribdDetails()
-    {
-        $model = new EbookSalesModel();
-        $dashboard = $model->getScribdDashboardData();
+{
+    $model = new EbookSalesModel();
+    $dashboard = $model->getScribdDashboardData();
 
-        $data = [
-            'title'           => 'Scribd eBook Dashboard',
-            'subTitle'        => 'Sales Summary',
-            'summary'         => $dashboard['summary'] ?? [],
-            'top_books'       => $dashboard['top_books'] ?? [],
-            'language_sales'  => $dashboard['language_sales'] ?? [],
-            'year_sales'      => $dashboard['year_sales'] ?? [],
-            'genre_sales'     => $dashboard['genre_sales'] ?? [],
-        ];
+    $data = [
+        'title'           => 'Scribd eBook Dashboard',
+        'subTitle'        => 'Sales Summary',
+        'summary'         => $dashboard['summary'] ?? [],
+        'top_books'       => $dashboard['top_books'] ?? [],
+        'language_sales'  => $dashboard['language_sales'] ?? [],
+        'year_sales'      => $dashboard['year_sales'] ?? [],
+        'genre_sales'     => $dashboard['genre_sales'] ?? [],
+    ];
 
-        return view('sales/ebook/ebookScribdDetails', $data);
-    }
+    return view('sales/ebook/ebookScribdDetails', $data);
+}
     /*BOOK LIST */
     public function scribdBooks()
     {
         $model = new EbookSalesModel();
 
         $data = [
-            'title' => '',
+            'title' => 'Scribd Books',
             'books' => $model->getScribdBooks() // <-- method in your model
         ];
 
-        return view('sales/ebook/scribdBooksList', $data);
+        return view('sales/scribdBooksList', $data);
     }
 
     /** SINGLE BOOK DETAILS */
@@ -307,46 +257,8 @@ public function amazonAuthorBooks($author)
             'txns'         => $model->getTransactionsByBook($bookId)  // transactions list
         ];
 
-        return view('sales/ebook/scribdBookTransactions', $data);
+        return view('sales/scribdBookTransactions', $data);
     }
-    public function scribdAuthors()
-    {
-        $model = new \App\Models\EbookSalesModel();
-
-        $data = [
-            'authors' => $model->getAuthorsWithScribdBooks(),
-            'title'   => 'Scribd Authors'
-        ];
-
-        return view('sales/ebook/scribdAuthors', $data);
-    }
-
-    public function scribdAuthorBooks($authorId)
-    {
-        $model = new \App\Models\EbookSalesModel();
-
-        $data = [
-            'books'  => $model->getBooksScribdByAuthor($authorId),
-            'author' => $this->db->table('author_tbl')
-                            ->where('author_id', $authorId)
-                            ->get()->getRowArray()
-        ];
-
-        // Set dynamic title
-        $data['title'] = ($data['author']['author_name'] ?? 'Author') . ' - Scribd Books';
-
-        return view('sales/ebook/scribdAuthorBooks', $data);
-    }
-
-    // public function scribdOrders()
-    // {
-    //     $model = new \App\Models\EbookSalesModel();
-
-    //     $data['orders'] = $model->getScribdOrders();
-    //     $data['title']  = 'Scribd Orders List';
-
-    //     return view('sales/ebook/scribdOrdersList', $data);
-    // }
 
     public function EbookStorytelDetails()
     {
@@ -357,193 +269,23 @@ public function amazonAuthorBooks($author)
             'summary'        => $model->getStorytelSummary(),
             'topBooks'       => $model->getTopStorytelBooks(10),
             'languageSales'  => $model->getStorytelLanguageWiseSales(),
-
-            // Add these two for charts
-            'genreSales'     => $model->getStorytelGenreWiseSales(),
-            'yearSales'      => $model->getStorytelYearWiseSales(),
         ];
 
         return view('sales/ebook/ebookStorytelDetails', $data);
     }
-
-
-    // LIST OF ALL UPLOADED STORYTEL BOOKS
-    public function storytelBooks()
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title' => '',
-            'books' => $model->getstorytelBooks()
-        ];
-
-        return view('sales/ebook/storytelBooksList', $data);
-    }
-
-    // SINGLE STORYTEL BOOK DETAILS + TRANSACTIONS
-    public function storytelBookDetails($bookId)
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title'        => 'Storytel Book Details',
-            'book'         => $model->getBookDetails($bookId),
-            'transactions' => $model->getTransactions($bookId),
-        ];
-
-        return view('sales/ebook/storytelBookTransactions', $data);
-    }
-        public function storytelAuthors()
-    {
-        $model = new EbookSalesModel();
-        $data['authors'] = $model->getstorytelAuthors();
-        $data['title']   = 'Storytel Authors';     // PAGE TITLE
-        return view('sales/ebook/storytelAuthors', $data);
-    }
-
-    public function storytelBooksByAuthor($authorId)
-    {
-        $model = new EbookSalesModel();
-        $data['books']  = $model->getstorytelBooksByAuthor($authorId);
-
-        // Get author name for title (optional)
-        $data['author'] = $model->getstorytelAuthorName($authorId);
-        $data['title']   = '';
-
-        return view('sales/ebook/storytelBooks', $data);
-    }
-
     public function ebookGoogleDetails()
     {
         $model = new EbookSalesModel();
 
         $data = [
-            'title'          => 'Google Dashboard',
+            'title'          => 'Storytel Dashboard',
             'summary'        => $model->getGoogleSummary(),
             'topBooks'       => $model->getTopGoogleBooks(),
-            'year_sales'     => $model->getGoogleYearWise(),
-            'lang_sales'     => $model->getGoogleLanguageWise(),
-            'genre_sales'    => $model->getGoogleGenreWise(),
+            'languageSales'  => $model->getLanguageWiseSales(),
         ];
 
         return view('sales/ebook/ebookGoogleDetails', $data);
     }
-    // TITLES 
-    public function googleTitles()
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title' => 'Google Titles',
-            'books' => $model->getGoogleBooksList()
-        ];
-        return view('sales/ebook/googleTitles', $data);
-    }
-
-    public function googleTitleDetails($bookId)
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title' => 'Google Book Details',
-            'book' => $model->getGoogleBookDetails($bookId),
-            'transactions' => $model->getGoogleBookTransactions($bookId)
-        ];
-        return view('sales/ebook/googleTitleView', $data);
-    }
-
-    // AUTHORS 
-    public function googleAuthors()
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title' => 'Google Authors',
-            'authors' => $model->getGoogleAuthors()
-        ];
-        return view('sales/ebook/googleAuthors', $data);
-    }
-
-    public function googleAuthorBooks($authorId)
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title' => 'Books by Author',
-            'books' => $model->getGoogleAuthorBooks($authorId)
-        ];
-        return view('sales/ebook/googleAuthorBooks', $data);
-    }
-    public function ebookPratilipiDetails()
-{
-    $model = new EbookSalesModel();
-
-    $booksAuthors = $model->getpratilipiBooksAuthors();
-    $orders = $model->getpratilipiOrdersSummary();
-    $earnings = $model->getpratilipiEarningsSummary();
-
-    $data = [
-        'title' => 'Pratilipi Dashboard',
-
-        // merge into one summary
-        'summary' => [
-            'total_titles'     => $booksAuthors['total_titles'] ?? 0,
-            'total_authors'    => $booksAuthors['total_authors'] ?? 0,
-
-            'total_orders'     => $orders['total_orders'] ?? 0,
-            'orders_paid'      => $orders['paid_orders'] ?? 0,
-            'orders_pending'   => $orders['pending_orders'] ?? 0,
-
-            'total_revenue'    => $earnings['total_earning'] ?? 0,
-            'revenue_paid'     => $earnings['paid_earning'] ?? 0,
-            'revenue_pending'  => $earnings['pending_earning'] ?? 0,
-        ],
-
-        'topAuthors' => $model->getPratilipiTopAuthors(),
-        'yearTransactions' => $model->getpratilipiYearTransactions(),
-    ];
-
-    return view('Sales/ebook/ebookPratilipiDetails', $data);
-}
-
-    public function pratilipiTitles()
-    {
-        $model = new EbookSalesModel();
-        $data = [
-            'title' => 'Pratilipi Titles',
-            'books' => $model->getPratilipiBooks(),
-        ];
-
-        return view('Sales/ebook/pratilipiTitles', $data);
-    }
-
-    public function pratilipiAuthorDetails($authorId)
-    {
-        $model = new EbookSalesModel();
-
-        $data = [
-            'title' => 'Pratilipi Author Details',
-            'info' => $model->getPratilipiAuthorInfo($authorId),
-            'transactions' => $model->getPratilipiAuthorTransactions($authorId),
-        ];
-
-        return view('Sales/ebook/pratilipiAuthorDetails', $data);
-    }
-    public function pratilipiauthors()
-{
-    $model = new \App\Models\EbookSalesModel();
-    $data['title']   = 'Pratilipi – Authors';
-    $data['authors'] = $model->getPratilipiAuthors();
-
-    return view('sales/ebook/pratilipiAuthors', $data);
-}
-
-public function pratilipiauthorbooks($authorId)
-{
-    $model = new \App\Models\EbookSalesModel();
-    $data['authorName'] = $model->getAuthorName($authorId);
-    $data['books']      = $model->getBooksByAuthor($authorId);
-    $data['title']      = 'Pratilipi – Books by ' . $data['authorName'];
-
-    return view('sales/ebook/pratilipiAuthorBooks', $data);
-}
-
-
-
     public function AudibleAudiobookDetails()
     {
         $model = new AudiobookSalesModel();
@@ -629,5 +371,7 @@ public function pratilipiauthorbooks($authorId)
 
         return view('sales/audiobook/kukufmDetails', $data);
     }
-    
+
+
+
 }

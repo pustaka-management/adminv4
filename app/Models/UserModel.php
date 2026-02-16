@@ -224,7 +224,7 @@ foreach ($query->getResultArray() as $row) {
     $subscription['plan_type'] = $row['plan_type'];
 
     // Fetch books
-    $sql_book = "SELECT obd.book_id, book_tbl.book_title, author_tbl.author_name, obd.order_date, obd.date_created
+    $sql_book = "SELECT obd.book_id, book_tbl.book_title, author_tbl.author_name, obd.order_date 
                  FROM order_book_details obd
                  JOIN book_tbl ON book_tbl.book_id = obd.book_id
                  JOIN author_tbl ON author_tbl.author_id = obd.author_id
@@ -238,8 +238,7 @@ foreach ($query->getResultArray() as $row) {
             'book_id' => $b['book_id'],
             'book_name' => $b['book_title'],
             'author_name' => $b['author_name'],
-            'order_date' => $b['order_date'],
-			'date_created' => $b['date_created'],
+            'order_date' => $b['order_date']
         ];
     }
 
@@ -1077,17 +1076,19 @@ public function checkOrCreateUser($email)
 	}
 
 	public function getContactUs()
-{
-    $db = \Config\Database::connect();
-    $builder = $db->table('contact_us as c');
+	{
+		$db = \Config\Database::connect();
+		$builder = $db->table('contact_us as c');
 
-    $builder->select('c.id, u.user_id, u.username, u.email, c.date_created, c.subject, c.message');
-    $builder->join('users_tbl as u', 'c.user_id = u.user_id', 'left');
-    $builder->orderBy('c.id', 'DESC');
+		$builder->select('c.id, u.username, u.email, c.date_created, c.subject, c.message');
+		$builder->join('users_tbl as u', 'c.user_id = u.user_id');
+		$builder->orderBy('c.id', 'DESC');
 
-    $query = $builder->get();
-    return $query->getResultArray();
-}
+		$query = $builder->get();
+
+		// Return as array
+		return $query->getResultArray();
+	}
 	public function deleteContactUs($id)
 {
     return $this->db->table('contact_us')->delete(['id' => $id]);

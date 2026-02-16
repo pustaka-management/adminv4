@@ -473,10 +473,6 @@ $routes->group('combobookfair', function($routes) {
     $routes->post('saveReturn', 'ComboBookfair::bookfairBookshopsaveReturn');
 
     $routes->get('bookfairbookshopshippedorders', 'ComboBookfair::bookfairBookshopShippedOrders');
-    $routes->get('exportSingleShippedOrder/(:num)', 'Combobookfair::exportSingleShippedOrder/$1');
-    $routes->get('exportBookshopOrderExcel/(:num)', 'Combobookfair::exportBookshopOrderExcel/$1');
-
-
     $routes->get('bookfairbookshopsoldorders', 'ComboBookfair::bookfairBookshopSoldOrders');
 
     $routes->get('bookfairbookshoporderdetails/(:any)', 'ComboBookfair::bookfairBookshopOrderDetails/$1');
@@ -486,14 +482,13 @@ $routes->group('combobookfair', function($routes) {
     $routes->get('bookfaircombobooks/(:num)', 'ComboBookfair::bookfairComboBooks/$1');
 
     $routes->get('comboorderdetails/(:num)', 'ComboBookfair::comboOrderDetails/$1');
-    $routes->get('combobookorders/(:any)', 'ComboBookfair::combobookorders/$1');
+    $routes->get('combobookorders/(:num)', 'ComboBookfair::combobookOrders/$1');
 
     $routes->get('bookfairdetailsview/(:num)', 'ComboBookfair::bookfairDetailsView/$1');
     $routes->get('ship/(:num)', 'ComboBookfair::ship/$1');
     $routes->get('downloadbookfairexcel/(:num)','ComboBookfair::downloadbookfairexcel/$1');
 
 });
-
 
 //book//
     $routes->group('book', function($routes) {
@@ -824,7 +819,13 @@ $routes->group('prospectivemanagement', function($routes) {
     $routes->get('completedbookdetails/(:num)', 'ProspectiveManagement::completedbookdetails/$1');
     $routes->get('completeplandetails/(:num)', 'ProspectiveManagement::completePlanDetails/$1');
 
-    $routes->post('savePlanInfo', 'ProspectiveManagement::savePlanInfo');
+
+
+
+
+$routes->post('savePlanInfo', 'ProspectiveManagement::savePlanInfo');
+
+
     $routes->get('completedbooks', 'ProspectiveManagement::completedbooks');
     
 

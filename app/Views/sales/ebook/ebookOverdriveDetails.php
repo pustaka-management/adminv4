@@ -3,7 +3,7 @@
 
 <div class="container-fluid">
 
-    <!--  SUMMARY CARDS  -->
+    <!-- ===================== SUMMARY CARDS ===================== -->
     <div class="d-flex flex-wrap gap-3 mb-4">
 
         <!-- Total Titles -->
@@ -82,7 +82,7 @@
 
     </div>
 
-    <!--  TOP BOOKS + YEAR CHART  -->
+    <!-- ===================== TOP BOOKS + YEAR CHART ===================== -->
     <div class="row g-3">
 
         <!-- Top Books -->
@@ -91,7 +91,7 @@
                 <div class="card-body">
                     <h5 class="fw-bold mb-3">Top Selling Overdrive Books</h5>
                     <div class="table-responsive" style="max-height:360px">
-                        <table class="zero-config table table-hover mt-4">
+                        <table class="table table-striped mb-0">
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -136,7 +136,7 @@
 
     </div>
 
-    <!-- GENRE + LANGUAGE  -->
+    <!-- ===================== GENRE + LANGUAGE ===================== -->
     <div class="row g-3 mt-3">
 
         <div class="col-lg-6">
