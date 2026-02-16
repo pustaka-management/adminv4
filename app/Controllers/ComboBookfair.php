@@ -267,57 +267,75 @@ class ComboBookfair extends BaseController
         /* =======================
         * 2. COMMON PROCESSING
         * ======================= */
-        $matched = [];
-        $mismatched = [];
+       $matched = [];
+$mismatched = [];
 
-        foreach ($rows as $i => $row) {
+foreach ($rows as $i => $row) {
 
-            // Skip header ONLY for Excel
-            if ($uploadType === 'excel' && $i == 1) {
-                continue;
-            }
+    // Skip header ONLY for Excel
+    if ($uploadType === 'excel' && $i == 1) {
+        continue;
+    }
 
-            $book_id     = trim($row['A'] ?? '');
-            $excel_title = trim($row['B'] ?? '');
-            $quantity    = (int) ($row['C'] ?? 0);
-            $discount    = (float) ($row['D'] ?? 0);
+    $book_id     = trim($row['A'] ?? '');
+    $excel_title = trim($row['B'] ?? '');
+    $quantity    = (int) ($row['C'] ?? 0);
+    $discount    = (float) ($row['D'] ?? 0);
 
-            if (empty($book_id) || $quantity <= 0) continue;
+    if (empty($book_id) || $quantity <= 0) {
+        continue;
+    }
 
-            $dbBook = $this->db->table('book_tbl')
-                ->where('book_id', $book_id)
-                ->get()
-                ->getRowArray();
+    // 🔍 Check if book_id starts with a number
+    $startsWithNumber = ctype_digit(substr($book_id, 0, 1));
 
-            if ($dbBook) {
-                $db_title = trim($dbBook['book_title']);
+    // 🔄 Decide table based on book_id format
+    if ($startsWithNumber) {
+        $dbBook = $this->db->table('book_tbl')
+            ->where('book_id', $book_id)
+            ->get()
+            ->getRowArray();
 
-                // Manual → skip title check
-                if ($uploadType === 'manual' || strcasecmp($excel_title, $db_title) === 0) {
+        $db_title_key = 'book_title';
+    } else {
+        $dbBook = $this->db->table('tp_publisher_bookdetails')
+            ->where('sku_no', $book_id)
+            ->get()
+            ->getRowArray();
 
-                    $matched[] = [
-                        'book_id'  => $book_id,
-                        'title'    => $db_title,
-                        'quantity' => $quantity,
-                    ];
+        $db_title_key = 'book_title'; // change if column name differs
+    }
 
-                } else {
-                    $mismatched[] = [
-                        'book_id'     => $book_id,
-                        'excel_title' => $excel_title,
-                        'db_title'    => $db_title,
-                        'quantity'    => $quantity,
-                    ];
-                }
-            } else {
-                $mismatched[] = [
-                    'book_id'     => $book_id,
-                    'excel_title' => $excel_title,
-                    'db_title'    => 'Not Found in DB',
-                    'quantity'    => $quantity,
-                ];
-            }
+    if ($dbBook) {
+        $db_title = trim($dbBook[$db_title_key]);
+
+        // Manual → skip title check
+        if ($uploadType === 'manual' || strcasecmp($excel_title, $db_title) === 0) {
+
+            $matched[] = [
+                'book_id'  => $book_id,
+                'title'    => $db_title,
+                'quantity' => $quantity,
+            ];
+
+        } else {
+            $mismatched[] = [
+                'book_id'     => $book_id,
+                'excel_title' => $excel_title,
+                'db_title'    => $db_title,
+                'quantity'    => $quantity,
+            ];
         }
+
+    } else {
+        $mismatched[] = [
+            'book_id'     => $book_id,
+            'excel_title' => $excel_title,
+            'db_title'    => 'Not Found in DB',
+            'quantity'    => $quantity,
+        ];
+    }
+}
 
         /* =======================
         * 3. STORE & RETURN VIEW
