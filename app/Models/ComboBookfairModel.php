@@ -55,78 +55,72 @@ class ComboBookfairModel extends Model
     return $row['total_qty'] ?? 0;
 }
 
-    // ================= CREATE ORDER =================
     public function createOrder($orderData, $comboId)
 {
     $db = \Config\Database::connect();
-    $db->transBegin();
+    $db->transBegin(); // start transaction
 
-    // MAIN ORDER INSERT
-    $db->query(
-        "INSERT INTO bookfair_sale_or_return_orders
-        (order_id, bookshop_id, create_date, combo_id, total_qty, status)
-        VALUES (?, ?, ?, ?, ?, ?)",
-        [
+    try {
+        // ---------- 1. Insert main order ----------
+        $sqlOrder = "INSERT INTO bookfair_sale_or_return_orders 
+                     (order_id, bookshop_id, create_date, combo_id, total_qty, status) 
+                     VALUES (?, ?, ?, ?, ?, ?)";
+        $db->query($sqlOrder, [
             $orderData['order_id'],
             $orderData['bookshop_id'],
             $orderData['create_date'],
             $orderData['combo_id'],
             $orderData['total_qty'],
             $orderData['status']
-        ]
-    );
+        ]);
 
-    // FETCH COMBO BOOKS
-    $comboBooks = $db->query(
-        "SELECT * FROM bookfair_combo_pack_details WHERE combo_id = ?",
-        [$comboId]
-    )->getResultArray();
+        // ---------- 2. Get all books in the combo ----------
+        $sqlComboBooks = "SELECT * FROM bookfair_combo_pack_details WHERE combo_id = ?";
+        $comboBooks = $db->query($sqlComboBooks, [$comboId])->getResultArray();
 
-    if (!$comboBooks) {
-        throw new \Exception('Combo books not found');
-    }
-
-    foreach ($comboBooks as $row) {
-
-        $sku = $row['book_id'];
-        $qty = $row['default_value'];
-
-        // GET PRICE FROM PUBLISHER TABLE USING SKU
-        $pubBook = $db->query(
-            "SELECT mrp FROM tp_publisher_bookdetails WHERE sku_no = ?",
-            [$sku]
-        )->getRowArray();
-
-        if (!$pubBook) {
-            continue;
+        if (!$comboBooks) {
+            throw new \Exception('No books found in this combo.');
         }
 
-        $price = $pubBook['mrp'] ?? 0;
+        // ---------- 3. Insert order details for each book ----------
+        foreach ($comboBooks as $book) {
+            $bookId = $book['book_id'];
+            $qty    = $book['default_value'];
 
-        // INSERT ORDER DETAILS
-        $db->query(
-            "INSERT INTO bookfair_sale_or_return_order_details
-            (order_id, bookshop_id, create_date, book_id, send_qty, book_price, discount, status)
-            VALUES (?, ?, ?, ?, ?, ?, 0, 0)",
-            [
+            // Get price from publisher table (default 0 if not found)
+            $sqlPub = "SELECT mrp FROM tp_publisher_bookdetails WHERE sku_no = ?";
+            $pubBook = $db->query($sqlPub, [$bookId])->getRowArray();
+            $price = $pubBook['mrp'] ?? 0;
+
+            // Insert into order details
+            $sqlDetail = "INSERT INTO bookfair_sale_or_return_order_details
+                          (order_id, bookshop_id, create_date, book_id, send_qty, book_price, discount, status)
+                          VALUES (?, ?, ?, ?, ?, ?, 0, 0)";
+            $db->query($sqlDetail, [
                 $orderData['order_id'],
                 $orderData['bookshop_id'],
                 $orderData['create_date'],
-                $sku,
+                $bookId,
                 $qty,
                 $price
-            ]
-        );
-    }
+            ]);
+        }
 
-    if ($db->transStatus() === false) {
+        // ---------- 4. Commit transaction ----------
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+            throw new \Exception('Transaction failed.');
+        }
+
+        $db->transCommit();
+        return true;
+
+    } catch (\Throwable $e) {
         $db->transRollback();
-        throw new \Exception('Transaction failed');
+        throw $e; // you can also handle error messages here if needed
     }
-
-    $db->transCommit();
-    return true;
 }
+
 
     // ================= RETURN =================
     public function getReturnOrder($orderId)
