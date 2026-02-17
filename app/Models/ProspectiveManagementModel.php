@@ -317,38 +317,33 @@ class ProspectiveManagementModel extends Model
         return $data;
     }
 
-  public function getPlanCounts()
+    public function getPlanCounts()
 {
     $db = \Config\Database::connect();
-
     $plans = ['Silver', 'Gold', 'Platinum', 'Silver++', 'Rhodium', 'Pearl', 'Sapphire'];
 
     $result = [];
     $total = 0;
 
-    // Subquery get latest row for each (prospector + title + plan)
+    // Subquery to get latest create_date for each (prospector_id + title)
     $subquery = $db->table('prospectors_book_details')
-        ->select('prospector_id, title, plan_name, MAX(create_date) AS latest_date')
-        ->groupBy('prospector_id, title, plan_name');
+        ->select('MAX(create_date) as latest_date, prospector_id, title')
+        ->groupBy('prospector_id, title');
 
-    // Base query: load only those latest records
-    $baseSQL = $db->table('prospectors_book_details b')
-        ->select('b.plan_name')
+    // Join latest entry to main book details
+    $baseQuery = $db->table('prospectors_book_details b')
         ->join('(' . $subquery->getCompiledSelect() . ') latest',
             'latest.prospector_id = b.prospector_id 
              AND latest.title = b.title 
-             AND latest.plan_name = b.plan_name
-             AND latest.latest_date = b.create_date'
-        )
+             AND latest.latest_date = b.create_date',
+            'inner')
         ->join('prospectors_details p', 'p.id = b.prospector_id', 'left')
         ->where('p.prospectors_status', 1);
 
-    // Count each plan
+    // Loop through plans and count occurrences
     foreach ($plans as $plan) {
-        $count = (clone $baseSQL)
-            ->where('b.plan_name', $plan)
-            ->countAllResults();
-
+        $builder = clone $baseQuery;
+        $count = $builder->where('b.plan_name', $plan)->countAllResults();
         $result[$plan] = $count;
         $total += $count;
     }
@@ -357,67 +352,52 @@ class ProspectiveManagementModel extends Model
 
     return $result;
 }
-
- public function getPaymentSummary()
+   public function getPaymentSummary()
 {
     $db = \Config\Database::connect();
 
-    // STEP 1: Fetch all rows for active prospects (include all payment_status)
-    $allRows = $db->table('prospectors_book_details b')
-        ->select('b.prospector_id, b.title, b.plan_name, b.payment_status, b.payment_amount')
+    // Subquery – Get latest record per (prospector_id + title)
+    $subquery = $db->table('prospectors_book_details')
+        ->select('prospector_id, title, MAX(create_date) AS latest_date')
+        ->groupBy('prospector_id, title');
+
+    //  Join to get only those latest entries
+    $builder = $db->table('prospectors_book_details b')
+        ->select('b.prospector_id, b.title, b.payment_status, b.payment_amount, b.create_date')
+        ->join('(' . $subquery->getCompiledSelect() . ') latest',
+            'latest.prospector_id = b.prospector_id 
+             AND latest.title = b.title 
+             AND latest.latest_date = b.create_date',
+            'inner')
         ->join('prospectors_details p', 'p.id = b.prospector_id', 'left')
-        ->where('p.prospectors_status', 1)
-        ->orderBy('b.create_date', 'DESC')
-        ->get()
-        ->getResultArray();
+        ->where('p.prospectors_status', 1) // closed/active prospects only
+        ->orderBy('b.create_date', 'DESC');
 
-    $grouped = [];
+    $records = $builder->get()->getResultArray();
 
-    // STEP 2: Group by prospector_id + title + plan_name
-    foreach ($allRows as $row) {
-        $key = $row['prospector_id'] . '||' . $row['title'] . '||' . $row['plan_name'];
-
-        if (!isset($grouped[$key])) {
-            $grouped[$key] = [
-                'prospector_id' => $row['prospector_id'],
-                'title' => $row['title'],
-                'plan_name' => $row['plan_name'],
-                'payment_status' => strtolower($row['payment_status'] ?? 'unpaid'),
-                'payment_amount_total' => (float)($row['payment_amount'] ?? 0),
-            ];
-        } else {
-            // Paid dominates Partial, Partial dominates Unpaid
-            $status = strtolower($row['payment_status'] ?? 'unpaid');
-            if ($status === 'paid') {
-                $grouped[$key]['payment_status'] = 'paid';
-            } elseif ($status === 'partial' && $grouped[$key]['payment_status'] !== 'paid') {
-                $grouped[$key]['payment_status'] = 'partial';
-            }
-
-            // Sum amounts only for paid/partial rows
-            if (in_array($status, ['paid','partial'])) {
-                $grouped[$key]['payment_amount_total'] += (float)$row['payment_amount'];
-            }
-        }
-    }
-
-    // STEP 3: Count totals
+    //  Initialize counters
     $totalCount = $paidCount = $partialCount = 0;
     $totalRevenue = $paidTotal = $partialTotal = 0.0;
 
-    foreach ($grouped as $row) {
-        $totalCount++;
-        $totalRevenue += $row['payment_amount_total'];
+    // Loop through latest records only
+    foreach ($records as $row) {
+        $amount = (float)($row['payment_amount'] ?? 0);
+        $status = strtolower(trim($row['payment_status'] ?? ''));
 
-        if ($row['payment_status'] === 'paid') {
+        // Count total titles
+        $totalCount++;
+        $totalRevenue += $amount;
+
+        if ($status === 'paid') {
             $paidCount++;
-            $paidTotal += $row['payment_amount_total'];
-        } elseif ($row['payment_status'] === 'partial') {
+            $paidTotal += $amount;
+        } elseif ($status === 'partial') {
             $partialCount++;
-            $partialTotal += $row['payment_amount_total'];
+            $partialTotal += $amount;
         }
     }
 
+    // Return summary array
     return [
         'totalCount'    => $totalCount,
         'totalRevenue'  => $totalRevenue,
@@ -427,7 +407,6 @@ class ProspectiveManagementModel extends Model
         'partialTotal'  => $partialTotal,
     ];
 }
-
 
 public function addBook()
 {
@@ -490,15 +469,22 @@ public function saveBookDetails()
 {
     $builder = $this->db->table('prospectors_book_details');
 
-    $builder->select('id, prospector_id, title, plan_name, payment_status, payment_amount, payment_date, create_date, agreement_send_date, agreement_signed_date');
+    // Subquery to get latest id per title for paid/partial
+    $subQuery = $this->db->table('prospectors_book_details')
+        ->select('MAX(id) as max_id')
+        ->where('prospector_id', $prospectorId)
+        ->groupStart()
+            ->whereIn('LOWER(payment_status)', ['paid', 'partial'])
+        ->groupEnd()
+        ->groupBy('title');
 
+    $builder->select('id, prospector_id, title, plan_name, payment_status, payment_amount, payment_date, create_date'); // include prospector_id
     $builder->where('prospector_id', $prospectorId)
-            ->groupStart()
-                ->whereIn('LOWER(payment_status)', ['paid', 'partial'])
-            ->groupEnd()
-            ->orderBy('create_date', 'DESC');
+            ->whereIn('id', $subQuery);
 
+    $builder->orderBy('create_date', 'DESC'); 
     $query = $builder->get();
+
     $result = $query->getResultArray();
 
     // Add readable payment status
@@ -515,6 +501,7 @@ public function saveBookDetails()
 
     return $result;
 }
+
 public function getProspectorGeneralRemarks($prospectorId)
 {
     return $this->db->table('prospectors_remark_details')
@@ -563,7 +550,7 @@ public function getProspectorGeneralRemarks($prospectorId)
 public function getPlansByProspectorAndId($prospector_id, $id)
 {
     $builder = $this->db->table('prospectors_book_details');
-    $builder->select('id, prospector_id, title, plan_name, payment_status, payment_amount, payment_date, create_date, agreement_send_date, agreement_signed_date, target_date');
+    $builder->select('id, prospector_id, title, plan_name, payment_status, payment_amount, payment_date, create_date');
     $builder->where('prospector_id', $prospector_id);
     $builder->where('id', $id);
     $builder->groupStart()
@@ -683,77 +670,7 @@ public function getPlanSummaryHome()
 
     return $plans;
 }
-    public function getBookCounts()
-    {
-        return [
-            'pendingBooks'  => $this->db->table('prospectors_book_details')->where('completed_status', 0)->countAllResults(),
-            'completedBooks'=> $this->db->table('prospectors_book_details')->where('completed_status', 1)->countAllResults(),
-        ];
-    }
-
-    public function getPendingBookList()
-    {
-        return $this->db->table('prospectors_book_details b')
-            ->select('p.name, p.author_status, b.id, b.title, b.agreement_send_date, b.agreement_signed_date, b.target_date, b.plan_name')
-            ->join('prospectors_details p', 'p.id = b.prospector_id')
-            ->where('b.completed_status', 0)
-            ->orderBy('p.name')
-            ->get()
-            ->getResultArray();
-    }
-    /* Book + plan JSON by title */
-  public function getBookByTitle($title)
-{
-    return $this->db->table('prospectors_book_details b')
-        ->select('
-            b.*, 
-            pp.plan_template,
-            p.name as author_name
-        ')
-        ->join('publishing_plan_details pp', 'pp.plan_name = b.plan_name', 'left')
-        ->join('prospectors_details p', 'p.id = b.prospector_id', 'left')
-        ->where('b.title', $title)
-        ->get()
-        ->getRowArray();
-}
 
 
-
-    /* Update plan_status */
-    public function updatePlanStatus($bookId, $statusJson)
-    {
-        return $this->db->table('prospectors_book_details')
-            ->where('id', $bookId)
-            ->update([
-                'plan_status' => $statusJson
-            ]);
-    }
-
-    public function getCompletedBooks()
-{
-    return $this->db->table('prospectors_book_details pb')
-        ->select([
-            'pb.id',
-            'pd.name',
-            'pd.author_status',
-            'pb.title',
-            'pb.agreement_send_date',
-            'pb.agreement_signed_date',
-            'pb.target_date',
-            'pb.plan_name'
-        ])
-        ->join('prospectors_details pd', 'pd.id = pb.prospector_id')
-        ->where('pb.completed_status', 1)
-        ->orderBy('pb.id', 'DESC')
-        ->get()
-        ->getResultArray();
-}
-public function getCompletedBookDetails($id)
-{
-    return $this->db->table('prospectors_book_details')
-        ->where('id', $id)
-        ->get()
-        ->getRowArray();
-}
 
 }

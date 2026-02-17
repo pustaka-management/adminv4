@@ -127,7 +127,7 @@ class ComboBookfair extends BaseController
     // ================= SOLD =================
     public function bookfairBookshopSoldOrders()
     {
-        $data['title']  = 'Bookfair – Sold Orders';
+        $data['title']  = '';
         $data['orders'] = $this->combobookfairmodel->getBookfairOrders(2);
 
         return view('printorders/bookfair/bookfairBookshopSoldOrders', $data);
@@ -156,16 +156,6 @@ class ComboBookfair extends BaseController
         }
 
         return view('printorders/bookfair/bookfairShippedOrderDetails', $data);
-    }
-        public function exportSingleShippedOrder($orderId)
-    {
-        return $this->combobookfairmodel->exportSingleShippedOrderExcel($orderId);
-    }
-        public function exportBookshopOrderExcel($orderId)
-    {
-        $model = new \App\Models\Combobookfairmodel();
-
-        return $model->exportSoldOrderExcel($orderId);
     }
 
     // ================= COMBO =================
@@ -220,7 +210,9 @@ class ComboBookfair extends BaseController
         $combo_pack_name =  $this->request->getPost('combo_pack_name');
         $rows = [];
 
-        /*  READ INPUT DATA */
+        /* =======================
+        * 1. READ INPUT DATA
+        * ======================= */
         if ($uploadType === 'excel') {
 
             $file = $this->request->getFile('excel_file');
@@ -275,7 +267,7 @@ class ComboBookfair extends BaseController
         /* =======================
         * 2. COMMON PROCESSING
         * ======================= */
-       $matched = [];
+         $matched = [];
 $mismatched = [];
 
 foreach ($rows as $i => $row) {
@@ -344,7 +336,6 @@ foreach ($rows as $i => $row) {
         ];
     }
 }
-
         /* =======================
         * 3. STORE & RETURN VIEW
         * ======================= */
@@ -527,6 +518,5 @@ foreach ($rows as $i => $row) {
         $writer->save('php://output');
         exit;
     }
-    
 }
 

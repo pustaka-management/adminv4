@@ -16,12 +16,12 @@ class Amazon extends BaseController
         helper(['form', 'url', 'file']);
     }
 
-    public function uploadEBooks()
+public function uploadEBooks()
     {
         ini_set('max_execution_time', 600);
         ini_set('memory_limit', '1024M');
 
-        $file_name = "14-feb-26.xlsx";
+        $file_name = "07-feb-26.xlsx";
         $inputFileName = WRITEPATH . 'uploads/ExcelUpload/amazon/' . $file_name;
 
         /* ========= LOAD EXCEL ========= */
@@ -323,7 +323,7 @@ class Amazon extends BaseController
     ini_set('max_execution_time', 600);
     ini_set('memory_limit', '1024M');
 
-    $file_name = "Amazon_paperback_14feb.xlsx";
+    $file_name = "Amazon_Paperback_25_Oct.xlsx";
     $inputFile = WRITEPATH . 'uploads' . DIRECTORY_SEPARATOR . 'ExcelUpload' . DIRECTORY_SEPARATOR . 'amazon' . DIRECTORY_SEPARATOR . $file_name;
 
     try {

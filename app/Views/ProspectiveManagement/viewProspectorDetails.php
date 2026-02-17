@@ -102,36 +102,29 @@
                     <input type="text" class="form-control" readonly value="<?= esc($prospect['recommended_plan'] ?? ''); ?>">
                 </div>
 
-                <!-- All Remarks -->
-<div class="col-md-12">
-    <label class="form-label">All Remarks</label>
+                <!-- Latest Remark -->
+                <div class="col-md-12">
+                    <label class="form-label">Latest Remark</label>
 
-    <?php if (!empty($generalRemarks)): ?>
-        <table class="table table-bordered table-sm">
-            <thead>
-                <tr class="bg-secondary text-white">
-                    <th width="40%">Title</th>
-                    <th width="40%">Remark</th>
-                    <th width="20%">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($generalRemarks as $remark): ?>
-                    <tr>
-                        <td><?= esc($remark['title'] ?? ''); ?></td>
-                        <td><?= esc($remark['remarks'] ?? ''); ?></td>
-                        <td><?= !empty($remark['create_date']) 
-                                ? date('d-m-Y', strtotime($remark['create_date'])) 
-                                : ''; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php else: ?>
-        <p class="text-muted mb-0">No remarks available.</p>
-    <?php endif; ?>
-</div>
+                    <?php if (!empty($latestRemark)): ?>
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr class="bg-secondary text-white">
+                                    <th width="70%">Remark</th>
+                                    <th width="30%">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><?= esc($latestRemark['remarks'] ?? ''); ?></td>
+                                    <td><?= !empty($latestRemark['create_date']) ? date('d-m-Y h:i A', strtotime($latestRemark['create_date'])) : ''; ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <p class="text-muted mb-0">No latest remark available.</p>
+                    <?php endif; ?>
+                </div>
 
             </div>
         </div>

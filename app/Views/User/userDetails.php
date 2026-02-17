@@ -10,38 +10,12 @@
 
 <div class="container-fluid py-4">
     <!-- HORIZONTAL TABS NAVIGATION - TOP -->
-    <div class="row mb-2">
+     <div class="row mb-2">
     <div class="col-12">
-        <!-- User Name -->
         <h6 class="fw-bold mb-1"><?= esc($display['user_name']) ?></h6>
-
-        <!-- Email + Copy Icon -->
-        <div class="d-flex align-items-center gap-1">
-            <span id="userEmailText" class="text-muted" style="cursor: pointer;">
-                <?= esc($display['user_email']) ?>
-            </span>
-
-            <span id="copyIcon" style="cursor:pointer;" title="Copy Email" onclick="copyEmail()">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     width="16" height="16"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4
-                             a2 2 0 0 1 2-2h9
-                             a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </span>
-
-            <!-- Copied Text -->
-            <span id="copyMsg" class="text-success small" style="display:none;">
-                Copied
-            </span>
-        </div>
+       <span id="userEmail" style="cursor: pointer; user-select: all;" onclick="copyToClipboard('<?= esc($display['user_email']) ?>')">
+    <?= esc($display['user_email']) ?>
+</span>
     </div>
 </div>
 <br>
@@ -482,7 +456,7 @@
                                                                             <td><?= $book['book_id'] ?></td>
                                                                             <td><?= $book['book_name'] ?></td>
                                                                             <td><?= $book['author_name'] ?></td>
-                                                                            <td><?= date('d-m-y', strtotime($book['date_created'])) ?></td>
+                                                                            <td><?= date('d-m-y', strtotime($book['order_date'])) ?></td>
 
                                                                         </tr>
                                                                     <?php endforeach; ?>
@@ -513,7 +487,7 @@
                                                                                     <td><?= $book['book_id'] ?></td>
                                                                                     <td><?= $book['book_name'] ?></td>
                                                                                     <td><?= $book['author_name'] ?></td>
-                                                                                    <td><?= date('d/m/Y', strtotime($book['date_created'])) ?></td>
+                                                                                    <td><?= date('d/m/Y', strtotime($book['order_date'])) ?></td>
                                                                                 </tr>
                                                                             <?php endforeach; ?>
                                                                         </tbody>
@@ -675,7 +649,7 @@
                                                 <tr>
                                                     <td scope="row"><?= $i + 1 ?></td>
                                                     <td><?= $free_book['free_book_title'] ?></td>
-                                                    <td><?= date('Y-m-d', strtotime($free_book['date'])) ?></td>
+                                                    <td><?= date('d-m-y', strtotime($free_book['date'])) ?></td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -988,16 +962,6 @@
                 "searching": false 
             });
         });
-        function copyEmail() {
-    const email = document.getElementById('userEmailText').innerText;
-    const msg = document.getElementById('copyMsg');
-
-    navigator.clipboard.writeText(email).then(() => {
-        // Show "Copied"
-        msg.style.display = 'inline';
-        setTimeout(() => msg.style.display = 'none', 1200);
-    });
-}
 
 
     </script>

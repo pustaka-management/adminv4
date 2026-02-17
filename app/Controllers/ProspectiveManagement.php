@@ -16,202 +16,22 @@ class ProspectiveManagement extends Controller
           $this->db = Database::connect();
     }
 
-   public function dashboard()
-{
-    $model = new \App\Models\ProspectiveManagementModel();
-
-    $dashboardData = [
-        'title'           => 'Prospective Dashboard', 
-        'prospectCounts'  => $model->getProspectCounts(),
-        'planCounts'      => $model->getPlanCounts(),
-        'paymentSummary'  => $model->getPaymentSummary(),
-        'bookCounts'      => $model->getBookCounts(),   
-    ];
-
-    return view('ProspectiveManagement/PMdashboard', $dashboardData);
-}
-
-public function booksprocessing()
+    public function dashboard()
     {
-        $model = new ProspectiveManagementModel();
-        $data = [
-            'title' => 'Processing Books List',
-            'books' => $model->getPendingBookList()
+        $model = new \App\Models\ProspectiveManagementModel();
+        $dashboardData = [
+            'prospectCounts' => $model->getProspectCounts(),
+            'planCounts'     => $model->getPlanCounts(),
+            'paymentSummary' => $model->getPaymentSummary(),
         ];
-
-        return view('ProspectiveManagement/ProcessingBooks', $data);
+        $data = [
+            'title'           => '',
+            'prospectCounts'  => $dashboardData['prospectCounts'],
+            'planCounts'      => $dashboardData['planCounts'],
+            'paymentSummary'  => $dashboardData['paymentSummary'],
+        ];
+        return view('ProspectiveManagement/PMdashboard', $data);
     }
-
-    // View plan details for a book
-    public function viewPlanDetails($bookId = null)
-{
-    $db = \Config\Database::connect();
-
-    // Get Book
-    $book = $db->table('prospectors_book_details')
-               ->where('id', $bookId)
-               ->get()
-               ->getRowArray();
-
-    if (!$book) {
-        return redirect()->back()->with('error', 'Book not found');
-    }
-
-    // Get Plan Master
-    $planRow = $db->table('publishing_plan_details')
-                  ->where('plan_name', $book['plan_name'])
-                  ->get()
-                  ->getRowArray();
-
-    if (!$planRow) {
-        return redirect()->back()->with('error', 'Plan not found');
-    }
-
-    // Decode JSON
-    $planTemplate = json_decode($planRow['plan_template'], true);
-    $planStatus   = !empty($book['plan_status']) ? json_decode($book['plan_status'], true) : [];
-
-    // ---------------- NORMALIZE STRUCTURE ----------------
-
-    // Plan Template
-    if (isset($planTemplate['plan_detail'])) {
-        $planTemplate = array_merge($planTemplate, $planTemplate['plan_detail']);
-        unset($planTemplate['plan_detail']);
-    }
-
-    // Plan Status
-    if (isset($planStatus['plan_detail'])) {
-        $planStatus = array_merge($planStatus, $planStatus['plan_detail']);
-        unset($planStatus['plan_detail']);
-    }
-
-    // Safety Defaults
-    $planTemplate['ownership_support'] = $planTemplate['ownership_support'] ?? [];
-    $planTemplate['distribution']      = $planTemplate['distribution'] ?? [];
-    $planTemplate['complementary']     = $planTemplate['complementary'] ?? [];
-
-    $planStatus['ownership_support'] = $planStatus['ownership_support'] ?? [];
-    $planStatus['distribution']      = $planStatus['distribution'] ?? [];
-    $planStatus['complementary']     = $planStatus['complementary'] ?? [];
-
-    // -----------------------------------------------------
-
-    $data = [
-        'title'        => 'Book Process',
-        'book'         => $book,
-        'planTemplate' => $planTemplate,
-        'planStatus'   => $planStatus
-    ];
-
-    return view('ProspectiveManagement/BookProcessDashboard', $data);
-}
-
-    // Save plan details
-  public function savePlanStatus($bookId = null)
-{
-    $db = \Config\Database::connect();
-    $builder = $db->table('prospectors_book_details');
-
-    $book = $builder->where('id', $bookId)->get()->getRowArray();
-    if (!$book) {
-        return redirect()->back()->with('error', 'Book not found');
-    }
-
-    $post = $this->request->getPost();
-
-    // Get plan template
-    $planRow = $db->table('publishing_plan_details')
-        ->where('plan_name', $book['plan_name'])
-        ->get()
-        ->getRowArray();
-
-    if (!$planRow) {
-        return redirect()->back()->with('error', 'Plan template not found');
-    }
-
-    // Base JSON = TEMPLATE (overwrite)
-    $plan_status = json_decode($planRow['plan_template'], true);
-
-    /*
-     |------------------------------------------------
-     | Override values from POST (if given)
-     |------------------------------------------------
-     */
-
-    if (isset($post['ownership_support'])) {
-        $plan_status['ownership_support'] = $post['ownership_support'];
-    }
-
-    if (isset($post['distribution'])) {
-        $plan_status['distribution'] = $post['distribution'];
-    }
-
-    if (isset($post['complementary'])) {
-        $plan_status['complementary'] = $post['complementary'];
-    }
-
-    // plan_detail exists?
-    if (!isset($plan_status['plan_detail'])) {
-        $plan_status['plan_detail'] = [];
-    }
-
-    // Add-on (always overwrite)
-    $plan_status['plan_detail']['add_on'] = $post['add_on'] ?? '';
-
-    // SAVE FULL JSON (overwrite old one)
-    $builder->where('id', $bookId)->update([
-        'plan_status' => json_encode($plan_status, JSON_UNESCAPED_UNICODE)
-    ]);
-
-    return redirect()->back()->with('success', 'Plan details saved successfully');
-}
-
-
-
-public function completedbooks()
-{
-    $model = new \App\Models\ProspectiveManagementModel();
-
-    $data = [
-        'title' => 'Completed Books',
-        'books' => $model->getCompletedBooks()
-    ];
-
-    return view('ProspectiveManagement/CompletedBooks', $data);
-}
-public function completedbookdetails($id)
-{
-    $model = new \App\Models\ProspectiveManagementModel();
-
-    $book = $model->getCompletedBookDetails($id);
-
-    $book['plan_status_arr'] = json_decode($book['plan_status'], true);
-
-    $data = [
-        'title' => 'Completed Book Details',
-        'book'  => $book
-    ];
-
-    return view('ProspectiveManagement/CompletedBookDetails', $data);
-}
-public function completePlanDetails($id = null)
-{
-    if (!$id) {
-        return redirect()->back()->with('error', 'Invalid Book ID.');
-    }
-
-    $db = \Config\Database::connect();
-    $builder = $db->table('prospectors_book_details');
-
-    // Update book_status to 1 (Completed)
-    $updated = $builder->update(['completed_status' => 1], ['id' => $id]);
-
-    if ($updated) {
-        return redirect()->back()->with('success', 'Book marked as completed.');
-    } else {
-        return redirect()->back()->with('error', 'Failed to update book status.');
-    }
-}
     public function addProspect()
     {
         $data = [
@@ -612,22 +432,23 @@ public function viewProspector($id)
 {
     $db = \Config\Database::connect();
 
-    $plan = urldecode($planName);
-    $data['planName'] = $plan;
+    $data['planName'] = urldecode($planName);
 
-    // Subquery → Get latest row per prospect + title **for this plan only**
+    // ✅ Subquery to get latest entry per (prospector_id + title)
     $subquery = $db->table('prospectors_book_details')
-        ->select('prospector_id, title, MAX(id) AS max_id')
-        ->where('plan_name', $plan)
+        ->select('prospector_id, title, MAX(create_date) AS latest_date')
         ->groupBy('prospector_id, title');
 
-    // Main Query
+    // ✅ Main query
     $data['prospects'] = $db->table('prospectors_book_details b')
         ->select('b.*, p.id AS prospect_id, p.name, p.phone, p.email, p.author_status')
         ->join('(' . $subquery->getCompiledSelect() . ') latest',
-            'latest.max_id = b.id',
+            'latest.prospector_id = b.prospector_id 
+             AND latest.title = b.title 
+             AND latest.latest_date = b.create_date',
             'inner')
         ->join('prospectors_details p', 'p.id = b.prospector_id', 'left')
+        ->where('b.plan_name', $data['planName'])
         ->where('p.prospectors_status', 1)
         ->orderBy('b.create_date', 'DESC')
         ->get()
@@ -637,25 +458,26 @@ public function viewProspector($id)
 
     return view('ProspectiveManagement/planSubscribers', $data);
 }
+
+
   public function paymentDetails()
 {
     $db = \Config\Database::connect();
 
-    // Subquery: latest entry per (prospector + title + plan)
+    //  Subquery to get latest create_date for each title of each prospector
     $subquery = $db->table('prospectors_book_details')
-        ->select('prospector_id, title, plan_name, MAX(create_date) AS latest_date')
-        ->groupBy('prospector_id, title, plan_name');
+        ->select('MAX(create_date) as latest_date, prospector_id, title')
+        ->groupBy('prospector_id, title');
 
-    // Main query: pick only matching latest rows
+    //  Main query joins to get all latest book entries (per title per prospector)
     $builder = $db->table('prospectors_book_details b')
         ->select('b.*, p.name, p.phone, p.email, p.author_status, p.recommended_plan')
+        ->join('prospectors_details p', 'p.id = b.prospector_id', 'left')
         ->join('(' . $subquery->getCompiledSelect() . ') latest',
-            'latest.prospector_id = b.prospector_id 
-             AND latest.title = b.title 
-             AND latest.plan_name = b.plan_name
+            'latest.prospector_id = b.prospector_id
+             AND latest.title = b.title
              AND latest.latest_date = b.create_date',
             'inner')
-        ->join('prospectors_details p', 'p.id = b.prospector_id', 'left')
         ->where('p.prospectors_status', 1)
         ->whereIn('b.payment_status', ['paid', 'partial'])
         ->orderBy('b.create_date', 'DESC');
@@ -665,6 +487,8 @@ public function viewProspector($id)
 
     return view('ProspectiveManagement/paymentDetails', $data);
 }
+
+
     public function closeInprogress($id)
     {
         $db = Database::connect();
@@ -741,58 +565,47 @@ public function viewProspector($id)
     return view('ProspectiveManagement/addBook', $data);
 }
 
+    public function saveBookDetails()
+    {
+        $request = service('request');
+        $db = \Config\Database::connect();
 
-// ======================= SAVE NEW ==========================
-public function saveBookDetails()
-{
-    $request = service('request');
-    $db = \Config\Database::connect();
+        $prospector_id       = $request->getPost('prospector_id');
+        $plan_name           = $request->getPost('plan_name');
+        $title               = $request->getPost('title');
+        $payment_status      = $request->getPost('payment_status');
+        $payment_amount      = $request->getPost('payment_amount');
+        $payment_description = $request->getPost('payment_description');
+        $payment_date        = $request->getPost('payment_date');
+        $remarks             = $request->getPost('remarks');
 
-    $prospector_id       = $request->getPost('prospector_id');
-    $plan_name           = $request->getPost('plan_name');
-    $title               = $request->getPost('title');
-    $payment_status      = $request->getPost('payment_status');
-    $payment_amount      = $request->getPost('payment_amount');
-    $payment_description = $request->getPost('payment_description');
-    $payment_date        = $request->getPost('payment_date');
-    $remarks             = $request->getPost('remarks');
-    $target_date         = $request->getPost('target_date') ?: null;
-    $agreement_send_date   = $request->getPost('agreement_send_date') ?: null;
-    $agreement_signed_date = $request->getPost('agreement_signed_date') ?: null;
+        // Insert into prospectors_book_details table
+        $create_date = date('Y-m-d H:i:s');
+        $bookData = [
+            'prospector_id'       => $prospector_id,
+            'title'               => $title,
+            'plan_name'           => $plan_name,
+            'payment_status'      => $payment_status,
+            'payment_amount'      => $payment_amount,
+            'payment_date'        => $payment_date,
+            'create_date'         => $create_date
+        ];
+        $db->table('prospectors_book_details')->insert($bookData);
 
-    $create_date = date('Y-m-d H:i:s');
+        // Insert into prospectors_remark_details table
+        $remarkData = [
+            'prospectors_id'      => $prospector_id,
+            'title'               => $title,
+            'payment_description' => $payment_description,
+            'remarks'             => $remarks,
+            'des_date'            => date('Y-m-d H:i:s'),
+            'created_by'          => session()->get('username') ?? 'System',
+        ];
+        $db->table('prospectors_remark_details')->insert($remarkData);
 
-    // Insert into prospectors_book_details table
-    $bookData = [
-        'prospector_id'         => $prospector_id,
-        'title'                 => $title,
-        'plan_name'             => $plan_name,
-        'payment_status'        => $payment_status,
-        'payment_amount'        => $payment_amount,
-        'payment_date'          => $payment_date,
-        'target_date'           => $target_date,
-        'agreement_send_date'   => $agreement_send_date,
-        'agreement_signed_date' => $agreement_signed_date,
-        'completed_status'      => 0, // ⭐ ADDED DEFAULT
-        'create_date'           => $create_date
-    ];
-    $db->table('prospectors_book_details')->insert($bookData);
-
-    // Insert into remarks table
-    $remarkData = [
-        'prospectors_id'      => $prospector_id,
-        'title'               => $title,
-        'payment_description' => $payment_description,
-        'remarks'             => $remarks,
-        'des_date'            => $create_date,
-        'created_by'          => session()->get('username') ?? 'System',
-    ];
-    $db->table('prospectors_remark_details')->insert($remarkData);
-
-    return redirect()->to(base_url('prospectivemanagement'))
-        ->with('success', 'Book details added successfully!');
-}
-
+        return redirect()->to(base_url('prospectivemanagement'))
+            ->with('success', 'Book details added successfully!');
+    }
    public function editBook($prospector_id = null, $id = null)
 {
     if (!$prospector_id || !$id) {
@@ -872,12 +685,6 @@ public function updateBook($prospector_id = null, $id = null)
     $newPlan         = $request->getPost('plan_name');
     $paymentStatus   = $request->getPost('payment_status');
     $paymentDate     = $request->getPost('payment_date') ?: date('Y-m-d');
-
-    // 👇 NEW FIELDS
-    $targetDate = $request->getPost('target_date') ?: $book['target_date'];
-    $agreementSend   = $request->getPost('agreement_send_date') ?: $book['agreement_send_date'];
-    $agreementSigned = $request->getPost('agreement_signed_date') ?: $book['agreement_signed_date'];
-
     $remarksText     = trim($request->getPost('remarks'));
     $paymentDesc     = trim($request->getPost('payment_description'));
 
@@ -885,15 +692,12 @@ public function updateBook($prospector_id = null, $id = null)
     $db->table('prospectors_book_details')
        ->where('id', $id)
        ->update([
-           'title'                 => $newTitle,
-           'plan_name'             => $newPlan,
-           'payment_status'        => $paymentStatus,
-           'payment_amount'        => $newAmount,
-           'payment_date'          => $paymentDate,
-           'target_date'           => $targetDate,
-           'agreement_send_date'   => $agreementSend,       // 👈 UPDATE HERE
-           'agreement_signed_date' => $agreementSigned,     // 👈 UPDATE HERE
-           'update_date'           => date('Y-m-d H:i:s'),
+           'title'          => $newTitle,
+           'plan_name'      => $newPlan,
+           'payment_status' => $paymentStatus,
+           'payment_amount' => $newAmount,
+           'payment_date'   => $paymentDate,
+           'update_date'    => date('Y-m-d H:i:s'),
        ]);
 
     // Update remarks table title if title changed
@@ -928,19 +732,6 @@ public function updateBook($prospector_id = null, $id = null)
         $finalRemark = !empty($finalRemark) ? $finalRemark . ' | ' . $planMsg : $planMsg;
     }
 
-    // Add agreement date messages
-    if ($book['agreement_send_date'] != $agreementSend) {
-        $msg = "Agreement Sent: {$book['agreement_send_date']} → {$agreementSend}";
-        $changes[] = $msg;
-        $finalRemark = !empty($finalRemark) ? $finalRemark . ' | ' . $msg : $msg;
-    }
-
-    if ($book['agreement_signed_date'] != $agreementSigned) {
-        $msg = "Agreement Signed: {$book['agreement_signed_date']} → {$agreementSigned}";
-        $changes[] = $msg;
-        $finalRemark = !empty($finalRemark) ? $finalRemark . ' | ' . $msg : $msg;
-    }
-
     if (!empty($changes)) {
         $combined = implode(' | ', $changes);
         $finalPayDesc = $paymentDesc ? $paymentDesc . ' | ' . $combined : $combined;
@@ -954,7 +745,7 @@ public function updateBook($prospector_id = null, $id = null)
             'remarks'        => $finalRemark ?: null,
             'payment_description' => $finalPayDesc ?: null,
             'create_date'         => date('Y-m-d H:i:s'),
-            'des_date'            => date('Y-m-d H:i:s'),
+            'des_date'            => !empty($finalPayDesc) ? date('Y-m-d H:i:s') : null,
             'created_by'          => session()->get('username') ?? 'System',
         ]);
     }
@@ -962,6 +753,7 @@ public function updateBook($prospector_id = null, $id = null)
     return redirect()->to(base_url('prospectivemanagement/editbook/' . $prospector_id . '/' . $id))
                      ->with('success', 'Book details and remarks updated successfully.');
 }
+
    public function viewBook($prospector_id = null, $id = null)
 {
     if (!$prospector_id || !$id) {

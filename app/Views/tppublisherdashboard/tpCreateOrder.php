@@ -23,14 +23,19 @@
             <?php if (!empty($details)): ?>
                 <?php 
                     $i = 1; 
-                    $allSkus = [];
+                    $availableSkus = [];
+                    $skippedSkus = [];
                 ?>
                 <?php foreach ($details as $row): ?>
                     <?php
                         $sku = trim($row['sku_no']);
                         $available = (int)($row['available_stock'] ?? 0);
                         if (!empty($sku)) {
-                            $allSkus[] = $sku;
+                            if ($available > 0) {
+                                $availableSkus[] = $sku;
+                            } else {
+                                $skippedSkus[] = $sku;
+                            }
                         }
                     ?>
                     <tr>
@@ -40,8 +45,10 @@
                         <td><?= esc($row['mrp']) ?></td>
                         <td class="stock-cell">
                             <?php 
-                                if ($available <= 0) {
-                                    echo '<span style="color: red; font-weight: 600;">' . esc($available) . ' (Stock may be insufficient!)</span>';
+                                if ($available < 0) {
+                                    echo '<span style="color: red; font-weight: 600;">' . esc($available) . ' (Stock insufficient!)</span>';
+                                } elseif ($available == 0) {
+                                    echo '-';
                                 } else {
                                     echo esc($available);
                                 }
@@ -52,7 +59,8 @@
                                 onclick="AddToBookList('<?= esc($sku) ?>')" 
                                 class="w-32-px h-32-px bg-primary-light text-primary-600 rounded-circle d-inline-flex align-items-center justify-content-center add-to-cart-btn"
                                 title="Add to Cart"
-                                data-sku="<?= esc($sku) ?>">
+                                data-sku="<?= esc($sku) ?>"
+                                <?= $available <= 0 ? 'disabled' : '' ?>>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M7 18c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm10 0c-1.104 0-2 .896-2 2s.896 2 2 2 2-.896 2-2-.896-2-2-2zm-12.83-2l1.716-8h13.114l1.716 8h-16.546zm-1.17-10h18v2h-18v-2z"/>
                                 </svg>
@@ -69,7 +77,8 @@
     </table>
 
     <!-- Hidden fields for JS -->
-    <input type="hidden" id="all_available_skus" value="<?= implode(',', $allSkus ?? []); ?>">
+    <input type="hidden" id="all_available_skus" value="<?= implode(',', $availableSkus ?? []); ?>">
+    <input type="hidden" id="skipped_skus" value="<?= implode(',', $skippedSkus ?? []); ?>">
 
     <!-- Selected Book List Form -->
     <div class="mt-4">
@@ -118,12 +127,13 @@ function AddToBookList(sku_no) {
 
 function AddAllBooks() {
     const inputField = document.getElementById('selected_book_list');
-    const allSkus = document.getElementById('all_available_skus').value.split(',').map(s => s.trim()).filter(s => s !== '');
+    const allAvailableSkus = document.getElementById('all_available_skus').value.split(',').map(s => s.trim()).filter(s => s !== '');
+    const skippedSkus = document.getElementById('skipped_skus').value.split(',').map(s => s.trim()).filter(s => s !== '');
     
     let currentList = inputField.value.split(',').map(id => id.trim()).filter(id => id !== '');
     
-    // Merge all SKUs
-    allSkus.forEach(sku => {
+    // Merge all available SKUs
+    allAvailableSkus.forEach(sku => {
         if (!currentList.includes(sku)) {
             currentList.push(sku);
         }
@@ -132,7 +142,13 @@ function AddAllBooks() {
     inputField.value = currentList.join(',');
     updateSelectedCount();
 
-    alert(`${allSkus.length} books added to selection!`);
+    // Build alert message
+    let message = `${allAvailableSkus.length} available books added successfully!`;
+    if (skippedSkus.length > 0) {
+        message += `\n${skippedSkus.length} books skipped due to insufficient stock.\n\nSkipped SKUs:\n${skippedSkus.join(', ')}`;
+    }
+
+    alert(message);
 }
 
 function updateSelectedCount() {

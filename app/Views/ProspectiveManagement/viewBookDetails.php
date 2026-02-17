@@ -11,9 +11,6 @@
                     <th>Payment Status</th>
                     <th>Amount</th>
                     <th>Payment Date</th>
-                    <th>Agreement Send Date</th>
-                    <th>Agreement Signed Date</th>
-                    <th>Completed Target Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,9 +20,6 @@
                         <td><?= esc($p['payment_status_text']) ?></td>
                         <td><?= isset($p['payment_amount']) ? '₹' . number_format($p['payment_amount'], 2) : '-' ?></td>
                         <td><?= !empty($p['payment_date']) ? date('d-m-Y', strtotime($p['payment_date'])) : '-' ?></td>
-                        <td><?= !empty($p['agreement_send_date']) ? date('d-m-Y', strtotime($p['agreement_send_date'])) : '-' ?></td>
-                        <td><?= !empty($p['agreement_signed_date']) ? date('d-m-Y', strtotime($p['agreement_signed_date'])) : '-' ?></td>
-                        <td><?= !empty($p['target_date']) ? date('d-m-Y', strtotime($p['target_date'])) : '-' ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
